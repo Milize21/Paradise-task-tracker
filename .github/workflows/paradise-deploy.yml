@@ -1,0 +1,44 @@
+# Skeleton CI/CD kantor (Fase 2). Deploy step sengaja di-guard secret supaya
+# tidak jalan sampai server + secrets disiapkan. Sesuaikan sebelum diaktifkan.
+name: paradise-deploy
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths-ignore:
+      - "paradise/**"
+      - "**/*.md"
+
+concurrency:
+  group: paradise-deploy
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validasi compose
+        run: docker compose -f docker-compose.yml config -q
+      # TODO Fase 2: build & push image ke registry kantor (GHCR/Docker Hub)
+      #   - uses: docker/build-push-action@v6 ...
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # Jalan hanya kalau host deploy sudah dikonfigurasi (hindari fail kosong)
+    if: ${{ vars.DEPLOY_HOST != '' }}
+    steps:
+      - name: Deploy via SSH (compose pull && up)
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ vars.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd ${{ vars.DEPLOY_PATH }}
+            git pull --ff-only
+            docker compose pull
+            docker compose up -d
+            ./paradise/bin/healthcheck.sh
