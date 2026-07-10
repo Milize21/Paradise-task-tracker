@@ -117,3 +117,11 @@ packages/i18n/src/types/keys.generated.ts
 
 # Local security notes (not for version control)
 /security/
+
+# Paradise Task Tracker — artefak operasional kantor (jangan commit)
+/backups/
+*.sql
+*.sql.gz
+*.dump
+paradise/.env
+.env.paradise
