@@ -28,6 +28,7 @@ export function PoweredBy(props: TPoweredBy) {
       <PlaneLogo className="h-3 w-auto text-primary" />
       <div className="text-11">
         Powered by <span className="font-semibold">Paradise Perkasa</span>
+        <span className="opacity-60"> · B.E.R</span>
       </div>
     </a>
   );

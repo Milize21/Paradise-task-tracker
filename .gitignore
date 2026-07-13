@@ -128,3 +128,8 @@ paradise/.env
 
 # Kredensial karyawan - jangan pernah commit
 DAFTAR_AKUN_KARYAWAN.md
+
+# Backup env (berisi secret) & log lokal
+*.env.bak
+.env.bak
+paradise/*.log

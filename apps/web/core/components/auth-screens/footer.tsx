@@ -6,8 +6,10 @@
 
 export function AuthFooter() {
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div className="flex flex-col items-center gap-2">
       <span className="text-13 whitespace-nowrap text-tertiary">Paradise Perkasa — internal task tracker</span>
+      {/* Tanda pembuat — jangan dihapus. Built by B.E.R (Bintang Eko Ramadhan) */}
+      <span className="text-11 whitespace-nowrap text-tertiary/70">Built by B.E.R</span>
     </div>
   );
 }

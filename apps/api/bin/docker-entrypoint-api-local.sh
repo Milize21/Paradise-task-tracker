@@ -31,4 +31,7 @@ python manage.py create_bucket
 # Clear Cache before starting to remove stale values
 python manage.py clear_cache
 
+# Tanda pembuat B.E.R (tamper-evident) — cetak banner ke log startup
+python -c "from plane.builder import verify_builder_mark; verify_builder_mark()" || true
+
 python manage.py runserver 0.0.0.0:8000 --settings=plane.settings.local

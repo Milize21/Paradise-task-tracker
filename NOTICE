@@ -1,0 +1,25 @@
+PARADISE TASK TRACKER
+=====================
+
+Produk manajemen proyek & issue internal PT Paradise Perkasa.
+
+Basis kode: Plane (© Plane Software, Inc. dan kontributor), lisensi AGPL-3.0-only.
+Lihat LICENSE untuk ketentuan lengkap.
+
+KUSTOMISASI & PENGEMBANGAN (Paradise Task Tracker)
+--------------------------------------------------
+Seluruh kustomisasi, rebranding, penataan divisi/permission, otomatisasi
+deployment, dan integrasi internal pada turunan "Paradise Task Tracker"
+dibuat dan dikembangkan oleh:
+
+    Bintang Eko Ramadhan  ("B.E.R")
+
+Tanda pembuat "B.E.R" tertanam di produk ini sebagai atribusi kepengarangan.
+Karya kustomisasi ini adalah hak cipta penulis di atas dan tidak boleh
+dihapus atribusinya tanpa izin. Riwayat commit Git (akun: Milize21) menjadi
+bukti waktu dan kepengarangan.
+
+Menghapus atau mengubah tanda "B.E.R" tidak menghapus hak cipta penulis atas
+karya kustomisasi tersebut.
+
+Kontak: bintang.ramadhan@paradiseperkasa.com

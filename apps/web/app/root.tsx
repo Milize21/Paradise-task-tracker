@@ -27,11 +27,13 @@ import { LogoSpinner } from "@/components/common/logo-spinner";
 // local
 import { CustomErrorComponent } from "./error";
 import { AppProvider } from "./provider";
-// fonts
+// fonts (side-effect imports — memuat font global)
+// oxlint-disable no-unassigned-import
 import "@fontsource-variable/inter";
 import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 import "@fontsource/material-symbols-rounded";
 import "@fontsource/ibm-plex-mono";
+// oxlint-enable no-unassigned-import
 
 const APP_TITLE = "Paradise Task Tracker | Manajemen proyek & issue internal kantor.";
 
@@ -63,8 +65,11 @@ export function Layout({ children }: { children: ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#fff" />
+        {/* Paradise Task Tracker — dibangun & dikustomisasi oleh B.E.R (Bintang Eko Ramadhan) */}
+        <meta name="author" content="B.E.R" />
+        <meta name="generator" content="B.E.R" />
         {/* Meta info for PWA */}
-        <meta name="application-name" content="Plane" />
+        <meta name="application-name" content="Paradise Task Tracker" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content={SITE_NAME} />
