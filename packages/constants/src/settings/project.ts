@@ -107,6 +107,13 @@ export const PROJECT_SETTINGS: Record<TProjectSettingsTabs, TProjectSettingsItem
     access: [EUserProjectRoles.ADMIN],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/work-item-types/`,
   },
+  templates: {
+    key: "templates",
+    i18n_label: "common.templates",
+    href: `/templates`,
+    access: [EUserProjectRoles.ADMIN],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/templates/`,
+  },
   automations: {
     key: "automations",
     i18n_label: "project_settings.automations.label",
@@ -133,5 +140,5 @@ export const GROUPED_PROJECT_SETTINGS: Record<PROJECT_SETTINGS_CATEGORY, TProjec
     PROJECT_SETTINGS["estimates"],
     PROJECT_SETTINGS["work_item_types"],
   ],
-  [PROJECT_SETTINGS_CATEGORY.EXECUTION]: [PROJECT_SETTINGS["automations"]],
+  [PROJECT_SETTINGS_CATEGORY.EXECUTION]: [PROJECT_SETTINGS["templates"], PROJECT_SETTINGS["automations"]],
 };

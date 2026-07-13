@@ -343,6 +343,11 @@ export const coreRoutes: RouteConfigEntry[] = [
               ":workspaceSlug/settings/projects/:projectId/work-item-types",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/work-item-types/page.tsx"
             ),
+            // Templates & Recurring Work Items (Paradise/B.E.R)
+            route(
+              ":workspaceSlug/settings/projects/:projectId/templates",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/templates/page.tsx"
+            ),
             // Project Automations
             layout("./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/automations/layout.tsx", [
               route(
