@@ -83,6 +83,7 @@ from .favorite import UserFavorite
 from .issue_type import IssueType, ProjectIssueType
 from .issue_property import IssueProperty, IssuePropertyOption, IssuePropertyValue
 from .issue_template import IssueTemplate, RecurringIssue
+from .initiative import Initiative, InitiativeProject
 
 from .recent_visit import UserRecentVisit
 

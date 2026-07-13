@@ -220,6 +220,13 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
+  initiatives: {
+    key: "initiatives",
+    labelTranslationKey: "initiatives",
+    href: `/initiatives/`,
+    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
+    highlight: (pathname: string, url: string) => pathname.includes(url),
+  },
   archives: {
     key: "archives",
     labelTranslationKey: "archives",
@@ -233,6 +240,7 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS: IWorkspaceSidebar
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["views"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["analytics"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["dashboard_divisi"],
+  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["initiatives"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["archives"],
 ];
 

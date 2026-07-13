@@ -77,6 +77,11 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/dashboard-divisi", "./(all)/[workspaceSlug]/(projects)/dashboard-divisi/page.tsx"),
         ]),
 
+        // Initiatives (Paradise/B.E.R)
+        layout("./(all)/[workspaceSlug]/(projects)/initiatives/layout.tsx", [
+          route(":workspaceSlug/initiatives", "./(all)/[workspaceSlug]/(projects)/initiatives/page.tsx"),
+        ]),
+
         // Browse
         layout("./(all)/[workspaceSlug]/(projects)/browse/[workItem]/layout.tsx", [
           route(":workspaceSlug/browse/:workItem", "./(all)/[workspaceSlug]/(projects)/browse/[workItem]/page.tsx"),
