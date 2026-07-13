@@ -384,6 +384,34 @@ class IssueLink(ProjectBaseModel):
         return f"{self.issue.name} {self.url}"
 
 
+class IssueWorkLog(ProjectBaseModel):
+    """Catatan waktu kerja (time tracking) per work item."""
+
+    issue = models.ForeignKey(
+        "db.Issue", on_delete=models.CASCADE, related_name="issue_worklog"
+    )
+    logged_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="issue_worklogs",
+    )
+    # Durasi kerja dalam MENIT (integer positif). UI mengonversi ke jam:menit.
+    duration = models.PositiveIntegerField(
+        default=0, help_text="Durasi kerja dalam menit"
+    )
+    description = models.TextField(blank=True)
+    logged_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        verbose_name = "Issue Work Log"
+        verbose_name_plural = "Issue Work Logs"
+        db_table = "issue_work_logs"
+        ordering = ("-logged_at",)
+
+    def __str__(self):
+        return f"{self.issue.name} {self.duration}m"
+
+
 def get_upload_path(instance, filename):
     filename = sanitize_filename(filename) or uuid4().hex
     return f"{instance.workspace.id}/{uuid4().hex}-{filename}"

@@ -32,6 +32,7 @@ from plane.db.models import (
     Module,
     ModuleIssue,
     IssueLink,
+    IssueWorkLog,
     FileAsset,
     IssueReaction,
     CommentReaction,
@@ -596,6 +597,32 @@ class IssueLinkSerializer(BaseSerializer):
             raise serializers.ValidationError({"error": "URL already exists for this Issue"})
 
         return super().update(instance, validated_data)
+
+
+class IssueWorkLogSerializer(BaseSerializer):
+    logged_by_detail = UserLiteSerializer(read_only=True, source="logged_by")
+
+    class Meta:
+        model = IssueWorkLog
+        fields = "__all__"
+        read_only_fields = [
+            "workspace",
+            "project",
+            "issue",
+            "logged_by",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at",
+        ]
+
+    def validate_duration(self, value):
+        if value is None or value <= 0:
+            raise serializers.ValidationError({"error": "Durasi harus lebih dari 0 menit."})
+        # Batas wajar: 24 jam (1440 menit) per satu catatan
+        if value > 1440:
+            raise serializers.ValidationError({"error": "Durasi satu catatan maksimal 1440 menit (24 jam)."})
+        return value
 
 
 class IssueLinkLiteSerializer(BaseSerializer):

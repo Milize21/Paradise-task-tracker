@@ -9,6 +9,7 @@ from plane.app.views import (
     BulkDeleteIssuesEndpoint,
     SubIssuesEndpoint,
     IssueLinkViewSet,
+    IssueWorkLogViewSet,
     IssueAttachmentEndpoint,
     CommentReactionViewSet,
     IssueActivityEndpoint,
@@ -122,6 +123,16 @@ urlpatterns = [
             }
         ),
         name="project-issue-links",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/work-logs/",
+        IssueWorkLogViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-issue-work-logs",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/work-logs/<uuid:pk>/",
+        IssueWorkLogViewSet.as_view({"patch": "partial_update", "delete": "destroy"}),
+        name="project-issue-work-logs",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/issue-attachments/",
