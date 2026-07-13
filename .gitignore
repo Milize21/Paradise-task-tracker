@@ -125,3 +125,6 @@ packages/i18n/src/types/keys.generated.ts
 *.dump
 paradise/.env
 .env.paradise
+
+# Kredensial karyawan - jangan pernah commit
+DAFTAR_AKUN_KARYAWAN.md
