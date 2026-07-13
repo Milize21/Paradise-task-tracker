@@ -4,18 +4,19 @@
  * See the LICENSE file for details.
  */
 
-import { useTheme } from "next-themes";
-import LogoSpinnerDark from "@/app/assets/images/logo-spinner-dark.gif?url";
-import LogoSpinnerLight from "@/app/assets/images/logo-spinner-light.gif?url";
+// assets
+import ParadiseLogo from "@/app/assets/images/paradise-logo.png?url";
 
 export function LogoSpinner() {
-  const { resolvedTheme } = useTheme();
-
-  const logoSrc = resolvedTheme === "dark" ? LogoSpinnerLight : LogoSpinnerDark;
-
   return (
     <div className="flex items-center justify-center">
-      <img src={logoSrc} alt="logo" className="h-6 w-auto sm:h-11" />
+      <div className="relative flex size-12 items-center justify-center sm:size-16">
+        <span
+          className="absolute inset-0 animate-spin rounded-full border-2 border-[#ED1F24]/20 border-t-[#ED1F24]"
+          style={{ animationDuration: "0.9s" }}
+        />
+        <img src={ParadiseLogo} alt="Paradise Perkasa" className="size-6 animate-pulse object-contain sm:size-9" />
+      </div>
     </div>
   );
 }
