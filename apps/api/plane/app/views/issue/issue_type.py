@@ -87,6 +87,12 @@ class IssueTypeViewSet(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         with transaction.atomic():
+            # Bersihkan turunan tipe agar tidak yatim: nilai -> opsi -> field
+            from plane.db.models import IssueProperty, IssuePropertyOption, IssuePropertyValue
+
+            IssuePropertyValue.objects.filter(property__issue_type=issue_type).delete()
+            IssuePropertyOption.objects.filter(property__issue_type=issue_type).delete()
+            IssueProperty.objects.filter(issue_type=issue_type).delete()
             ProjectIssueType.objects.filter(project_id=project_id, issue_type=issue_type).delete()
             issue_type.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

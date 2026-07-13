@@ -132,6 +132,11 @@ class IssuePropertyValueEndpoint(BaseAPIView):
         if not prop:
             return Response({"error": "Property tidak ditemukan di project ini."}, status=status.HTTP_404_NOT_FOUND)
 
+        # Validasi nilai sesuai tipe field
+        error = self._validate_typed_value(prop, request.data)
+        if error:
+            return Response({"error": error}, status=status.HTTP_400_BAD_REQUEST)
+
         # Replace: hapus nilai lama property ini untuk issue, buat baru
         IssuePropertyValue.objects.filter(
             project_id=project_id, issue_id=issue_id, property_id=property_id
@@ -142,3 +147,29 @@ class IssuePropertyValueEndpoint(BaseAPIView):
             serializer.save(project_id=project_id, issue_id=issue_id, property_id=property_id)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @staticmethod
+    def _validate_typed_value(prop, data):
+        """Pastikan kolom nilai yang terisi cocok dengan property_type field."""
+        ptype = prop.property_type
+        if ptype == "TEXT" and not (data.get("value_text") or "").strip():
+            return "Field teks butuh value_text."
+        if ptype == "DECIMAL" and data.get("value_number") is None:
+            return "Field angka butuh value_number."
+        if ptype == "DATETIME" and not data.get("value_datetime"):
+            return "Field tanggal butuh value_datetime."
+        if ptype in ("OPTION", "MEMBER") and not data.get("value_uuid"):
+            return f"Field {ptype.lower()} butuh value_uuid."
+        if ptype == "OPTION":
+            from plane.db.models import IssuePropertyOption
+
+            if not IssuePropertyOption.objects.filter(property=prop, pk=data.get("value_uuid")).exists():
+                return "value_uuid bukan opsi yang valid untuk field ini."
+        if ptype == "MEMBER":
+            from plane.db.models import ProjectMember
+
+            if not ProjectMember.objects.filter(
+                project_id=prop.project_id, member_id=data.get("value_uuid"), is_active=True
+            ).exists():
+                return "value_uuid bukan anggota project ini."
+        return None
