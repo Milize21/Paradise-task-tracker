@@ -121,6 +121,7 @@ from .intake import (
     IntakeIssueDetailSerializer,
 )
 
+from .issue_type import IssueTypeSerializer
 from .analytic import AnalyticViewSerializer
 
 from .notification import NotificationSerializer, UserNotificationPreferenceSerializer
