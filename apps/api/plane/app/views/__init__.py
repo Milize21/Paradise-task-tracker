@@ -150,6 +150,11 @@ from .issue.issue_property import (
     IssuePropertyOptionViewSet,
     IssuePropertyValueEndpoint,
 )
+from .issue.template import (
+    IssueTemplateViewSet,
+    IssueTemplateApplyEndpoint,
+    RecurringIssueViewSet,
+)
 
 from .issue.relation import IssueRelationViewSet
 

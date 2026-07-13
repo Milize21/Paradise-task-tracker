@@ -122,6 +122,7 @@ from .intake import (
 )
 
 from .issue_type import IssueTypeSerializer
+from .issue_template import IssueTemplateSerializer, RecurringIssueSerializer
 from .issue_property import (
     IssuePropertySerializer,
     IssuePropertyOptionSerializer,

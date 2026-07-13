@@ -14,6 +14,9 @@ from plane.app.views import (
     IssuePropertyViewSet,
     IssuePropertyOptionViewSet,
     IssuePropertyValueEndpoint,
+    IssueTemplateViewSet,
+    IssueTemplateApplyEndpoint,
+    RecurringIssueViewSet,
     IssueAttachmentEndpoint,
     CommentReactionViewSet,
     IssueActivityEndpoint,
@@ -162,6 +165,31 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/property-values/",
         IssuePropertyValueEndpoint.as_view(),
         name="project-issue-property-values",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-templates/",
+        IssueTemplateViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-issue-templates",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-templates/<uuid:pk>/",
+        IssueTemplateViewSet.as_view({"patch": "partial_update", "delete": "destroy"}),
+        name="project-issue-templates",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-templates/<uuid:pk>/apply/",
+        IssueTemplateApplyEndpoint.as_view(),
+        name="project-issue-template-apply",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/recurring-issues/",
+        RecurringIssueViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-recurring-issues",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/recurring-issues/<uuid:pk>/",
+        RecurringIssueViewSet.as_view({"patch": "partial_update", "delete": "destroy"}),
+        name="project-recurring-issues",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/work-logs/",
