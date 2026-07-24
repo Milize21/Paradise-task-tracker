@@ -20,9 +20,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Nama variabel ini dipakai apa adanya oleh deployments/cli/community/build.yml.
-  # Isinya GHCR, bukan Docker Hub. Owner GHCR wajib huruf kecil.
-  DOCKERHUB_USER: ghcr.io/milize21
+  # Owner GHCR wajib huruf kecil.
+  REGISTRY: ghcr.io/milize21
 
 jobs:
   build:
@@ -59,20 +58,30 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # build.yml sudah mendaftarkan keenam image beserta context + dockerfile-nya,
-      # jadi tidak perlu job per-image.
+      # Bake membaca compose yang sama dengan yang dipakai server, jadi context dan
+      # nama image hanya ditulis di satu tempat (docker-compose.ghcr.yml).
+      #
+      # JANGAN pakai deployments/cli/community/build.yml di sini: context-nya
+      # ../../ padahal filenya tiga tingkat di bawah root, dan bake meresolusi
+      # context relatif ke direktori kerja — jadi tidak pernah menunjuk root repo.
+      #
+      # Keenam target disebut eksplisit: worker/beat-worker/migrator memakai image
+      # backend yang sama, tanpa ini image itu ter-build 4x.
+      #
       # ponytail: tanpa cache layer — build ~25 menit, dan menit Actions gratis untuk
       # repo public. Tambahkan cache-from/to type=gha kalau waktunya mulai mengganggu.
       - name: Build & push (tag = commit sha)
         env:
           APP_RELEASE: ${{ github.sha }}
-        run: docker buildx bake -f deployments/cli/community/build.yml --push
+        run: |
+          docker buildx bake -f docker-compose.yml -f docker-compose.ghcr.yml --push \
+            web admin space live api proxy
 
       # Manifest copy, bukan rebuild — hitungan detik.
       - name: Geser tag `latest` ke build ini
         run: |
           for img in frontend space admin live backend proxy; do
             docker buildx imagetools create \
-              -t "$DOCKERHUB_USER/plane-$img:latest" \
-              "$DOCKERHUB_USER/plane-$img:${{ github.sha }}"
+              -t "$REGISTRY/plane-$img:latest" \
+              "$REGISTRY/plane-$img:${{ github.sha }}"
           done
