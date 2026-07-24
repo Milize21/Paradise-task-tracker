@@ -22,3 +22,13 @@ tipis untuk operasional internal kantor:
 Karena AGPL-3.0, bila layanan ini diakses lewat jaringan oleh pengguna, source
 code (termasuk modifikasi) **wajib tetap tersedia** untuk mereka. Jangan hapus
 `LICENSE.txt` maupun berkas ini.
+
+## Library pihak ketiga yang ditambahkan fork ini
+
+Fitur tambahan kantor memakai library open-source berikut. Hak cipta dan lisensi
+milik penulis masing-masing; teks lisensinya ikut terdistribusi via paket
+(`pip`) dan tidak boleh dihapus.
+
+| Library                                                        | Fitur                            | Lisensi |
+| -------------------------------------------------------------- | -------------------------------- | ------- |
+| [django-auditlog](https://github.com/jazzband/django-auditlog) | Jejak audit (siapa mengubah apa) | MIT     |

@@ -30,6 +30,8 @@ jsonmodels==2.7.0
 django-storages==1.14.2
 # user management
 django-crum==0.7.9
+# audit trail (who changed what) — jazzband, MIT; lihat NOTICE
+django-auditlog==3.4.1
 # web server
 uvicorn==0.29.0
 # sockets

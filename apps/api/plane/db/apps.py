@@ -7,3 +7,9 @@ from django.apps import AppConfig
 
 class DbConfig(AppConfig):
     name = "plane.db"
+
+    def ready(self):
+        # Daftarkan model sensitif ke jejak audit setelah semua app dimuat.
+        from plane.db.audit import register_audit_models
+
+        register_audit_models()
