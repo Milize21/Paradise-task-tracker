@@ -4,6 +4,7 @@
 
 from plane.db.models import ProjectMember, Page
 from plane.app.permissions import ROLE
+from plane.utils.wiki_access import is_wiki_governed, can_edit_wiki_page
 
 
 from rest_framework.permissions import BasePermission, SAFE_METHODS
@@ -38,6 +39,11 @@ class ProjectPagePermission(BasePermission):
         if extended_access is False:
             return False
 
+        # ACL Wiki (fork B.E.R): di project ber-governance, hak edit ditentukan
+        # kepemilikan folder per-divisi — bukan peran atau kepemilikan halaman.
+        if is_wiki_governed(project_id):
+            return self._has_wiki_governed_access(request, slug, project_id, page_id, role)
+
         if page_id:
             page = Page.objects.get(id=page_id, workspace__slug=slug)
 
@@ -51,6 +57,33 @@ class ProjectPagePermission(BasePermission):
 
         # Handle public page access
         return self._has_public_page_action_access(request, role)
+
+    def _has_wiki_governed_access(self, request, slug, project_id, page_id, role):
+        """Izin halaman di Wiki ber-ACL folder.
+
+        View: semua anggota project boleh. Tulis: admin project selalu boleh;
+        selain itu harus anggota divisi pemilik folder top-level. Membuat folder
+        top-level (POST tanpa parent) = admin saja.
+        """
+        if request.method in SAFE_METHODS:
+            return True
+
+        if role == ADMIN:
+            return True
+
+        # Sasaran = halaman yang diedit, atau folder induk saat membuat sub-halaman.
+        target = None
+        if page_id:
+            target = Page.objects.filter(id=page_id, workspace__slug=slug).first()
+        else:
+            parent_id = request.data.get("parent")
+            if parent_id:
+                target = Page.objects.filter(id=parent_id, workspace__slug=slug).first()
+
+        if target is None:
+            return False
+
+        return can_edit_wiki_page(request.user, target)
 
     def _check_project_member_access(self, request, slug, project_id):
         """

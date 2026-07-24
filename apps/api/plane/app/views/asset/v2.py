@@ -18,9 +18,10 @@ from rest_framework.permissions import AllowAny
 
 # Module imports
 from ..base import BaseAPIView
-from plane.db.models import FileAsset, Workspace, Project, User, WorkspaceMember
+from plane.db.models import FileAsset, Workspace, Project, User, WorkspaceMember, ProjectMember, Page
 from plane.settings.storage import S3Storage
 from plane.app.permissions import allow_permission, ROLE
+from plane.utils.wiki_access import is_wiki_governed, can_edit_wiki_page
 from plane.utils.cache import invalidate_cache_directly
 from plane.utils.path_validator import sanitize_filename
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
@@ -539,6 +540,27 @@ class ProjectAssetEndpoint(BaseAPIView):
                 {"error": "Invalid entity type.", "status": False},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # ACL Wiki (fork B.E.R): unggah ke halaman di Wiki ber-governance hanya
+        # boleh oleh admin project atau anggota divisi pemilik folder — biar gate
+        # ini tidak jadi celah samping dari izin halaman.
+        if (
+            entity_type == FileAsset.EntityTypeContext.PAGE_DESCRIPTION
+            and is_wiki_governed(project_id)
+        ):
+            page = Page.objects.filter(id=entity_identifier, workspace__slug=slug).first()
+            is_admin = ProjectMember.objects.filter(
+                member=request.user,
+                project_id=project_id,
+                role=ROLE.ADMIN.value,
+                is_active=True,
+                deleted_at__isnull=True,
+            ).exists()
+            if not (is_admin or (page and can_edit_wiki_page(request.user, page))):
+                return Response(
+                    {"error": "Anda tidak berhak mengunggah ke folder ini.", "status": False},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         # Check if the file type is allowed
         allowed_types = [
