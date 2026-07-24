@@ -35,7 +35,11 @@ jobs:
 
       - name: Validasi compose + overlay GHCR
         run: |
-          cp .env.example .env   # compose butuh var terisi; nilainya tidak dipakai di sini
+          # Keduanya gitignored, jadi tidak pernah ada di checkout CI. Tanpa ini
+          # `config` gagal: docker-compose.yml menunjuk env_file ./apps/api/.env
+          # di 4 service. Isinya tidak dipakai — compose cuma butuh filenya ada.
+          cp .env.example .env
+          cp .env.example apps/api/.env
           docker compose -f docker-compose.yml config -q
           docker compose -f docker-compose.yml -f docker-compose.ghcr.yml config -q
           # Guard: service baru yang punya build: tapi lupa ditambah ke overlay akan
