@@ -1,0 +1,74 @@
+# CI kantor: build 6 image dari kode kustom -> push ke GHCR.
+# Deploy TIDAK otomatis. Di server jalankan `paradise/bin/deploy.sh` saat mau rilis.
+#
+# Sekali seumur hidup setelah run pertama: buka
+# https://github.com/Milize21/Paradise-task-tracker/pkgs -> tiap package ->
+# Package settings -> Change visibility -> Public. Package GHCR default-nya
+# private walaupun repo-nya public, dan server gagal `pull` kalau masih private.
+name: paradise-build
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths-ignore:
+      - "paradise/**"
+      - "**/*.md"
+
+concurrency:
+  group: paradise-build
+  cancel-in-progress: true
+
+env:
+  # Nama variabel ini dipakai apa adanya oleh deployments/cli/community/build.yml.
+  # Isinya GHCR, bukan Docker Hub. Owner GHCR wajib huruf kecil.
+  DOCKERHUB_USER: ghcr.io/milize21
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validasi compose + overlay GHCR
+        run: |
+          cp .env.example .env   # compose butuh var terisi; nilainya tidak dipakai di sini
+          docker compose -f docker-compose.yml config -q
+          docker compose -f docker-compose.yml -f docker-compose.ghcr.yml config -q
+          # Guard: service baru yang punya build: tapi lupa ditambah ke overlay akan
+          # diam-diam ter-build dari source di server. Gagalkan di sini.
+          missing=$(docker compose -f docker-compose.yml -f docker-compose.ghcr.yml config --format json \
+            | python3 -c "import json,sys; s=json.load(sys.stdin)['services']; print(' '.join(n for n,v in s.items() if 'build' in v and not v.get('image','').startswith('ghcr.io')))")
+          if [ -n "$missing" ]; then
+            echo "Service tanpa image GHCR di docker-compose.ghcr.yml: $missing"
+            exit 1
+          fi
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # build.yml sudah mendaftarkan keenam image beserta context + dockerfile-nya,
+      # jadi tidak perlu job per-image.
+      # ponytail: tanpa cache layer — build ~25 menit, dan menit Actions gratis untuk
+      # repo public. Tambahkan cache-from/to type=gha kalau waktunya mulai mengganggu.
+      - name: Build & push (tag = commit sha)
+        env:
+          APP_RELEASE: ${{ github.sha }}
+        run: docker buildx bake -f deployments/cli/community/build.yml --push
+
+      # Manifest copy, bukan rebuild — hitungan detik.
+      - name: Geser tag `latest` ke build ini
+        run: |
+          for img in frontend space admin live backend proxy; do
+            docker buildx imagetools create \
+              -t "$DOCKERHUB_USER/plane-$img:latest" \
+              "$DOCKERHUB_USER/plane-$img:${{ github.sha }}"
+          done

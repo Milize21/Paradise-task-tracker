@@ -16,13 +16,46 @@ Docker Compose sudah cukup. K8s hanya perlu kalau butuh HA/autoscale + tim ops.
 2. **Konfigurasi env:** `cp paradise/.env.example .env` lalu isi semua `<GANTI>`.
    Jalankan [`SECURITY-CHECKLIST.md`](SECURITY-CHECKLIST.md) — jangan skip.
 3. **Pilih compose:**
-   - Build dari source (kode kustom kantor):
+   - **Disarankan — image hasil CI:** `./paradise/bin/deploy.sh`. Workflow
+     `paradise-build` sudah build 6 image dari kode kustom kantor tiap push ke
+     `main` dan push ke GHCR; server tinggal tarik. Server tidak perlu build
+     (hemat CPU/RAM dan tidak ada downtime lama). Lihat [CI/CD](#cicd) di bawah.
+   - Build dari source (kalau CI mati / server airgapped):
      `docker compose -f docker-compose.yml up -d --build`
-   - Atau image prebuilt (lihat `deployments/cli/community/`, punya knob `*_REPLICAS`).
+   - Atau image prebuilt upstream (lihat `deployments/cli/community/`, punya knob `*_REPLICAS`).
 4. **Migrasi & verifikasi:** container `api` menjalankan migrasi saat start.
    Cek dengan `paradise/bin/healthcheck.sh`.
 5. **HTTPS:** set `SITE_ADDRESS=domain-kamu` + `CERT_EMAIL` → Caddy urus sertifikat
    otomatis. Untuk LAN tanpa domain, tetap HTTP di port 80.
+
+## CI/CD
+
+Alurnya sengaja **push image, tarik manual** — server LAN tidak perlu membuka SSH
+ke internet, dan tidak ada restart mendadak di jam kerja.
+
+| Tahap  | Di mana                           | Apa yang terjadi                                                                                    |
+| ------ | --------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Build  | GitHub Actions (`paradise-build`) | Tiap push ke `main`: build 6 image, push ke `ghcr.io/milize21/plane-*`, tag = commit SHA + `latest` |
+| Deploy | Server, manual                    | `./paradise/bin/deploy.sh` → `git pull` + `compose pull` + `up -d` + healthcheck                    |
+
+**Setup sekali saja, setelah run pertama workflow:** package GHCR default-nya
+private walaupun repo public. Buka `github.com/Milize21/Paradise-task-tracker/pkgs`
+→ tiap package → _Package settings_ → _Change visibility_ → **Public**. Tanpa ini
+`docker pull` di server akan gagal 401. (Alternatif: `docker login ghcr.io` di
+server pakai PAT ber-scope `read:packages`.)
+
+**Rollback.** Tiap build punya tag commit SHA, jadi kembali ke versi lama tidak
+perlu build ulang:
+
+```bash
+APP_RELEASE=<git-sha-lama> ./paradise/bin/deploy.sh
+```
+
+Simpan `APP_RELEASE` di `.env` kalau mau pin permanen. Kosongkan untuk kembali
+mengikuti `latest`.
+
+**Kalau nanti mau otomatis penuh**, `deploy.sh` sudah exit != 0 saat healthcheck
+gagal, jadi tinggal dipasang di cron (mis. `0 2 * * *`) tanpa perubahan kode.
 
 ## Scaling ~100 user
 

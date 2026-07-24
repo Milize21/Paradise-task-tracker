@@ -1,0 +1,28 @@
+# Overlay: pakai image hasil CI (GHCR) alih-alih build di server.
+#   docker compose -f docker-compose.yml -f docker-compose.ghcr.yml pull && ... up -d
+# Dipakai otomatis oleh paradise/bin/deploy.sh — jangan dipanggil sendirian.
+#
+# Service di bawah tetap punya blok build: dari file dasar (compose tidak bisa
+# menghapus key lewat overlay). Itu tidak masalah: `pull` mengambil image dari
+# GHCR dan `up` memakai image lokal yang sudah ada tanpa build ulang.
+#
+# Rollback: set APP_RELEASE=<git-sha> di .env lalu jalankan deploy.sh lagi.
+services:
+  web:
+    image: ghcr.io/milize21/plane-frontend:${APP_RELEASE:-latest}
+  admin:
+    image: ghcr.io/milize21/plane-admin:${APP_RELEASE:-latest}
+  space:
+    image: ghcr.io/milize21/plane-space:${APP_RELEASE:-latest}
+  live:
+    image: ghcr.io/milize21/plane-live:${APP_RELEASE:-latest}
+  proxy:
+    image: ghcr.io/milize21/plane-proxy:${APP_RELEASE:-latest}
+  api:
+    image: ghcr.io/milize21/plane-backend:${APP_RELEASE:-latest}
+  worker:
+    image: ghcr.io/milize21/plane-backend:${APP_RELEASE:-latest}
+  beat-worker:
+    image: ghcr.io/milize21/plane-backend:${APP_RELEASE:-latest}
+  migrator:
+    image: ghcr.io/milize21/plane-backend:${APP_RELEASE:-latest}
