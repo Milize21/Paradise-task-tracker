@@ -42,13 +42,23 @@ class S3Storage(S3Boto3Storage):
                 endpoint_protocol = "https"
             else:
                 endpoint_protocol = request.scheme if request else "http"
+            # Paradise (B.E.R): tanpa reverse-proxy (dev), URL presigned berbasis host API
+            # akan 404 karena tidak ada yang meneruskan /uploads ke MinIO. Override ini
+            # mengarahkan URL yang dilihat browser langsung ke port publik MinIO.
+            minio_public_endpoint = os.environ.get("MINIO_PUBLIC_ENDPOINT_URL")
+            if request and minio_public_endpoint:
+                browser_endpoint_url = minio_public_endpoint
+            elif request:
+                browser_endpoint_url = f"{endpoint_protocol}://{request.get_host()}"
+            else:
+                browser_endpoint_url = self.aws_s3_endpoint_url
             # Create an S3 client for MinIO
             self.s3_client = boto3.client(
                 "s3",
                 aws_access_key_id=self.aws_access_key_id,
                 aws_secret_access_key=self.aws_secret_access_key,
                 region_name=self.aws_region,
-                endpoint_url=(f"{endpoint_protocol}://{request.get_host()}" if request else self.aws_s3_endpoint_url),
+                endpoint_url=browser_endpoint_url,
                 config=boto3.session.Config(signature_version="s3v4"),
             )
         else:
