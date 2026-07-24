@@ -45,6 +45,7 @@ from .workspace.base import (
 
 from .workspace.draft import WorkspaceDraftIssueViewSet
 from .workspace.paradise_dashboard import DivisionDashboardEndpoint, WorkLogExportEndpoint
+from .workspace.audit_log import AuditLogEndpoint
 from .workspace.initiative import InitiativeViewSet
 
 from .workspace.home import WorkspaceHomePreferenceViewSet

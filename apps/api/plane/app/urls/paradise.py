@@ -5,7 +5,12 @@
 
 from django.urls import path
 
-from plane.app.views import DivisionDashboardEndpoint, WorkLogExportEndpoint, InitiativeViewSet
+from plane.app.views import (
+    DivisionDashboardEndpoint,
+    WorkLogExportEndpoint,
+    InitiativeViewSet,
+    AuditLogEndpoint,
+)
 
 urlpatterns = [
     path(
@@ -37,5 +42,10 @@ urlpatterns = [
         "workspaces/<str:slug>/worklogs/export/",
         WorkLogExportEndpoint.as_view(),
         name="worklogs-export",
+    ),
+    path(
+        "workspaces/<str:slug>/audit-logs/",
+        AuditLogEndpoint.as_view(),
+        name="audit-logs",
     ),
 ]
