@@ -190,6 +190,7 @@ from .page.base import (
 )
 from .page.version import PageVersionEndpoint
 from .page.can_edit import PageCanEditEndpoint
+from .page.wiki_access import WikiAccessEndpoint, WikiFolderAccessEndpoint
 
 from .search.base import GlobalSearchEndpoint, SearchEndpoint
 from .search.issue import IssueSearchEndpoint

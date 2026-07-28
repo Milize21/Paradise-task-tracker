@@ -11,6 +11,8 @@ from plane.app.views import (
     InitiativeViewSet,
     AuditLogEndpoint,
     PageCanEditEndpoint,
+    WikiAccessEndpoint,
+    WikiFolderAccessEndpoint,
 )
 
 urlpatterns = [
@@ -53,5 +55,15 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/pages/<uuid:page_id>/can-edit/",
         PageCanEditEndpoint.as_view(),
         name="page-can-edit",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki-access/",
+        WikiAccessEndpoint.as_view(),
+        name="wiki-access",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki-access/folders/<uuid:folder_id>/",
+        WikiFolderAccessEndpoint.as_view(),
+        name="wiki-folder-access",
     ),
 ]
