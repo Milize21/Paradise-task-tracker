@@ -358,6 +358,11 @@ export const coreRoutes: RouteConfigEntry[] = [
               ":workspaceSlug/settings/projects/:projectId/templates",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/templates/page.tsx"
             ),
+            // Wiki per-folder access control (Paradise/B.E.R)
+            route(
+              ":workspaceSlug/settings/projects/:projectId/wiki-access",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/wiki-access/page.tsx"
+            ),
             // Project Automations
             layout("./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/automations/layout.tsx", [
               route(

@@ -521,6 +521,10 @@
           }
         }
       }
+    },
+    "wiki_access": {
+      "heading": "Wiki erişimi",
+      "description": "Her üst düzey klasörü hangi bölümlerin düzenleyebileceğini seçin. Tüm proje üyeleri tüm sayfaları okumaya devam edebilir."
     }
   }
 }

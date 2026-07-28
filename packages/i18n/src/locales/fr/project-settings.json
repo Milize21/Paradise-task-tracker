@@ -521,6 +521,10 @@
           }
         }
       }
+    },
+    "wiki_access": {
+      "heading": "Accès au wiki",
+      "description": "Choisissez les divisions autorisées à modifier chaque dossier de premier niveau. Tous les membres du projet peuvent toujours lire chaque page."
     }
   }
 }

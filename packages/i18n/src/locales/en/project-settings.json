@@ -521,6 +521,10 @@
           }
         }
       }
+    },
+    "wiki_access": {
+      "heading": "Wiki access",
+      "description": "Choose which divisions can edit each top-level folder. Everyone in the project can still read every page."
     }
   }
 }

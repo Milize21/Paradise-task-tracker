@@ -521,6 +521,10 @@
           }
         }
       }
+    },
+    "wiki_access": {
+      "heading": "Přístup k wiki",
+      "description": "Vyberte, které divize mohou upravovat každou složku nejvyšší úrovně. Všichni členové projektu mohou i nadále číst všechny stránky."
     }
   }
 }

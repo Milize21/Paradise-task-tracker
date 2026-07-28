@@ -521,6 +521,10 @@
           }
         }
       }
+    },
+    "wiki_access": {
+      "heading": "Acces la wiki",
+      "description": "Alegeți ce divizii pot edita fiecare folder de nivel superior. Toți membrii proiectului pot citi în continuare toate paginile."
     }
   }
 }

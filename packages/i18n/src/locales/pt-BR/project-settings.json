@@ -521,6 +521,10 @@
           }
         }
       }
+    },
+    "wiki_access": {
+      "heading": "Acesso ao wiki",
+      "description": "Escolha quais divisões podem editar cada pasta de nível superior. Todos os membros do projeto continuam podendo ler todas as páginas."
     }
   }
 }

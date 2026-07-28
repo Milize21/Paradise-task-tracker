@@ -5,7 +5,7 @@
  */
 
 import type { LucideIcon } from "lucide-react";
-import { Users, Zap } from "lucide-react";
+import { FolderLock, LayoutTemplate, Shapes, Users, Zap } from "lucide-react";
 // plane imports
 import type { ISvgIcons } from "@plane/propel/icons";
 import {
@@ -33,5 +33,10 @@ export const PROJECT_SETTINGS_ICONS: Record<TProjectSettingsTabs, LucideIcon | R
   states: StatePropertyIcon,
   labels: LabelPropertyIcon,
   estimates: EstimatePropertyIcon,
+  // Tab kustom Paradise (B.E.R) — Record<TProjectSettingsTabs, …> mewajibkan
+  // setiap tab punya ikon, jadi tab baru harus didaftarkan di sini juga.
+  work_item_types: Shapes,
+  templates: LayoutTemplate,
+  wiki_access: FolderLock,
   automations: Zap,
 };

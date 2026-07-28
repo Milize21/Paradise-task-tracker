@@ -521,6 +521,10 @@
           }
         }
       }
+    },
+    "wiki_access": {
+      "heading": "Dostęp do wiki",
+      "description": "Można wybrać, które działy mogą edytować każdy folder najwyższego poziomu. Wszyscy członkowie projektu nadal mogą czytać wszystkie strony."
     }
   }
 }

@@ -63,7 +63,11 @@ function CollaborativeDocumentEditorInner(props: ICollaborativeDocumentEditorPro
   const { editor, titleEditor } = useCollaborativeEditor({
     provider,
     disabledExtensions,
-    editable,
+    // The server refuses writes on a read-only connection, so an editable
+    // surface would just swallow the user's typing. Client permission checks
+    // can also be more permissive than the server's (e.g. the wiki folder ACL,
+    // which the client does not model), so the server's answer wins.
+    editable: editable && !state.isServerReadOnly,
     editorClassName,
     editorProps,
     extendedEditorProps,

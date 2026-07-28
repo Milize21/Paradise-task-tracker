@@ -521,6 +521,10 @@
           }
         }
       }
+    },
+    "wiki_access": {
+      "heading": "Acceso al wiki",
+      "description": "Elija qué divisiones pueden editar cada carpeta de nivel superior. Todos los miembros del proyecto pueden seguir leyendo todas las páginas."
     }
   }
 }

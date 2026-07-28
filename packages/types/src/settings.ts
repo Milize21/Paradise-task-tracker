@@ -32,6 +32,7 @@ export type TProjectSettingsTabs =
   | "estimates"
   | "work_item_types"
   | "templates"
+  | "wiki_access"
   | "automations";
 export type TProjectSettingsItem = {
   key: TProjectSettingsTabs;

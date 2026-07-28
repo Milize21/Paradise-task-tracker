@@ -521,6 +521,10 @@
           }
         }
       }
+    },
+    "wiki_access": {
+      "heading": "Akses wiki",
+      "description": "Pilih divisi mana yang boleh mengedit setiap folder tingkat teratas. Semua anggota proyek tetap dapat membaca seluruh halaman."
     }
   }
 }

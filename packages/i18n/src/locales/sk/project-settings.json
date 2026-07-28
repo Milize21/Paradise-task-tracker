@@ -521,6 +521,10 @@
           }
         }
       }
+    },
+    "wiki_access": {
+      "heading": "Prístup k wiki",
+      "description": "Vyberte, ktoré divízie môžu upravovať každý priečinok najvyššej úrovne. Všetci členovia projektu môžu naďalej čítať všetky stránky."
     }
   }
 }

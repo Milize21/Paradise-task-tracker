@@ -41,6 +41,12 @@ export const useYjsSetup = ({ docId, serverUrl, authToken, onStateChange }: UseY
   const [hasCachedContent, setHasCachedContent] = useState(false);
   const [isCacheReady, setIsCacheReady] = useState(false);
 
+  // Whether the server granted write access for this document. The server is
+  // the only authority here (it refuses writes regardless), so the editor must
+  // follow it — otherwise the user types into a document that silently never
+  // saves. Starts false and opens up once the server says read-write.
+  const [isServerReadOnly, setIsServerReadOnly] = useState(false);
+
   // Provider and Y.Doc in state (nullable until effect runs)
   const [yjsSession, setYjsSession] = useState<{ provider: HocuspocusProvider; ydoc: Y.Doc } | null>(null);
 
@@ -105,6 +111,14 @@ export const useYjsSetup = ({ docId, serverUrl, authToken, onStateChange }: UseY
         setStage(newStage);
       },
     });
+
+    // The server reports the granted scope with the "authenticated" message;
+    // the provider stores it just before emitting the event.
+    const handleAuthenticated = () => {
+      if (isDisposedRef.current) return;
+      setIsServerReadOnly(provider.authorizedScope === "readonly");
+    };
+    provider.on("authenticated", handleAuthenticated);
 
     const pauseProvider = () => {
       const wsProvider = provider.configuration.websocketProvider;
@@ -255,6 +269,7 @@ export const useYjsSetup = ({ docId, serverUrl, authToken, onStateChange }: UseY
     return () => {
       try {
         provider.off("close", handleClose);
+        provider.off("authenticated", handleAuthenticated);
       } catch (error) {
         console.error(`Error unregistering close handler:`, error);
       }
@@ -367,6 +382,7 @@ export const useYjsSetup = ({ docId, serverUrl, authToken, onStateChange }: UseY
       isServerSynced,
       isServerDisconnected,
       isDocReady,
+      isServerReadOnly,
     },
     actions: {
       signalForcedClose,
