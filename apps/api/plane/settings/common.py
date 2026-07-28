@@ -345,6 +345,8 @@ CELERY_IMPORTS = (
     "plane.bgtasks.file_asset_task",
     "plane.bgtasks.email_notification_task",
     "plane.bgtasks.cleanup_task",
+    # Paradise (B.E.R): tanpa baris ini worker buang task dari beat "unregistered"
+    "plane.bgtasks.recurring_issue_task",
     "plane.license.bgtasks.telemetry_metrics",
     # management tasks
     "plane.bgtasks.dummy_data_task",
