@@ -21,11 +21,17 @@ class WikiGovernedProject(BaseModel):
     workspace = models.ForeignKey(
         "db.Workspace", related_name="wiki_governed_projects", on_delete=models.CASCADE
     )
-    project = models.OneToOneField(
+    # ForeignKey + unique_together yang MENYERTAKAN deleted_at, bukan OneToOneField.
+    # OneToOneField meng-unique-kan project_id saja dan mengabaikan soft-delete, jadi
+    # sekali governance dimatikan (soft-delete) project itu tak akan pernah bisa
+    # dinyalakan lagi — create() selalu IntegrityError. Pola ini menyamai
+    # WikiFolderAccess di bawah.
+    project = models.ForeignKey(
         "db.Project", related_name="wiki_governance", on_delete=models.CASCADE
     )
 
     class Meta:
+        unique_together = ["project", "deleted_at"]
         verbose_name = "Wiki Governed Project"
         verbose_name_plural = "Wiki Governed Projects"
         db_table = "wiki_governed_projects"

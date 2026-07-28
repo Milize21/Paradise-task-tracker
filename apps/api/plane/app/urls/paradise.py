@@ -10,6 +10,7 @@ from plane.app.views import (
     WorkLogExportEndpoint,
     InitiativeViewSet,
     AuditLogEndpoint,
+    PageCanEditEndpoint,
 )
 
 urlpatterns = [
@@ -47,5 +48,10 @@ urlpatterns = [
         "workspaces/<str:slug>/audit-logs/",
         AuditLogEndpoint.as_view(),
         name="audit-logs",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/pages/<uuid:page_id>/can-edit/",
+        PageCanEditEndpoint.as_view(),
+        name="page-can-edit",
     ),
 ]

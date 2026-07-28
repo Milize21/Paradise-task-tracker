@@ -5,11 +5,13 @@
  */
 
 // plane imports
+import type { ConnectionConfiguration } from "@hocuspocus/server";
 import type { IncomingHttpHeaders } from "http";
 import type { TUserDetails } from "@plane/editor";
 import { logger } from "@plane/logger";
 import { AppError } from "@/lib/errors";
 // services
+import { PagePermissionService } from "@/services/page-permission.service";
 import { UserService } from "@/services/user.service";
 // types
 import type { HocusPocusServerContext, TDocumentTypes } from "@/types";
@@ -26,11 +28,15 @@ export const onAuthenticate = async ({
   requestParameters,
   context,
   token,
+  documentName,
+  connection,
 }: {
   requestHeaders: IncomingHttpHeaders;
   context: HocusPocusServerContext;
   requestParameters: URLSearchParams;
   token: string;
+  documentName: string;
+  connection: ConnectionConfiguration;
 }) => {
   let cookie: string | undefined = undefined;
   let userId: string | undefined = undefined;
@@ -66,10 +72,49 @@ export const onAuthenticate = async ({
   context.userId = userId;
   context.workspaceSlug = requestParameters.get("workspaceSlug");
 
-  return await handleAuthentication({
+  const authenticated = await handleAuthentication({
     cookie: context.cookie,
     userId: context.userId,
   });
+
+  // Gerbang izin edit (fork B.E.R). Autentikasi hanya menjawab "siapa kamu";
+  // tanpa langkah ini siapa pun yang bisa login dapat mengetik di halaman mana
+  // pun lewat websocket dan melewati seluruh izin REST, termasuk ACL folder Wiki.
+  // Backend yang memutuskan — kita cuma menerapkan hasilnya sebagai read-only.
+  connection.readOnly = !(await canEditDocument({
+    cookie: context.cookie,
+    workspaceSlug: context.workspaceSlug,
+    projectId: context.projectId,
+    pageId: documentName,
+  }));
+
+  if (connection.readOnly) {
+    logger.info(`Koneksi read-only untuk halaman ${documentName} (user ${context.userId})`);
+  }
+
+  return authenticated;
+};
+
+/** Fail closed: identitas kurang lengkap = tidak boleh menulis. */
+const canEditDocument = async ({
+  cookie,
+  workspaceSlug,
+  projectId,
+  pageId,
+}: {
+  cookie: string;
+  workspaceSlug: string | null;
+  projectId: string | null;
+  pageId: string;
+}): Promise<boolean> => {
+  if (!workspaceSlug || !projectId || !pageId) {
+    logger.error(
+      `Tidak bisa memastikan izin edit (workspaceSlug=${workspaceSlug} projectId=${projectId} pageId=${pageId}) — read-only`
+    );
+    return false;
+  }
+
+  return new PagePermissionService().canEdit({ cookie, workspaceSlug, projectId, pageId });
 };
 
 export const handleAuthentication = async ({ cookie, userId }: { cookie: string; userId: string }) => {
