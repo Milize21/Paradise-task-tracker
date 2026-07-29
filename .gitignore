@@ -134,3 +134,6 @@ DAFTAR_AKUN_KARYAWAN.md
 *.env.bak
 .env.bak
 paradise/*.log
+
+# Vault Obsidian catatan pribadi (knowledge base proyek)
+/PP_TaskMgr/
