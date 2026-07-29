@@ -47,6 +47,8 @@ export interface IProjectPageStore {
   getCurrentProjectPageIdsByTab: (pageType: TPageNavigationTabs) => string[] | undefined;
   getCurrentProjectPageIds: (projectId: string) => string[];
   getCurrentProjectFilteredPageIdsByTab: (pageType: TPageNavigationTabs) => string[] | undefined;
+  getCurrentProjectRootPageIdsByTab: (pageType: TPageNavigationTabs) => string[] | undefined;
+  getSubPageIds: (pageId: string, pageType: TPageNavigationTabs) => string[];
   getPageById: (pageId: string) => TProjectPage | undefined;
   updateFilters: <T extends keyof TPageFilters>(filterKey: T, filterValue: TPageFilters[T]) => void;
   clearAllFilters: () => void;
@@ -181,6 +183,35 @@ export class ProjectPageStore implements IProjectPageStore {
     const pages = (filteredPages.map((page) => page.id) as string[]) || undefined;
 
     return pages ?? undefined;
+  });
+
+  /**
+   * @description halaman yang ditampilkan di tingkat teratas pohon
+   * @param {TPageNavigationTabs} pageType
+   */
+  getCurrentProjectRootPageIdsByTab = computedFn((pageType: TPageNavigationTabs) => {
+    const visibleIds = this.getCurrentProjectFilteredPageIdsByTab(pageType);
+    if (!visibleIds) return undefined;
+    const visible = new Set(visibleIds);
+    // Sebuah halaman berlabuh di tingkat atas kalau ia tidak punya induk, ATAU
+    // induknya tidak lolos filter. Tanpa syarat kedua, sub-halaman yang cocok
+    // dengan pencarian akan ikut lenyap bersama induknya yang tersembunyi -
+    // hasil pencarian jadi bohong.
+    return visibleIds.filter((id) => {
+      const parent = this.getPageById(id)?.parent;
+      return !parent || !visible.has(parent);
+    });
+  });
+
+  /**
+   * @description anak langsung sebuah halaman, mengikuti filter & urutan yang sama
+   * @param {string} pageId
+   * @param {TPageNavigationTabs} pageType
+   */
+  getSubPageIds = computedFn((pageId: string, pageType: TPageNavigationTabs) => {
+    const visibleIds = this.getCurrentProjectFilteredPageIdsByTab(pageType);
+    if (!visibleIds) return [];
+    return visibleIds.filter((id) => this.getPageById(id)?.parent === pageId);
   });
 
   /**

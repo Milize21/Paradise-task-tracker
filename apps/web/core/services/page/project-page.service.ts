@@ -22,7 +22,12 @@ export class ProjectPageService extends APIService {
   }
 
   async fetchAll(workspaceSlug: string, projectId: string): Promise<TPage[]> {
-    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/pages/`)
+    // sub_pages=true mengambil seluruh pohon sekaligus, lalu strukturnya disusun
+    // di klien. Untuk wiki seukuran kantor (ratusan halaman) ini satu request,
+    // dibanding lazy-load per node yang butuh request tiap kali cabang dibuka.
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/pages/`, {
+      params: { sub_pages: true },
+    })
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

@@ -94,7 +94,6 @@ class PageViewSet(BaseViewSet):
                 projects__project_projectmember__is_active=True,
                 projects__archived_at__isnull=True,
             )
-            .filter(parent__isnull=True)
             .filter(Q(owned_by=self.request.user) | Q(access=0))
             .prefetch_related("projects")
             .select_related("workspace")
@@ -290,6 +289,14 @@ class PageViewSet(BaseViewSet):
 
     def list(self, request, slug, project_id):
         queryset = self.get_queryset()
+        # Sub-pages are excluded by default so existing clients keep the flat
+        # list they expect; the page tree opts in with ?sub_pages=true. The
+        # filter deliberately does not live in get_queryset(): retrieve() and
+        # the write actions share that queryset, and keeping it there made a
+        # sub-page unreachable entirely — created and stored, but 404 on open.
+        # Mirrors the show_sub_issues switch in views/issue/archive.py.
+        if request.query_params.get("sub_pages", "false").lower() != "true":
+            queryset = queryset.filter(parent__isnull=True)
         project = Project.objects.get(pk=project_id)
         if (
             ProjectMember.objects.filter(

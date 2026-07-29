@@ -4,18 +4,23 @@
  * See the LICENSE file for details.
  */
 
+import { useState } from "react";
 import { observer } from "mobx-react";
-import { Earth, Info, Minus } from "lucide-react";
+import { useParams } from "react-router";
+import { Earth, Info, Minus, Plus } from "lucide-react";
 // plane imports
 import { LockIcon } from "@plane/propel/icons";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
+import type { TPage } from "@plane/types";
 import { Avatar, FavoriteStar } from "@plane/ui";
 import { renderFormattedDate, getFileURL } from "@plane/utils";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { usePageOperations } from "@/hooks/use-page-operations";
 // plane web hooks
-import type { EPageStoreType } from "@/hooks/store";
+import { EPageStoreType, usePageStore } from "@/hooks/store";
 // store
 import type { TPageInstance } from "@/store/pages/base-page";
 // local imports
@@ -29,15 +34,44 @@ type Props = {
 
 export const BlockItemAction = observer(function BlockItemAction(props: Props) {
   const { page, parentRef, storeType } = props;
+  // states
+  const [isCreatingSubPage, setIsCreatingSubPage] = useState(false);
   // store hooks
   const { getUserDetails } = useMember();
+  const { createPage } = usePageStore(EPageStoreType.PROJECT);
+  // router
+  const router = useAppRouter();
+  const { workspaceSlug } = useParams();
   // page operations
   const { pageOperations } = usePageOperations({
     page,
   });
   // derived values
-  const { access, created_at, is_favorite, owned_by, canCurrentUserFavoritePage } = page;
+  const { access, created_at, id, is_favorite, owned_by, project_ids, canCurrentUserFavoritePage } = page;
   const ownerDetails = owned_by ? getUserDetails(owned_by) : undefined;
+  // sub-halaman mewarisi akses induknya; kalau tidak, halaman anak dari folder
+  // privat bisa lahir sebagai publik tanpa disadari siapa pun
+  const handleCreateSubPage = async () => {
+    if (!id || isCreatingSubPage) return;
+    setIsCreatingSubPage(true);
+    const payload: Partial<TPage> = { parent: id, access };
+    try {
+      const res = await createPage(payload);
+      const projectId = project_ids?.[0];
+      if (res?.id && projectId) {
+        router.push(`/${workspaceSlug}/projects/${projectId}/pages/${res.id}`);
+      }
+    } catch (error) {
+      const message = (error as { data?: { error?: string } })?.data?.error;
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Error!",
+        message: message || "Sub-halaman gagal dibuat. Coba lagi.",
+      });
+    } finally {
+      setIsCreatingSubPage(false);
+    }
+  };
 
   return (
     <>
@@ -60,6 +94,25 @@ export const BlockItemAction = observer(function BlockItemAction(props: Props) {
         <span className="grid h-4 w-4 cursor-default place-items-center">
           <Info className="h-4 w-4 text-tertiary" />
         </span>
+      </Tooltip>
+
+      {/* tambah sub-halaman */}
+      <Tooltip tooltipContent="Tambah sub-halaman">
+        <button
+          type="button"
+          onClick={(e) => {
+            // tombol ini duduk di dalam baris yang bisa diklik; tanpa kedua
+            // penahan ini, membuat sub-halaman juga membuka halaman induknya
+            e.preventDefault();
+            e.stopPropagation();
+            void handleCreateSubPage();
+          }}
+          disabled={isCreatingSubPage}
+          className="grid size-5 place-items-center rounded text-tertiary transition-colors hover:bg-layer-3-hover hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Tambah sub-halaman"
+        >
+          <Plus className="size-4" />
+        </button>
       </Tooltip>
 
       {/* favorite/unfavorite */}

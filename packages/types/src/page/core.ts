@@ -22,6 +22,9 @@ export type TPage = {
   label_ids: string[] | undefined;
   name: string | undefined;
   owned_by: string | undefined;
+  /** id halaman induk; null untuk halaman tingkat atas. Nama field mengikuti
+   *  wire format API (PageSerializer mengekspos FK-nya sebagai `parent`). */
+  parent: string | null | undefined;
   project_ids?: string[] | undefined;
   updated_at: Date | undefined;
   updated_by: string | undefined;
