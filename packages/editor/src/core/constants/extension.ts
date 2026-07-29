@@ -13,6 +13,7 @@ export enum CORE_EXTENSIONS {
   CODE_BLOCK = "codeBlock",
   CODE_INLINE = "code",
   CUSTOM_COLOR = "customColor",
+  CUSTOM_FILE = "fileComponent",
   CUSTOM_IMAGE = "imageComponent",
   CUSTOM_LINK = "link",
   DOCUMENT = "doc",

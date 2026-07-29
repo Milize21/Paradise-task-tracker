@@ -652,12 +652,19 @@ class ProjectAssetEndpoint(BaseAPIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        # Pratinjau di halaman butuh disposition=inline: sebuah PDF di dalam
+        # <iframe> akan MEMICU UNDUHAN, bukan ditampilkan, kalau disposition-nya
+        # attachment. (<img>/<video>/<audio> mengabaikan header ini, jadi hanya
+        # jalur iframe yang terpengaruh.) Default tetap attachment supaya
+        # perilaku pemanggil lama tidak berubah.
+        disposition = "inline" if request.query_params.get("disposition") == "inline" else "attachment"
+
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
         signed_url = storage.generate_presigned_url(
             object_name=asset.asset.name,
-            disposition="attachment",
+            disposition=disposition,
             filename=asset.attributes.get("name"),
         )
         # Redirect to the signed URL

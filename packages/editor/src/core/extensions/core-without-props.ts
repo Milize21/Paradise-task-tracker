@@ -4,8 +4,8 @@
  * See the LICENSE file for details.
  */
 
-import TaskItem from "@tiptap/extension-task-item";
-import TaskList from "@tiptap/extension-task-list";
+import { TaskItem } from "@tiptap/extension-task-item";
+import { TaskList } from "@tiptap/extension-task-list";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Underline } from "@tiptap/extension-underline";
 // plane editor imports
@@ -15,6 +15,7 @@ import { CustomCalloutExtensionConfig } from "./callout/extension-config";
 import { CustomCodeBlockExtensionWithoutProps } from "./code/without-props";
 import { CustomCodeInlineExtension } from "./code-inline";
 import { CustomColorExtension } from "./custom-color";
+import { CustomFileExtensionConfig } from "./custom-file/extension-config";
 import { CustomImageExtensionConfig } from "./custom-image/extension-config";
 import { CustomLinkExtension } from "./custom-link";
 import { EmojiExtension } from "./emoji/extension";
@@ -37,6 +38,9 @@ export const CoreEditorExtensionsWithoutProps = [
   CustomLinkExtension,
   ImageExtensionConfig,
   CustomImageExtensionConfig,
+  // wajib ada di skema tanpa-props: server Live memakai daftar ini untuk
+  // mengonversi Y.Doc ke JSON/HTML. Node yang tak terdaftar hilang diam-diam.
+  CustomFileExtensionConfig,
   Underline,
   TextStyle,
   TaskList.configure({

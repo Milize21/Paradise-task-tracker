@@ -20,6 +20,7 @@ import {
   ListTodo,
   MessageSquareText,
   MinusSquare,
+  Paperclip,
   Smile,
   Table,
   TextQuote,
@@ -37,6 +38,7 @@ import {
   toggleTextColor,
   toggleBackgroundColor,
   insertImage,
+  insertFile,
   insertCallout,
   setText,
   openEmojiPicker,
@@ -302,6 +304,20 @@ export const getSlashCommandFilteredSections =
       });
     }
 
+    internalAdditionalOptions.push({
+      // "attachment" adalah nama upstream untuk berkas non-gambar; sudah ada di
+      // TEditorCommands, jadi tidak perlu key baru
+      commandKey: "attachment",
+      key: "attachment",
+      title: "File",
+      icon: <Paperclip className="size-3.5" />,
+      description: "Upload a PDF, doc, video or any other file",
+      searchTerms: ["attachment", "pdf", "doc", "docx", "video", "zip", "upload", "berkas", "lampiran"],
+      command: ({ editor, range }: CommandProps) => insertFile({ editor, event: "insert", range }),
+      section: "general",
+      pushAfter: "image",
+    });
+
     [
       ...internalAdditionalOptions,
       ...(externalAdditionalOptions ?? []),
@@ -319,6 +335,10 @@ export const getSlashCommandFilteredSections =
       }
     });
 
+    // SLASH_COMMAND_SECTIONS itu konstanta tingkat modul; saran rule ini
+    // (Object.assign / mutasi di tempat) akan merusaknya secara permanen tiap
+    // kali user mengetik, jadi salinan memang yang dimaksud di sini.
+    // oxlint-disable-next-line oxc/no-map-spread
     const filteredSlashSections = SLASH_COMMAND_SECTIONS.map((section) => ({
       ...section,
       items: section.items.filter((item) => {
