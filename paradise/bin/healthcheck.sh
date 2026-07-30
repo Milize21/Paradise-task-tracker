@@ -15,7 +15,9 @@ bad="$(docker compose ps --format '{{.Service}} {{.State}}' 2>/dev/null | grep -
 if [ -n "$bad" ]; then echo "TIDAK SEHAT:"; echo "$bad"; fail=1; fi
 
 echo "== HTTP $WEB_URL =="
-code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$WEB_URL" || echo 000)"
+# curl sudah mencetak 000 sendiri saat koneksi gagal; `|| echo 000` yang dulu
+# ada di sini menambah satu lagi sehingga log berbunyi "HTTP 000000".
+code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$WEB_URL" || true)"
 echo "HTTP $code"
 [ "$code" = "200" ] || [ "$code" = "302" ] || fail=1
 
