@@ -26,7 +26,8 @@ function New-TaskXml {
         [string]$Description,
         [string]$Arguments,
         [string]$TriggersXml,
-        [string]$TimeLimit    # ISO 8601, mis. PT30M
+        [string]$TimeLimit,   # ISO 8601, mis. PT30M
+        [string]$Enabled = "true"
     )
     $esc = [System.Security.SecurityElement]::Escape($Arguments)
     @"
@@ -51,7 +52,7 @@ $TriggersXml
     <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
     <StartWhenAvailable>true</StartWhenAvailable>
     <ExecutionTimeLimit>$TimeLimit</ExecutionTimeLimit>
-    <Enabled>true</Enabled>
+    <Enabled>$Enabled</Enabled>
   </Settings>
   <Actions Context="Author">
     <Exec>
@@ -99,9 +100,18 @@ Register-FromXml "Paradise - Backup DB" (New-TaskXml `
     -Arguments $bkArgs -TriggersXml $bkTriggers -TimeLimit "PT30M")
 Write-Host "OK: 'Paradise - Backup DB' terdaftar (02:00 + saat logon +5m)." -ForegroundColor Green
 
-# --- Task 2: Healthcheck tiap 30 menit ---
+# --- Task 2: Healthcheck tiap 30 menit --- DIDAFTARKAN NONAKTIF ---
 # WEB_URL harus 4000 - `react-router dev --port 4000`, bukan 3000. Port salah =
 # healthcheck selalu lapor "ADA MASALAH" (HTTP 000) alias alarm palsu tiap 30 menit.
+#
+# Didaftarkan NONAKTIF (keputusan 2026-07-30). Alasannya: frontend cuma hidup
+# kalau ada yang menjalankan `pnpm dev` manual, jadi task ini akan melapor
+# "ADA MASALAH" hampir sepanjang waktu. Alarm yang salah terus akan diabaikan,
+# dan itu lebih buruk daripada tidak ada alarm.
+#
+# NYALAKAN saat server produksi sudah ada dan layanannya memang hidup 24/7:
+#   schtasks /change /tn "Paradise - Healthcheck" /enable
+# Skripnya sendiri tetap bisa dipakai manual: bash paradise/bin/healthcheck.sh
 $hcArgs = "-lc ""cd '$repo' && COMPOSE_FILE=docker-compose-local.yml WEB_URL=http://localhost:4000 bash paradise/bin/healthcheck.sh >> paradise/healthcheck.log 2>&1"""
 $hcTriggers = @"
     <LogonTrigger>
@@ -115,9 +125,10 @@ $hcTriggers = @"
     </LogonTrigger>
 "@
 Register-FromXml "Paradise - Healthcheck" (New-TaskXml `
-    -Description "Cek kesehatan layanan tiap 30 menit (B.E.R)" `
-    -Arguments $hcArgs -TriggersXml $hcTriggers -TimeLimit "PT5M")
-Write-Host "OK: 'Paradise - Healthcheck' terdaftar (tiap 30 menit sejak logon)." -ForegroundColor Green
+    -Description "Cek kesehatan layanan tiap 30 menit (B.E.R) - nonaktif sampai ada server produksi" `
+    -Arguments $hcArgs -TriggersXml $hcTriggers -TimeLimit "PT5M" -Enabled "false")
+Write-Host "OK: 'Paradise - Healthcheck' terdaftar NONAKTIF (sengaja)." -ForegroundColor Yellow
+Write-Host "    Nyalakan saat produksi siap: schtasks /change /tn ""Paradise - Healthcheck"" /enable" -ForegroundColor DarkGray
 
 Write-Host ""
 Get-ScheduledTask -TaskName "Paradise*" | Select-Object TaskName, State | Format-Table -AutoSize
