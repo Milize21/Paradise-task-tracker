@@ -227,6 +227,20 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
+  // Wiki perusahaan (Paradise/B.E.R). href SENGAJA statis `/wiki/` — halaman itu
+  // meresolusi project ber-identifier WIKI lalu redirect. Jangan menaruh UUID
+  // project di sini: UUID-nya berbeda di tiap instance, jadi akan salah di server
+  // produksi.
+  wiki: {
+    key: "wiki",
+    // "wiki_nav", BUKAN "wiki": namespace `wiki.*` sudah dipakai wiki.json
+    // (wiki.nested_pages_*), jadi key daun bernama "wiki" bentrok dan ditolak
+    // sync:check — "wiki is a leaf but wiki.nested_pages_... extends it".
+    labelTranslationKey: "wiki_nav",
+    href: `/wiki/`,
+    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
+    highlight: (pathname: string, url: string) => pathname.includes(url),
+  },
   archives: {
     key: "archives",
     labelTranslationKey: "archives",
@@ -241,6 +255,7 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS: IWorkspaceSidebar
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["analytics"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["dashboard_divisi"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["initiatives"],
+  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["wiki"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["archives"],
 ];
 

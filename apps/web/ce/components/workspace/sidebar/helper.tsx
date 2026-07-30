@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { BookText, LayoutDashboard, Target } from "lucide-react";
 import {
   AnalyticsIcon,
   ArchiveIcon,
@@ -40,5 +41,14 @@ export const getSidebarNavigationItemIcon = (key: string, className: string = ""
       return <ArchiveIcon className={cn("size-4 flex-shrink-0", className)} />;
     case "stickies":
       return <MultipleStickyIcon className={cn("size-4 flex-shrink-0", className)} />;
+    // Item kustom Paradise/B.E.R. Tanpa case di sini switch mengembalikan
+    // undefined dan itemnya tampil TANPA ikon — itu yang terjadi pada
+    // dashboard_divisi & initiatives sejak dibuat.
+    case "wiki":
+      return <BookText className={cn("size-4 flex-shrink-0", className)} />;
+    case "dashboard_divisi":
+      return <LayoutDashboard className={cn("size-4 flex-shrink-0", className)} />;
+    case "initiatives":
+      return <Target className={cn("size-4 flex-shrink-0", className)} />;
   }
 };
