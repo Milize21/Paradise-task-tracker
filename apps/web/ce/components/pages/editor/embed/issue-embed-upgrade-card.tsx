@@ -5,7 +5,6 @@
  */
 
 // plane imports
-import { getButtonStyling } from "@plane/propel/button";
 import { cn } from "@plane/utils";
 // components
 import { ProIcon } from "@/components/common/pro-icon";
@@ -20,20 +19,13 @@ export function IssueEmbedUpgradeCard(props: any) {
         }
       )}
     >
+      {/* Dulu ajakan berlangganan ke plane.so/pro. Tombol upgrade dibuang:
+          instalasi internal ini tidak berlangganan tier upstream, jadi tombolnya
+          hanya akan membawa karyawan ke halaman jualan yang tidak berlaku. */}
       <div className="flex items-center gap-4">
         <ProIcon className="size-4 flex-shrink-0" />
-        <p className="!text-14 text-secondary">
-          Embed and access issues in pages seamlessly, upgrade to Plane Pro now.
-        </p>
+        <p className="!text-14 text-secondary">Menyematkan work item di halaman belum tersedia.</p>
       </div>
-      <a
-        href="https://plane.so/pro"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={cn(getButtonStyling("primary", "base"), "no-underline")}
-      >
-        Upgrade
-      </a>
     </div>
   );
 }

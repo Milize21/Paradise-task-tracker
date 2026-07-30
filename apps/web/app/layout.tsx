@@ -6,7 +6,8 @@
 
 import Script from "next/script";
 
-// styles
+// styles (side-effect import — memuat CSS global)
+// oxlint-disable-next-line no-unassigned-import
 import "@/styles/globals.css";
 
 import { SITE_DESCRIPTION, SITE_NAME } from "@plane/constants";
@@ -37,22 +38,13 @@ export const meta = () => [
     content:
       "width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
   },
-  { property: "og:title", content: "Plane | Simple, extensible, open-source project management tool." },
+  { property: "og:title", content: "Paradise Task Tracker" },
   {
     property: "og:description",
-    content: "Open-source project management tool to manage work items, cycles, and product roadmaps easily",
+    content: "Manajemen proyek & issue internal PT Paradise Perkasa",
   },
-  { property: "og:url", content: "https://app.plane.so/" },
-  { property: "og:image", content: "https://app.plane.so/og-image.png" },
-  { property: "og:image:width", content: "1200" },
-  { property: "og:image:height", content: "630" },
-  { property: "og:image:alt", content: "Plane - Modern project management" },
-  { name: "twitter:site", content: "@planepowers" },
+  { property: "og:image:alt", content: "Paradise Task Tracker" },
   { name: "twitter:card", content: "summary_large_image" },
-  { name: "twitter:image", content: "https://app.plane.so/og-image.png" },
-  { name: "twitter:image:width", content: "1200" },
-  { name: "twitter:image:height", content: "630" },
-  { name: "twitter:image:alt", content: "Plane - Modern project management" },
 ];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

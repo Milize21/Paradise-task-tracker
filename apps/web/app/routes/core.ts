@@ -280,10 +280,9 @@ export const coreRoutes: RouteConfigEntry[] = [
             ":workspaceSlug/settings/members",
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/members/page.tsx"
           ),
-          route(
-            ":workspaceSlug/settings/billing",
-            "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/billing/page.tsx"
-          ),
+          // Route billing DIBUANG bersama tab-nya: halaman perbandingan tier
+          // berlangganan upstream. Kalau route-nya ditinggal, halamannya masih
+          // bisa dibuka dengan mengetik URL walau tabnya sudah hilang.
           route(
             ":workspaceSlug/settings/exports",
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/exports/page.tsx"

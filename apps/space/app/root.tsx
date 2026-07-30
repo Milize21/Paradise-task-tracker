@@ -18,14 +18,16 @@ import type { Route } from "./+types/root";
 // local imports
 import ErrorPage from "./error";
 import { AppProviders } from "./providers";
-// fonts
+// fonts (side-effect imports — memuat font global)
+// oxlint-disable no-unassigned-import
 import "@fontsource-variable/inter";
 import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 import "@fontsource/material-symbols-rounded";
 import "@fontsource/ibm-plex-mono";
+// oxlint-enable no-unassigned-import
 
-const APP_TITLE = "Plane Publish | Make your Plane boards public with one-click";
-const APP_DESCRIPTION = "Plane Publish is a customer feedback management tool built on top of plane.so";
+const APP_TITLE = "Paradise Publish | Halaman publik PT Paradise Perkasa";
+const APP_DESCRIPTION = "Halaman publik Paradise Task Tracker — PT Paradise Perkasa";
 
 export const links: Route.LinksFunction = () => [
   { rel: "apple-touch-icon", sizes: "180x180", href: appleTouchIcon },
@@ -74,11 +76,9 @@ export const meta: Route.MetaFunction = () => [
   { name: "description", content: APP_DESCRIPTION },
   { property: "og:title", content: APP_TITLE },
   { property: "og:description", content: APP_DESCRIPTION },
-  { property: "og:url", content: "https://sites.plane.so/" },
   {
     name: "keywords",
-    content:
-      "software development, customer feedback, software, accelerate, code management, release management, project management, work item tracking, agile, scrum, kanban, collaboration",
+    content: "manajemen proyek, halaman publik, internal, PT Paradise Perkasa",
   },
   { name: "twitter:site", content: "@planepowers" },
 ];

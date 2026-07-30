@@ -106,17 +106,15 @@ export const meta: Route.MetaFunction = () => [
   { property: "og:title", content: APP_TITLE },
   {
     property: "og:description",
-    content: "Open-source project management tool to manage work items, cycles, and product roadmaps easily",
+    content: "Manajemen proyek & issue internal PT Paradise Perkasa",
   },
-  { property: "og:url", content: "https://app.plane.so/" },
   { property: "og:image", content: ogImage },
   { property: "og:image:width", content: "1200" },
   { property: "og:image:height", content: "630" },
-  { property: "og:image:alt", content: "Plane - Modern project management" },
+  { property: "og:image:alt", content: "Paradise Task Tracker" },
   {
     name: "keywords",
-    content:
-      "software development, plan, ship, software, accelerate, code management, release management, project management, work item tracking, agile, scrum, kanban, collaboration",
+    content: "manajemen proyek, task tracker, internal, PT Paradise Perkasa",
   },
   { name: "twitter:site", content: "@planepowers" },
   { name: "twitter:card", content: "summary_large_image" },

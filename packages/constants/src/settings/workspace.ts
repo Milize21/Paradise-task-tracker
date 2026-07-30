@@ -72,7 +72,11 @@ export const GROUPED_WORKSPACE_SETTINGS: Record<WORKSPACE_SETTINGS_CATEGORY, TWo
   [WORKSPACE_SETTINGS_CATEGORY.ADMINISTRATION]: [
     WORKSPACE_SETTINGS["general"],
     WORKSPACE_SETTINGS["members"],
-    WORKSPACE_SETTINGS["billing-and-plans"],
+    // "billing-and-plans" SENGAJA tidak didaftarkan: itu halaman perbandingan
+    // tier berlangganan upstream, tidak berlaku untuk instalasi internal ini.
+    // Key-nya TETAP ada di WORKSPACE_SETTINGS karena tipenya
+    // Record<TWorkspaceSettingsTabs,...> — menghapusnya di sana akan memecah
+    // kompilasi. Cukup tidak ditampilkan di navigasi.
     WORKSPACE_SETTINGS["export"],
   ],
   [WORKSPACE_SETTINGS_CATEGORY.FEATURES]: [],

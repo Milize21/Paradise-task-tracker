@@ -13,23 +13,12 @@ import maintenanceModeLightModeImage from "@/app/assets/instance/maintenance-mod
 // layouts
 import DefaultLayout from "@/layouts/default-layout";
 
-const linkMap = [
-  {
-    key: "mail_to",
-    label: "Contact Support",
-    value: "mailto:support@plane.so",
-  },
-  {
-    key: "status",
-    label: "Status Page",
-    value: "https://status.plane.so/",
-  },
-  {
-    key: "twitter_handle",
-    label: "@planepowers",
-    value: "https://x.com/planepowers",
-  },
-];
+// Saluran dukungan upstream (support@plane.so, status.plane.so, @planepowers)
+// dibuang — tak satu pun melayani PT Paradise Perkasa. Sengaja TIDAK diganti
+// alamat email karangan: kalau salah, karyawan mengirim aduan ke alamat yang
+// tidak ada dan mengira sudah dilaporkan. Isi alamat IT sebenarnya di sini
+// kalau sudah ada.
+const linkMap: { key: string; label: string; value: string }[] = [];
 
 // Production Error Component
 interface ProdErrorComponentProps {
@@ -57,10 +46,9 @@ export function ProdErrorComponent({ onGoHome }: ProdErrorComponentProps) {
         </div>
         <div className="relative mt-4 flex w-full flex-col gap-4">
           <div className="flex flex-col gap-2.5">
-            <h1 className="text-left text-18 font-semibold text-primary">&#x1F6A7; Looks like something went wrong!</h1>
+            <h1 className="text-left text-18 font-semibold text-primary">&#x1F6A7; Terjadi kesalahan</h1>
             <span className="text-left text-14 font-medium text-secondary">
-              We track these errors automatically and working on getting things back up and running. If the problem
-              persists feel free to contact us. In the meantime, try refreshing.
+              Coba muat ulang halaman. Kalau masalahnya terus berulang, hubungi tim IT internal.
             </span>
           </div>
 

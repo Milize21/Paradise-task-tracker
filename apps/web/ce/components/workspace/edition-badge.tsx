@@ -4,43 +4,25 @@
  * See the LICENSE file for details.
  */
 
-import { useState } from "react";
 import { observer } from "mobx-react";
 // ui
-import { useTranslation } from "@plane/i18n";
 import { Tooltip } from "@plane/propel/tooltip";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import packageJson from "package.json";
-// local components
-import { PaidPlanUpgradeModal } from "../license";
-import { Button } from "@plane/propel/button";
 
+// Dulu tombol "Community" yang membuka PaidPlanUpgradeModal — ajakan berlangganan
+// tier berbayar upstream. Tidak relevan untuk alat internal kantor, jadi modalnya
+// dibuang. Nomor versinya DIPERTAHANKAN: berguna waktu ada yang melapor masalah
+// dan kita perlu tahu dia memakai rilis yang mana. Sekarang sekadar label, bukan
+// tombol — tidak ada lagi yang bisa diklik.
 export const WorkspaceEditionBadge = observer(function WorkspaceEditionBadge() {
-  // states
-  const [isPaidPlanPurchaseModalOpen, setIsPaidPlanPurchaseModalOpen] = useState(false);
-  // translation
-  const { t } = useTranslation();
   // platform
   const { isMobile } = usePlatformOS();
 
   return (
-    <>
-      <PaidPlanUpgradeModal
-        isOpen={isPaidPlanPurchaseModalOpen}
-        handleClose={() => setIsPaidPlanPurchaseModalOpen(false)}
-      />
-      <Tooltip tooltipContent={`Version: v${packageJson.version}`} isMobile={isMobile}>
-        <Button
-          variant="tertiary"
-          size="lg"
-          onClick={() => setIsPaidPlanPurchaseModalOpen(true)}
-          aria-haspopup="dialog"
-          aria-label={t("aria_labels.projects_sidebar.edition_badge")}
-        >
-          Community
-        </Button>
-      </Tooltip>
-    </>
+    <Tooltip tooltipContent={`Versi v${packageJson.version}`} isMobile={isMobile}>
+      <span className="rounded-sm bg-layer-2 px-2 py-1 text-11 font-medium text-secondary">v{packageJson.version}</span>
+    </Tooltip>
   );
 });
