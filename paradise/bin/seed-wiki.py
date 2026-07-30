@@ -87,7 +87,9 @@ for title in ROOT_PAGES:
         owned_by=owner,
         defaults={
             "access": 0,  # public dalam project
-            "description_html": f"<h1>{title}</h1><p>Tulis dokumentasi di sini…</p>",
+            # TANPA <h1> judul: Plane sudah merender nama halaman sendiri di atas
+            # badan dokumen, jadi <h1>{title}</h1> membuat judul tampil DUA KALI.
+            "description_html": "<p>Tulis dokumentasi di sini…</p>",
             "created_by": owner,
         },
     )
