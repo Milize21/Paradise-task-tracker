@@ -1,153 +1,149 @@
 # Paradise Task Tracker
 
-Sistem manajemen kerja internal **PT Paradise Perkasa** — pelacakan work item,
-pencatatan waktu kerja, dokumentasi perusahaan, dan pelaporan per divisi, jalan
-di server sendiri tanpa langganan pihak ketiga.
+Sistem manajemen kerja internal PT Paradise Perkasa. Jalan di server sendiri,
+tanpa langganan bulanan ke siapa pun.
 
-Dipakai lintas **16 divisi** dengan **79 akun karyawan** dalam satu workspace.
+Sekarang dipakai 16 divisi, 79 akun.
 
----
+## Kenapa dibikin
 
-## Yang dibangun sendiri
+Kantor butuh satu tempat buat ngelacak kerjaan, catat jam kerja, dan naruh
+dokumentasi perusahaan. Yang komersial mahal kalau dikali 79 orang, dan datanya
+ada di server orang lain.
 
-Fondasi aplikasinya open-source (lihat [Asal-usul](#asal-usul)), tapi delapan
-kemampuan di bawah ini **tidak ada di dalamnya** dan dibangun dari nol — model
-database, migrasi, endpoint API, aturan izin, sampai antarmukanya.
+Jadi saya ambil basis open-source yang bagus (Plane CE, AGPL — lihat bagian
+paling bawah), lalu bangun sendiri bagian-bagian yang kantor butuh tapi memang
+nggak ada di dalamnya.
 
-### 🕒 Time Tracking
+## Yang saya bangun sendiri
 
-Model `IssueWorkLog` + API `/work-logs/`. Anggota mencatat dan menghapus worklog
-miliknya sendiri; admin project melihat dan mengelola semuanya. Terpasang
-langsung di sidebar detail work item.
+Delapan ini nggak ada di basis aslinya. Semuanya dari nol — model database,
+migrasi, endpoint, aturan izin, sampai tampilannya.
 
-### 🏷️ Work Item Types & Custom Properties
+**Time tracking.** Orang catat jam kerja langsung di work item-nya. Tiap orang
+cuma bisa hapus catatan miliknya sendiri, admin project bisa lihat semua.
 
-Tipe work item per project (khusus admin), plus properti kustom dengan **6 jenis
-field**: teks, desimal, boolean, tanggal-waktu, pilihan, dan anggota. Model
-`IssueProperty` / `IssuePropertyOption` / `IssuePropertyValue`, dengan validasi
-nilai bertipe di sisi server — opsi harus milik propertinya, anggota harus
-benar-benar anggota project.
+**Work item types + custom properties.** Tiap project bisa punya tipe work item
+sendiri, dan properti custom dengan 6 jenis field (teks, angka, boolean,
+tanggal, pilihan, anggota). Validasinya di server — opsi harus beneran milik
+propertinya, dan kalau field-nya "anggota" ya orangnya harus beneran anggota
+project itu.
 
-### 📋 Templates & Recurring Issues
+**Template + recurring.** Bikin template work item, terus jadwalkan berulang.
+Yang agak saya pikirin di sini: kalau laptop mati semalam, jadwal yang kelewat
+**dilewat**, bukan dirapel. Kalau dirapel, paginya orang bangun dan dapat
+tumpukan tugas palsu.
 
-Template work item yang bisa diterapkan anggota, plus penjadwalan berulang lewat
-Celery beat. `advance_schedule()` **melewati jadwal yang terlewat** alih-alih
-merapelnya — laptop mati semalam tidak menghasilkan tumpukan tugas palsu esok
-paginya.
+**Wiki perusahaan.** Ini yang paling panjang, dikerjain tiga tahap:
 
-### 📚 Workspace Wiki — tiga fase
+Tahap A, halaman bisa nerima semua tipe file — pdf, docx, mp4, zip — sampai
+100 MB, plus node "File" di editor yang bisa nampilin PDF langsung di dalam
+halaman.
 
-Dokumentasi perusahaan sebagai project khusus, dibangun bertahap:
+Tahap B, kontrol edit per folder. Tiap folder tingkat atas dimiliki divisi
+tertentu; cuma anggotanya yang boleh nyunting, sisanya baca doang. Ini yang
+paling makan waktu, karena harus ditegakkan di **dua tempat**: REST API dan
+server kolaborasi real-time. Kalau cuma di REST, orang di luar divisi bakal
+lihat halamannya bisa diedit, ngetik panjang-panjang, terus tulisannya hilang
+pas reload. Endpoint `can-edit/` sengaja nggak nyalin aturan izinnya — dia
+manggil kelas permission yang sama persis, jadi REST sama editor mustahil beda
+pendapat.
 
-| Fase  | Isi                                                                                                                                               |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A** | Halaman menerima **semua tipe berkas** (pdf, docx, mp4, zip) s/d 100 MB, plus node "File" di editor dengan pratinjau PDF di dalam halaman         |
-| **B** | **Kontrol edit per-folder** — tiap folder tingkat atas dimiliki satu atau lebih divisi; hanya anggotanya yang boleh menyunting, sisanya baca-saja |
-| **C** | **Pohon halaman bertingkat** — sub-halaman terlihat dan bisa dibuka (sebelumnya 404)                                                              |
+Tahap C, pohon halaman bertingkat. Sub-halaman dulu bukan cuma nggak keliatan,
+tapi **404 kalau dibuka**.
 
-Fase B ditegakkan di **dua lapis**: REST API dan server kolaborasi real-time.
-Endpoint `can-edit/` sengaja **tidak menyalin** aturan izin — ia memanggil kelas
-permission yang sama lewat request tiruan, jadi REST dan editor kolaboratif
-mustahil berbeda pendapat.
+**Dashboard divisi.** Rekap per project yang kamu ikuti: total, yang masih
+jalan, yang lewat tenggat, yang selesai, plus total jam kerja. Ada ekspor CSV
+juga, langsung bisa dibuka Excel. Staf cuma lihat project yang dia ikuti.
 
-### 📊 Dashboard Divisi
+**Initiatives.** Sasaran tingkat workspace yang nyambungin beberapa project
+divisi, progresnya dihitung dari semua work item di project yang ketaut.
 
-Rekap per project yang diikuti user: total / terbuka / lewat tenggat / selesai,
-menit worklog total dan bulan berjalan, jumlah anggota. Plus **ekspor CSV**
-laporan waktu (BOM UTF-8, siap dibuka Excel). Isolasi teruji: staf hanya melihat
-project yang ia ikuti.
+**Audit logs.** Nyatet siapa ngubah apa di model-model penting. Aktornya
+kerekam baik lewat request HTTP biasa maupun lewat editor kolaboratif — yang
+kedua ini sempat saya ragukan, ternyata jalan.
 
-### 🎯 Initiatives
+**ACL per folder Wiki.** Pemetaan folder ke divisi, sub-halaman mewarisi dari
+induknya, admin bisa override. Sengaja nggak nambah dependency: keanggotaan
+divisi itu berubah-ubah, jadi grant statis malah gampang melenceng dari
+kenyataan.
 
-Sasaran tingkat workspace yang menaut beberapa project divisi, dengan rollup
-progres dihitung dari seluruh work item di project tertaut.
+## Bagian operasionalnya
 
-### 📜 Audit Logs
+Ini juga saya urus sendiri, dan jujur bagian ini yang paling sering ngasih
+pelajaran:
 
-Perekaman siapa-mengubah-apa pada model akses dan konten (Project, ProjectMember,
-WorkspaceMember, Issue, Page). Aktor terekam pada jalur HTTP nyata **maupun**
-lewat editor kolaboratif. API baca khusus admin dengan filter model / aksi /
-aktor dan pagination.
+- **CI/CD** — tiap push ke `main` bikin 6 image ke GHCR. Tag-nya pakai commit
+  SHA, terus `latest` digeser pakai `imagetools create` (nyalin manifest, bukan
+  build ulang). Deploy di server manual lewat `paradise/bin/deploy.sh`, rollback
+  tinggal `APP_RELEASE=<sha>`.
+- **Backup** — `pg_dump` terkompresi, ada retensi, hasilnya dicek nggak kosong.
+  Dan dia **nunggu** Postgres beneran siap, bukan langsung nyerah pas Docker
+  belum naik. Ini hasil dua pagi berturut-turut backup gagal.
+- **Healthcheck** buat semua layanan, plus skrip pendaftaran scheduled task yang
+  nggak butuh hak admin di Windows.
 
-### 🔐 Kontrol akses per folder Wiki
+## Cara jalanin
 
-Pemetaan folder → divisi, dengan pewarisan ke sub-halaman dan override admin.
-Dibangun tanpa dependency baru: keanggotaan divisi bersifat dinamis, jadi grant
-statis justru rawan melenceng dari keadaan sebenarnya.
-
----
-
-## Operasional
-
-Bukan cuma fitur — sisi operasionalnya juga dibangun sendiri:
-
-- **CI/CD** — tiap push ke `main` membangun 6 image ke GHCR lewat
-  `docker buildx bake`; tag = commit SHA, lalu `latest` digeser dengan
-  `imagetools create` (salin manifest, bukan build ulang). Deploy manual di
-  server lewat `paradise/bin/deploy.sh`, rollback dengan `APP_RELEASE=<sha>`.
-- **Backup** — `paradise/bin/backup-db.sh`: `pg_dump` terkompresi dengan
-  retensi, verifikasi hasil tidak kosong, dan menunggu Postgres benar-benar
-  siap (`pg_isready`) alih-alih menyerah saat Docker belum naik.
-- **Healthcheck** — `paradise/bin/healthcheck.sh` untuk seluruh layanan.
-- **Penjadwalan** — `paradise/bin/register-schedule.ps1` (Windows Task
-  Scheduler, tanpa perlu hak admin).
-
----
-
-## Menjalankan
-
-**Prasyarat:** Docker, Node 20+, pnpm.
+Butuh Docker, Node 20+, pnpm.
 
 ```bash
 cp .env.example .env
 cp .env.example apps/api/.env
 
-# backend + infrastruktur
 COMPOSE_FILE=docker-compose-local.yml docker compose up -d
-
-# frontend
 pnpm install
 pnpm dev
 ```
 
-| Layanan                | Port     |
-| ---------------------- | -------- |
-| Web                    | **4000** |
-| Admin / God Mode       | 3001     |
-| Space (halaman publik) | 3002     |
-| Live (kolaborasi)      | 3100     |
-| API                    | 8000     |
+Web-nya di **port 4000** (bukan 3000, ini sering bikin salah). Admin/God Mode
+3001, halaman publik 3002, server kolaborasi 3100, API 8000.
 
-> Ubah kode backend → `docker compose restart api`.
-> Ubah `.env` → `docker compose up -d`, **bukan** `restart` — `restart` tidak
-> membaca ulang `env_file`.
+Dua hal yang bakal bikin kamu bingung kalau nggak tahu:
 
-Panduan deploy produksi, keamanan pra-produksi, dan sinkronisasi upstream ada di
-`paradise/`.
+- Ubah kode backend? **`docker compose restart api`.** Autoreload-nya nggak
+  jalan di sini — bind-mount Windows ke container nggak nerusin event perubahan
+  file. Gejalanya endpoint balas 404 padahal kodenya udah bener.
+- Ubah `.env`? **`docker compose up -d`, bukan `restart`.** `restart` nggak baca
+  ulang `env_file`.
 
----
+Sisanya — deploy produksi, checklist keamanan, cara sync dari upstream — ada di
+folder `paradise/`.
 
-## Stack
+## Dibangun pakai
 
-Django REST Framework · PostgreSQL · Redis · RabbitMQ + Celery · MinIO ·
-React + React Router · TypeScript · MobX · Tailwind · Hocuspocus (Y.js) ·
-Docker Compose · Caddy
+Django REST Framework, PostgreSQL, Redis, RabbitMQ + Celery, MinIO di backend.
+React + React Router, TypeScript, MobX, Tailwind di frontend. Hocuspocus (Y.js)
+buat editor kolaboratif. Semuanya dibungkus Docker Compose, di depannya Caddy.
 
----
+## Yang belum beres
 
-## Asal-usul
+Biar jujur aja:
 
-Dibangun di atas **Plane Community Edition v0.24.0**, dilisensikan
-**GNU AGPL-3.0**. Rincian atribusi dan kewajiban lisensinya ada di
-**[NOTICE.md](NOTICE.md)** dan **[LICENSE.txt](LICENSE.txt)**.
+- **SMTP belum jalan.** Kolomnya udah keisi, tapi host-nya masih placeholder yang
+  nggak resolve dari dalam container. Jadi undangan user sama reset password
+  nggak bakal nyampe. Nunggu IP mail server dari IT.
+- **Belum ada server produksi.** Masih jalan lokal semua.
+- **Isi Wiki-nya masih kerangka.** Mesinnya udah kelar, dokumennya belum ditulis
+  — dan itu kerjaan manusia, bukan kerjaan kode.
+- **Belum pernah sync dari upstream.** Berisiko konflik, nanti dikerjain di
+  branch sendiri.
 
-Merek produk upstream sudah dihapus dari antarmuka — sistem ini bukan produk
-vendor dan tidak dijual. Yang tetap dipertahankan adalah **atribusi hukum**:
-header hak cipta di berkas sumber, teks lisensi, dan berkas NOTICE. AGPL §13
-berlaku untuk pemakaian lewat jaringan, terlepas dijual atau tidak.
+## Soal basis kodenya
 
----
+Ini dibangun di atas **Plane Community Edition v0.24.0**, lisensinya
+**GNU AGPL-3.0**. Detail atribusi sama kewajiban lisensinya ada di
+[NOTICE.md](NOTICE.md) dan [LICENSE.txt](LICENSE.txt).
+
+Merek produk aslinya udah saya hapus dari tampilan — sistem ini bukan produk
+vendor dan nggak dijual, jadi nampilin merek orang lain di dalamnya cuma bikin
+bingung. Tapi **atribusi hukumnya tetap**: header copyright di file sumber, teks
+lisensi, dan file NOTICE. Dua hal itu beda, dan yang kedua bukan hak saya buat
+hapus.
+
+Kalau kamu pakai ini lewat jaringan, AGPL pasal 13 tetap berlaku — mau dijual
+atau enggak.
 
 ## Lisensi
 
-GNU Affero General Public License v3.0 — lihat [LICENSE.txt](LICENSE.txt).
+GNU Affero General Public License v3.0. Lihat [LICENSE.txt](LICENSE.txt).
