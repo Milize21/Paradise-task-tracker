@@ -13,7 +13,7 @@ from rest_framework.response import Response
 # Module imports
 from . import BaseAPIView
 from plane.app.permissions import allow_permission, ROLE
-from plane.utils.trash import TRASH_MODELS, ambil, buang_permanen, kumpulkan, pulihkan
+from plane.utils.trash import ambil, buang_permanen, kumpulkan, pulihkan
 
 
 class ProjectTrashEndpoint(BaseAPIView):
@@ -65,18 +65,3 @@ class ProjectTrashEndpoint(BaseAPIView):
             )
         buang_permanen(obj)
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class TrashTypeEndpoint(BaseAPIView):
-    """Daftar jenis barang yang bisa muncul di tong sampah.
-
-    Dipakai frontend untuk membangun saringan tanpa menyalin daftarnya —
-    kalau kelak ada jenis baru, UI ikut tanpa diubah.
-    """
-
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
-    def get(self, request, slug):
-        return Response(
-            [{"value": k, "label": v["label"]} for k, v in TRASH_MODELS.items()],
-            status=status.HTTP_200_OK,
-        )
