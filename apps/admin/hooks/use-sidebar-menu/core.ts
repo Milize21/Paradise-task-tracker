@@ -4,13 +4,21 @@
  * See the LICENSE file for details.
  */
 
-import { Image, BrainCog, Cog, Mail, ScrollText } from "lucide-react";
+import { Image, BrainCog, Cog, Mail, ScrollText, Trash2 } from "lucide-react";
 // plane imports
 import { LockIcon, WorkspaceIcon } from "@plane/propel/icons";
 // types
 import type { TSidebarMenuItem } from "./types";
 
-export type TCoreSidebarMenuKey = "general" | "email" | "workspace" | "authentication" | "ai" | "image" | "logs";
+export type TCoreSidebarMenuKey =
+  | "general"
+  | "email"
+  | "workspace"
+  | "authentication"
+  | "ai"
+  | "image"
+  | "logs"
+  | "trash";
 
 export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem> = {
   general: {
@@ -57,5 +65,11 @@ export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem>
     name: "Jejak audit",
     description: "Siapa mengubah apa di seluruh instance.",
     href: `/logs/`,
+  },
+  trash: {
+    Icon: Trash2,
+    name: "TPA",
+    description: "Barang terhapus dari seluruh project.",
+    href: `/trash/`,
   },
 };

@@ -13,6 +13,9 @@ from django.db.models.fields.related import OneToOneRel
 # Third party imports
 from celery import shared_task
 
+# Module imports
+from plane.utils.exception_logger import log_exception
+
 
 @shared_task
 def soft_delete_related_objects(app_label, model_name, instance_pk, using=None):
@@ -105,9 +108,80 @@ def soft_delete_related_objects(app_label, model_name, instance_pk, using=None):
         instance.save()
 
 
-# @shared_task
-def restore_related_objects(app_label, model_name, instance_pk, using=None):
-    pass
+def restore_related_objects(app_label, model_name, instance_pk, cutoff, using=None):
+    """Kembalikan objek beserta anak-anak yang ikut terhapus bersamanya.
+
+    Kustomisasi Paradise (B.E.R) — kebalikan dari `soft_delete_related_objects`,
+    dipakai Trashbin (per project) dan TPA (God Mode).
+
+    `cutoff` adalah `deleted_at` milik objek induk. HANYA anak dengan
+    `deleted_at >= cutoff` yang dipulihkan, dan itu bukan detail sepele:
+    penghapusan berjenjang menyetel `deleted_at = now()` pada tiap anak, jadi
+    semuanya bernilai sama-atau-sesudah induknya. Anak yang dihapus LEBIH DULU
+    berarti dihapus orang secara terpisah dan sengaja — memulihkannya sekalian
+    akan menghidupkan kembali sesuatu yang tidak pernah diminta kembali.
+
+    Dijalankan sinkron, bukan lewat Celery: pengguna menekan "Pulihkan" lalu
+    menunggu hasilnya di layar. Kalau dilempar ke antrean, layar akan berkata
+    berhasil sementara barangnya belum tentu kembali.
+    """
+    model_class = apps.get_model(app_label, model_name)
+
+    try:
+        instance = model_class.all_objects.get(pk=instance_pk)
+    except model_class.DoesNotExist:
+        return 0
+
+    dipulihkan = 0
+
+    all_related = [
+        f for f in instance._meta.get_fields() if (f.one_to_many or f.one_to_one) and f.auto_created and not f.concrete
+    ]
+
+    for relation in all_related:
+        related_name = relation.get_accessor_name()
+        if not hasattr(instance, related_name):
+            continue
+
+        on_delete_name = relation.on_delete.__name__ if hasattr(relation.on_delete, "__name__") else ""
+        # SET_NULL memutus tautannya saat menghapus; nilai lamanya tidak disimpan
+        # di mana pun, jadi tidak ada yang bisa dikembalikan. DO_NOTHING memang
+        # tidak menyentuh anaknya sejak awal.
+        if on_delete_name in ("DO_NOTHING", "SET_NULL"):
+            continue
+
+        try:
+            if relation.one_to_one:
+                related_obj = getattr(instance, related_name, None)
+                if related_obj and getattr(related_obj, "deleted_at", None) and related_obj.deleted_at >= cutoff:
+                    related_obj.deleted_at = None
+                    related_obj.save(update_fields=["deleted_at"])
+                    dipulihkan += 1
+                    dipulihkan += restore_related_objects(
+                        related_obj._meta.app_label, related_obj._meta.model_name, related_obj.pk, cutoff, using
+                    )
+            else:
+                # `all_objects`, bukan manager bawaan — manager bawaan menyaring
+                # habis yang ter-soft-delete, jadi justru yang mau dipulihkan
+                # tidak akan pernah terlihat.
+                anak = getattr(instance, related_name)(manager="all_objects").filter(deleted_at__gte=cutoff)
+                for related_obj in anak:
+                    related_obj.deleted_at = None
+                    related_obj.save(update_fields=["deleted_at"])
+                    dipulihkan += 1
+                    dipulihkan += restore_related_objects(
+                        related_obj._meta.app_label, related_obj._meta.model_name, related_obj.pk, cutoff, using
+                    )
+        except Exception as e:
+            log_exception(e)
+            continue
+
+    if getattr(instance, "deleted_at", None):
+        instance.deleted_at = None
+        instance.save(update_fields=["deleted_at"])
+        dipulihkan += 1
+
+    return dipulihkan
 
 
 @shared_task

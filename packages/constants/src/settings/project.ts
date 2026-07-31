@@ -121,6 +121,15 @@ export const PROJECT_SETTINGS: Record<TProjectSettingsTabs, TProjectSettingsItem
     access: [EUserProjectRoles.ADMIN],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/wiki-access/`,
   },
+  // Kustomisasi Paradise (B.E.R) — Trashbin per project. Khusus admin project:
+  // memulihkan & membuang permanen bukan wewenang anggota biasa.
+  trash: {
+    key: "trash",
+    i18n_label: "project_settings.trash.heading",
+    href: `/trash`,
+    access: [EUserProjectRoles.ADMIN],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/trash/`,
+  },
   automations: {
     key: "automations",
     i18n_label: "project_settings.automations.label",
@@ -150,6 +159,7 @@ export const GROUPED_PROJECT_SETTINGS: Record<PROJECT_SETTINGS_CATEGORY, TProjec
   [PROJECT_SETTINGS_CATEGORY.EXECUTION]: [
     PROJECT_SETTINGS["templates"],
     PROJECT_SETTINGS["wiki_access"],
+    PROJECT_SETTINGS["trash"],
     PROJECT_SETTINGS["automations"],
   ],
 };

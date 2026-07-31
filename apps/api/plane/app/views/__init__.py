@@ -254,3 +254,6 @@ from .notification.base import MarkAllReadNotificationViewSet
 from .user.base import AccountEndpoint, ProfileEndpoint, UserSessionEndpoint
 
 from .timezone.base import TimezoneEndpoint
+
+# Kustomisasi Paradise (B.E.R) — Trashbin per project.
+from .paradise_trash import ProjectTrashEndpoint, TrashTypeEndpoint

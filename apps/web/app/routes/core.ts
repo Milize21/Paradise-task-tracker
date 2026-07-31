@@ -368,6 +368,11 @@ export const coreRoutes: RouteConfigEntry[] = [
               ":workspaceSlug/settings/projects/:projectId/wiki-access",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/wiki-access/page.tsx"
             ),
+            // Trashbin per project (Paradise/B.E.R) — pasangan TPA di God Mode
+            route(
+              ":workspaceSlug/settings/projects/:projectId/trash",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/trash/page.tsx"
+            ),
             // Project Automations
             layout("./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/automations/layout.tsx", [
               route(

@@ -7,3 +7,4 @@
 export * from "./instance.service";
 // Kustomisasi Paradise (B.E.R)
 export * from "./audit-log.service";
+export * from "./trash.service";

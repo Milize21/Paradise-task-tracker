@@ -6,6 +6,8 @@
 from django.urls import path
 
 from plane.app.views import (
+    ProjectTrashEndpoint,
+    TrashTypeEndpoint,
     DivisionDashboardEndpoint,
     WorkLogExportEndpoint,
     InitiativeViewSet,
@@ -59,5 +61,20 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/wiki-access/folders/<uuid:folder_id>/",
         WikiFolderAccessEndpoint.as_view(),
         name="wiki-folder-access",
+    ),
+    path(
+        "workspaces/<str:slug>/trash-types/",
+        TrashTypeEndpoint.as_view(),
+        name="trash-types",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/trash/",
+        ProjectTrashEndpoint.as_view(),
+        name="project-trash",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/trash/<str:trash_type>/<uuid:pk>/",
+        ProjectTrashEndpoint.as_view(),
+        name="project-trash-item",
     ),
 ]

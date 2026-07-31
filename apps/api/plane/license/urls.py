@@ -19,6 +19,7 @@ from plane.license.api.views import (
     InstanceWorkSpaceAvailabilityCheckEndpoint,
     InstanceWorkSpaceEndpoint,
     InstanceAuditLogEndpoint,
+    InstanceTrashEndpoint,
 )
 
 urlpatterns = [
@@ -75,4 +76,11 @@ urlpatterns = [
     # Kustomisasi Paradise (B.E.R). Menggantikan endpoint workspace-level lama
     # di app/urls/paradise.py: jejak audit sengaja hanya terbaca dari God Mode.
     path("audit-logs/", InstanceAuditLogEndpoint.as_view(), name="instance-audit-logs"),
+    # TPA — tong sampah lintas project, hanya Super Admin.
+    path("trash/", InstanceTrashEndpoint.as_view(), name="instance-trash"),
+    path(
+        "trash/<str:trash_type>/<uuid:pk>/",
+        InstanceTrashEndpoint.as_view(),
+        name="instance-trash-item",
+    ),
 ]

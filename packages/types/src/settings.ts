@@ -33,6 +33,7 @@ export type TProjectSettingsTabs =
   | "work_item_types"
   | "templates"
   | "wiki_access"
+  | "trash"
   | "automations";
 export type TProjectSettingsItem = {
   key: TProjectSettingsTabs;

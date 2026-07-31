@@ -5,7 +5,7 @@
  */
 
 import type { LucideIcon } from "lucide-react";
-import { FolderLock, LayoutTemplate, Shapes, Users, Zap } from "lucide-react";
+import { FolderLock, LayoutTemplate, Shapes, Trash2, Users, Zap } from "lucide-react";
 // plane imports
 import type { ISvgIcons } from "@plane/propel/icons";
 import {
@@ -38,5 +38,6 @@ export const PROJECT_SETTINGS_ICONS: Record<TProjectSettingsTabs, LucideIcon | R
   work_item_types: Shapes,
   templates: LayoutTemplate,
   wiki_access: FolderLock,
+  trash: Trash2,
   automations: Zap,
 };
