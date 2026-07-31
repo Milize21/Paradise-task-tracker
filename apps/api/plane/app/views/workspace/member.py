@@ -11,6 +11,7 @@ from django.db.models.functions import Coalesce
 from rest_framework import status
 from rest_framework.response import Response
 
+from plane.db.superadmin import sembunyikan
 from plane.app.permissions import WorkspaceEntityPermission, allow_permission, ROLE
 
 # Module imports
@@ -35,9 +36,11 @@ class WorkSpaceMemberViewSet(BaseViewSet):
     use_read_replica = True
 
     def get_queryset(self):
+        # Super Admin disembunyikan (B.E.R): mereka anggota supaya bisa
+        # memantau semua project, tapi keberadaannya tidak boleh terlihat
+        # user maupun admin project. Lihat plane/db/superadmin.py.
         return self.filter_queryset(
-            super()
-            .get_queryset()
+            sembunyikan(super().get_queryset())
             .filter(workspace__slug=self.kwargs.get("slug"))
             .select_related("member", "member__avatar_asset")
         )
@@ -249,8 +252,8 @@ class WorkspaceProjectMemberEndpoint(BaseAPIView):
         )
 
         # Get all the project members in which the user is involved
-        project_members = ProjectMember.objects.filter(
-            workspace__slug=slug, project_id__in=project_ids, is_active=True
+        project_members = sembunyikan(
+            ProjectMember.objects.filter(workspace__slug=slug, project_id__in=project_ids, is_active=True)
         ).select_related("project", "member", "workspace")
         project_members = ProjectMemberRoleSerializer(project_members, many=True).data
 

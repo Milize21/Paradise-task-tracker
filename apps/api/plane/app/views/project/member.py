@@ -16,6 +16,7 @@ from plane.app.serializers import (
     ProjectMemberPreferenceSerializer,
 )
 
+from plane.db.superadmin import sembunyikan
 from plane.app.permissions import WorkspaceUserPermission
 
 from plane.db.models import Project, ProjectMember, ProjectUserProperty, WorkspaceMember
@@ -31,13 +32,14 @@ class ProjectMemberViewSet(BaseViewSet):
     search_fields = ["member__display_name", "member__first_name"]
 
     def get_queryset(self):
+        # Super Admin disembunyikan (B.E.R): mereka anggota supaya bisa
+        # memantau semua project, tapi keberadaannya tidak boleh terlihat
+        # user maupun admin project. Lihat plane/db/superadmin.py.
         return self.filter_queryset(
-            super()
-            .get_queryset()
+            sembunyikan(super().get_queryset())
             .filter(workspace__slug=self.kwargs.get("slug"))
             .filter(project_id=self.kwargs.get("project_id"))
             .filter(member__is_bot=False)
-            .filter()
             .select_related("project")
             .select_related("member")
             .select_related("workspace", "workspace__owner")

