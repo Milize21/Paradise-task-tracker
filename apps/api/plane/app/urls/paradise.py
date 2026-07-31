@@ -9,7 +9,6 @@ from plane.app.views import (
     DivisionDashboardEndpoint,
     WorkLogExportEndpoint,
     InitiativeViewSet,
-    AuditLogEndpoint,
     PageCanEditEndpoint,
     WikiAccessEndpoint,
     WikiFolderAccessEndpoint,
@@ -45,11 +44,6 @@ urlpatterns = [
         "workspaces/<str:slug>/worklogs/export/",
         WorkLogExportEndpoint.as_view(),
         name="worklogs-export",
-    ),
-    path(
-        "workspaces/<str:slug>/audit-logs/",
-        AuditLogEndpoint.as_view(),
-        name="audit-logs",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/pages/<uuid:page_id>/can-edit/",

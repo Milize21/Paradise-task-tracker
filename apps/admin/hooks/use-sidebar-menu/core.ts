@@ -4,13 +4,13 @@
  * See the LICENSE file for details.
  */
 
-import { Image, BrainCog, Cog, Mail } from "lucide-react";
+import { Image, BrainCog, Cog, Mail, ScrollText } from "lucide-react";
 // plane imports
 import { LockIcon, WorkspaceIcon } from "@plane/propel/icons";
 // types
 import type { TSidebarMenuItem } from "./types";
 
-export type TCoreSidebarMenuKey = "general" | "email" | "workspace" | "authentication" | "ai" | "image";
+export type TCoreSidebarMenuKey = "general" | "email" | "workspace" | "authentication" | "ai" | "image" | "logs";
 
 export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem> = {
   general: {
@@ -45,8 +45,17 @@ export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem>
   },
   image: {
     Icon: Image,
-    name: "Images in Plane",
-    description: "Allow third-party image libraries.",
+    // Sisa merek upstream di God Mode — apps/web & apps/space sudah dibersihkan
+    // di `a407ce0`/`07a6fe2`, apps/admin belum ikut disapu.
+    name: "Pustaka gambar",
+    description: "Izinkan pustaka gambar pihak ketiga.",
     href: `/image/`,
+  },
+  // Kustomisasi Paradise (B.E.R) — jejak audit sengaja HANYA di God Mode.
+  logs: {
+    Icon: ScrollText,
+    name: "Jejak audit",
+    description: "Siapa mengubah apa di seluruh instance.",
+    href: `/logs/`,
   },
 };
