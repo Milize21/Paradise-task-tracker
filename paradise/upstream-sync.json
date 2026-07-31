@@ -1,0 +1,59 @@
+{
+  "_catatan": "Ditulis oleh paradise/bin/upstream-sync.sh. Jangan tebak isinya dari nama tag di README atau ingatan — baseline yang salah membuat sync berikutnya menerapkan patch yang sudah ada, atau melewatkan yang belum. Kejadian: vault sempat mencatat baseline v0.24.0, aslinya commit 7fbf14a6cb.",
+
+  "upstream": {
+    "remote": "https://github.com/makeplane/plane.git",
+    "branch_rilis": "preview",
+    "pola_tag": "v*"
+  },
+
+  "baseline": {
+    "commit": "v1.4.0-rc2",
+    "sha": "ff4bf5d64c",
+    "tanggal": "2026-07-29",
+    "diterapkan_pada": "2026-07-31",
+    "commit_kita": "dc87c95f4a",
+    "_catatan": "Sync ke TAG RILIS, bukan ujung preview. preview berisi kerjaan setengah jadi; tag sudah lewat QA mereka."
+  },
+
+  "sebelumnya": {
+    "commit": "7fbf14a6cb",
+    "tanggal": "2026-07-01",
+    "_catatan": "Titik vendoring awal. Repo ini disalin, bukan di-fork, jadi tidak ada leluhur bersama — git merge menolak, harus patch tiga arah."
+  },
+
+  "lewati": [
+    {
+      "commit": "8ef78bf0c1",
+      "judul": "refactor: store and components consolidation to core",
+      "alasan": "Menghapus seluruh apps/web/ce/ (249 berkas jadi nol) dan memindahkannya ke core. Lapisan itu tempat Time Tracking, Custom Properties, dan perbaikan sidebar kita hidup — semuanya mengisi stub yang upstream sediakan. Mengambilnya menghapus antarmuka tiga fitur kita sementara backend-nya tetap jalan, dan pemanggilnya ikut hilang, jadi tidak ada yang gagal dengan berisik.",
+      "tindak_lanjut": "Pindah ke struktur core/ adalah porting, bukan merge. Kerjakan terpisah, jangan dibarengkan dengan patch keamanan."
+    }
+  ],
+
+  "tolak_selamanya": [
+    {
+      "berkas": "apps/web/core/components/instance/edition-badge.tsx",
+      "alasan": "Upstream berkala memasang lagi modal ajakan upgrade ke paket berbayar. Debranding (KEP-14) membuangnya dengan sengaja. Setiap sync, ambil versi kita."
+    }
+  ],
+
+  "harus_selamat": {
+    "_catatan": "Diperiksa oleh `upstream-sync.sh verify`. Kalau salah satu hilang setelah sync, patch memakan kustomisasi kita.",
+    "berkas": [
+      "apps/api/plane/db/superadmin.py",
+      "apps/api/plane/utils/trash.py",
+      "apps/api/plane/app/views/paradise_trash.py",
+      "apps/api/plane/license/api/views/audit_log.py",
+      "apps/api/plane/license/api/views/trash.py",
+      "apps/api/plane/license/api/views/member.py",
+      "apps/admin/app/(all)/(dashboard)/logs/page.tsx",
+      "apps/admin/app/(all)/(dashboard)/trash/page.tsx",
+      "apps/admin/app/(all)/(dashboard)/members/page.tsx",
+      "packages/services/src/instance/audit-log.service.ts",
+      "packages/services/src/instance/trash.service.ts",
+      "packages/services/src/instance/member.service.ts"
+    ],
+    "folder_tanpa_penghapusan": ["apps/web/ce"]
+  }
+}
