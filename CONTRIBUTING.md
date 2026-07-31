@@ -1,247 +1,176 @@
-# Contributing to Plane
+# Panduan Kerja — Paradise Task Tracker
 
-Thank you for showing an interest in contributing to Plane! All kinds of contributions are valuable to us. In this guide, we will cover how you can quickly onboard and make your first contribution.
+Repositori internal PT Paradise Perkasa. Panduan ini untuk siapa pun yang
+mengerjakan kodenya.
 
-## Submitting an issue
+---
 
-Before submitting a new issue, please search the [issues](https://github.com/makeplane/plane/issues) tab. Maybe an issue or discussion already exists and might inform you of workarounds. Otherwise, you can give new information.
+## Menyiapkan lingkungan
 
-While we want to fix all the [issues](https://github.com/makeplane/plane/issues), before fixing a bug we need to be able to reproduce and confirm it. Please provide us with a minimal reproduction scenario using a repository or [Gist](https://gist.github.com/). Having a live, reproducible scenario gives us the information without asking questions back & forth with additional questions like:
-
-- 3rd-party libraries being used and their versions
-- a use-case that fails
-
-Without said minimal reproduction, we won't be able to investigate all [issues](https://github.com/makeplane/plane/issues), and the issue might not be resolved.
-
-You can open a new issue with this [issue form](https://github.com/makeplane/plane/issues/new).
-
-### Naming conventions for issues
-
-When opening a new issue, please use a clear and concise title that follows this format:
-
-- For bugs: `🐛 Bug: [short description]`
-- For features: `🚀 Feature: [short description]`
-- For improvements: `🛠️ Improvement: [short description]`
-- For documentation: `📘 Docs: [short description]`
-
-**Examples:**
-
-- `🐛 Bug: API token expiry time not saving correctly`
-- `📘 Docs: Clarify RAM requirement for local setup`
-- `🚀 Feature: Allow custom time selection for token expiration`
-
-This helps us triage and manage issues more efficiently.
-
-## Projects setup and Architecture
-
-### Requirements
-
-- Docker Engine installed and running
-- Node.js version 20+ [LTS version](https://nodejs.org/en/about/previous-releases)
-- Python version 3.8+
-- Postgres version v14
-- Redis version v6.2.7
-- **Memory**: Minimum **12 GB RAM** recommended
-  > ⚠️ Running the project on a system with only 8 GB RAM may lead to setup failures or memory crashes (especially during Docker container build/start or dependency install). Use cloud environments like GitHub Codespaces or upgrade local RAM if possible.
-
-### Setup the project
-
-The project is a monorepo, with backend api and frontend in a single repo.
-
-The backend is a django project which is kept inside apps/api
-
-1. Clone the repo
+**Prasyarat:** Docker · Node 20+ · pnpm · RAM 12 GB (8 GB sering gagal saat
+build container).
 
 ```bash
-git clone https://github.com/makeplane/plane.git [folder-name]
-cd [folder-name]
-chmod +x setup.sh
-```
+git clone https://github.com/Milize21/Paradise-task-tracker.git
+cd Paradise-task-tracker
 
-2. Run setup.sh
+cp .env.example .env
+cp .env.example apps/api/.env
 
-```bash
-./setup.sh
-```
-
-3. Start the containers
-
-```bash
-docker compose -f docker-compose-local.yml up
-```
-
-4. Start web apps:
-
-```bash
+COMPOSE_FILE=docker-compose-local.yml docker compose up -d
+pnpm install
 pnpm dev
 ```
 
-5. Open your browser to http://localhost:3001/god-mode/ and register yourself as instance admin
-6. Open up your browser to http://localhost:3000 then log in using the same credentials from the previous step
+Buka `http://localhost:3001/god-mode/` untuk mendaftarkan instance admin pertama.
 
-That’s it! You’re all set to begin coding. Remember to refresh your browser if changes don’t auto-reload. Happy contributing! 🎉
+| Layanan          | Port                  |
+| ---------------- | --------------------- |
+| Web              | **4000** (bukan 3000) |
+| Admin / God Mode | 3001                  |
+| Space            | 3002                  |
+| Live             | 3100                  |
+| API              | 8000                  |
 
-## Missing a Feature?
+---
 
-If a feature is missing, you can directly _request_ a new one [here](https://github.com/makeplane/plane/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+). You also can do the same by choosing "🚀 Feature" when raising a [New Issue](https://github.com/makeplane/plane/issues/new/choose) on our GitHub Repository.
-If you would like to _implement_ it, an issue with your proposal must be submitted first, to be sure that we can use it. Please consider the guidelines given below.
+## Tiga jebakan lingkungan yang WAJIB diingat
 
-## Coding guidelines
+Ketiganya sudah pernah memakan waktu berjam-jam. Baca sebelum melapor "kodenya
+tidak jalan".
 
-To ensure consistency throughout the source code, please keep these rules in mind as you are working:
+**1. Ubah kode backend → `docker compose restart api`**
+`runserver` tidak auto-reload di sini: bind-mount Windows→container tidak
+meneruskan event perubahan berkas. Gejalanya endpoint membalas 404 padahal
+kodenya sudah benar.
 
-- All features or bug fixes must be tested by one or more specs (unit-tests).
-- We lint with [OxLint](https://oxc.rs/docs/guide/usage/linter) using the shared `.oxlintrc.json` and format with [oxfmt](https://oxc.rs/docs/guide/usage/formatter) using `.oxfmtrc.json`.
+**2. Ubah `.env` → `docker compose up -d`, BUKAN `restart`**
+`restart` tidak membaca ulang `env_file`. Container harus dibuat ulang.
 
-## Ways to contribute
+**3. Habis commit yang menyentuh berkas locale → cek `git status`**
+`packages/i18n/locales` adalah junction ke `packages/i18n/src/locales`. Proses
+`git stash` milik pre-commit hook bisa memecahnya menjadi direktori asli berisi
+ratusan duplikat. Kalau `git status` tiba-tiba menampilkan ratusan perubahan,
+junction-nya pecah — jangan di-commit, pulihkan dulu.
 
-- Try Plane Cloud and the self hosting platform and give feedback
-- Add new integrations
-- Add or update translations
-- Help with open [issues](https://github.com/makeplane/plane/issues) or [create your own](https://github.com/makeplane/plane/issues/new/choose)
-- Share your thoughts and suggestions with us
-- Help create tutorials and blog posts
-- Request a feature by submitting a proposal
-- Report a bug
-- **Improve documentation** - fix incomplete or missing [docs](https://docs.plane.so/), bad wording, examples or explanations.
+Selain itu: jangan menaruh berkas sementara di `packages/*` atau `apps/live`
+saat `pnpm dev` jalan — watcher akan me-rebuild dan me-restart server Live di
+tengah pengujian.
 
-## Contributing to language support
+---
 
-This guide is designed to help contributors understand how to add or update translations in the application.
+## Gerbang sebelum commit
 
-### Understanding translation structure
+Jalankan semuanya. Pre-commit hook menjalankan lint & format atas berkas
+ter-stage, tapi tidak menjalankan tsc maupun `sync:check`.
 
-#### File organization
-
-Translations are organized by language in the locales directory. Each language has its own folder containing JSON files for translations. Here's how it looks:
-
-```
-packages/i18n/src/locales/
-    ├── en/
-    │   ├── core.json       # Critical translations
-    │   └── translations.json
-    ├── fr/
-    │   └── translations.json
-    └── [language]/
-        └── translations.json
+```bash
+pnpm --filter web exec tsc --noEmit          # ulangi utk space, admin, constants
+pnpm exec oxlint --deny-warnings <path>
+pnpm exec oxfmt --check <path>
 ```
 
-#### Nested structure
+Kalau menyentuh berkas locale, tambahkan:
 
-To keep translations organized, we use a nested structure for keys. This makes it easier to manage and locate specific translations. For example:
-
-```json
-{
-  "issue": {
-    "label": "Work item",
-    "title": {
-      "label": "Work item title"
-    }
-  }
-}
+```bash
+pnpm --filter @plane/i18n run sync:check     # wajib 19/19
+pnpm --filter @plane/i18n run generate:types
 ```
 
-### Translation formatting guide
+Catatan:
 
-We use [IntlMessageFormat](https://formatjs.github.io/docs/intl-messageformat/) to handle dynamic content, such as variables and pluralization. Here's how to format your translations:
+- `oxlint <path>` **tanpa** `--deny-warnings` memberi hijau palsu.
+- Jangan salurkan hasilnya ke `tail` lalu membaca `$?` — yang terbaca exit code
+  `tail`. Tulis ke berkas dulu, atau pakai `${PIPESTATUS[0]}`.
+- Peringatan pre-existing di berkas yang kamu sentuh: **perbaiki**, jangan
+  dibungkam.
 
-#### Examples
+---
 
-- **Simple variables**
+## Menambah key i18n
 
-  ```json
-  {
-    "greeting": "Hello, {name}!"
-  }
-  ```
+- Nama berkas di `packages/i18n/src/locales/en/` adalah **nama namespace**.
+  Key daun tidak boleh memakai nama yang sama — `"wiki"` ditolak karena
+  `wiki.json` sudah membentuk namespace `wiki.*`. Bentrok ini tidak terdeteksi
+  tsc maupun oxlint, hanya `sync:check`.
+- Key di `common.json` bisa dipanggil tanpa awalan (`defaultNS: "common"`).
+- Key baru wajib ditambahkan ke **semua 19 locale**, lalu `sync:check` harus
+  melaporkan 19/19.
 
-- **Pluralization**
-  ```json
-  {
-    "items": "{count, plural, one {Work item} other {Work items}}"
-  }
-  ```
+---
 
-### Contributing guidelines
+## Menambah background task
 
-#### Updating existing translations
+Daftarkan di **dua tempat**, kalau tidak task-nya tidak akan pernah jalan:
 
-1. Locate the key in `locales/<language>/translations.json`.
+1. `apps/api/plane/celery.py` → `beat_schedule` (kapan dikirim)
+2. `apps/api/plane/settings/common.py` → `CELERY_IMPORTS` (agar worker
+   mengenalnya)
 
-2. Update the value while ensuring the key structure remains intact.
-3. Preserve any existing ICU formats (e.g., variables, pluralization).
+`autodiscover_tasks()` hanya mencari `tasks.py` per app, sedangkan task di repo
+ini ada di `plane/bgtasks/*.py`. Task yang tidak terdaftar akan dikirim beat lalu
+**dibuang diam-diam** oleh worker.
 
-#### Adding new translation keys
+Verifikasi:
 
-1. When introducing a new key, ensure it is added to **all** language files, even if translations are not immediately available. Use English as a placeholder if needed.
-
-2. Keep the nesting structure consistent across all languages.
-
-3. If the new key requires dynamic content (e.g., variables or pluralization), ensure the ICU format is applied uniformly across all languages.
-
-### Adding new languages
-
-Adding a new language involves several steps to ensure it integrates seamlessly with the project. Follow these instructions carefully:
-
-1.  **Update type definitions**
-    Add the new language to the TLanguage type in the language definitions file:
-
-```ts
-// packages/i18n/src/types/language.ts
-export type TLanguage = "en" | "fr" | "your-lang";
+```bash
+docker exec pradise_plane-worker-1 celery -A plane inspect registered
 ```
 
-1.  **Add language configuration**
-    Include the new language in the list of supported languages:
+---
 
-```ts
-// packages/i18n/src/constants/language.ts
-export const SUPPORTED_LANGUAGES: ILanguageOption[] = [
-  { label: "English", value: "en" },
-  { label: "Your Language", value: "your-lang" },
-];
+## Menambah fitur
+
+Cek **`apps/web/ce/`** lebih dulu. Alias `@/plane-web/*` menunjuk ke sana, dan
+banyak slot UI sudah ter-wire ke stub kosong — mengisinya jauh lebih murah
+daripada membangun jalur baru.
+
+Item navigasi baru harus didaftarkan di **dua** tempat, kalau tidak ia tidak
+akan pernah terlihat:
+
+1. daftar item nav (`packages/constants/src/workspace.ts`)
+2. `getSidebarNavigationItemIcon` di `apps/web/ce/.../sidebar/helper.tsx` —
+   `switch` ini tidak punya `default`, jadi key tak terdaftar tampil tanpa ikon
+   tanpa error apa pun
+
+Item nav dinamis juga disembunyikan kalau tidak di-pin. Daftarkan lewat
+`additionalStaticItems` agar selalu tampil.
+
+---
+
+## Konvensi commit
+
+```
+<tipe>(<cakupan>): <deskripsi singkat, huruf kecil>
+
+Badan pesan menjelaskan KENAPA, bukan cuma apa. Sebutkan perilaku salah yang
+diperbaiki, dan sebutkan juga apa yang sengaja TIDAK dikerjakan beserta
+alasannya.
 ```
 
-2.  **Create translation files**
-    1. Create a new folder for your language under locales (e.g., `locales/your-lang/`).
+Tipe: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `ci`, `build`.
 
-    2. Add a `translations.json` file inside the folder.
+Tulis apa yang sudah diverifikasi dan bagaimana. "Sudah diuji" tanpa menyebut
+caranya tidak berguna buat orang berikutnya — termasuk buat dirimu sendiri
+tiga minggu lagi.
 
-    3. Copy the structure from an existing translation file and translate all keys.
+---
 
-3.  **Update import logic**
-    Modify the language import logic to include your new language:
+## Dokumentasi operasional
 
-```ts
-      private importLanguageFile(language: TLanguage): Promise<any> {
-      switch (language) {
-          case "your-lang":
-          return import("../locales/your-lang/translations.json");
-          // ...
-      }
-      }
-```
+Panduan deploy, backup, keamanan pra-produksi, dan sinkronisasi upstream ada di
+`paradise/`. Skrip operasionalnya di `paradise/bin/`.
 
-### Quality checklist
+Sinkronisasi upstream harus di-diff terhadap **tag `v0.24.0`**, bukan
+`upstream/main` — repo ini di-vendor dari v0.24.0, jadi diff ke `main` akan
+melaporkan ribuan baris jarak versi sebagai "perubahan kita".
 
-Before submitting your contribution, please ensure the following:
+---
 
-- All translation keys exist in every language file.
-- Nested structures match across all language files.
-- ICU message formats are correctly implemented.
-- All languages load without errors in the application.
-- Dynamic values and pluralization work as expected.
-- There are no missing or untranslated keys.
+## Lisensi
 
-#### Pro tips
-
-- When in doubt, refer to the English translations for context.
-- Verify pluralization works with different numbers.
-- Ensure dynamic values (e.g., `{name}`) are correctly interpolated.
-- Double-check that nested key access paths are accurate.
-
-Happy translating! 🌍✨
-
-## Need help? Questions and suggestions
-
-Questions, suggestions, and thoughts are most welcome. We can also be reached in our [Forum](https://forum.plane.so).
+Kontribusi ke repositori ini tunduk pada **GNU AGPL-3.0**
+([LICENSE.txt](LICENSE.txt)). Jangan menghapus header hak cipta di berkas
+sumber, `LICENSE.txt`, atau [NOTICE.md](NOTICE.md) — lihat NOTICE untuk
+penjelasan mengapa penghapusan merek produk berbeda dari penghapusan atribusi
+hukum.

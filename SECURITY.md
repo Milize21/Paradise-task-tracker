@@ -1,39 +1,53 @@
-# Security policy
-This document outlines the security protocols and vulnerability reporting guidelines for the Plane project. Ensuring the security of our systems is a top priority, and while we work diligently to maintain robust protection, vulnerabilities may still occur. We highly value the community’s role in identifying and reporting security concerns to uphold the integrity of our systems and safeguard our users.
+# Kebijakan Keamanan — Paradise Task Tracker
 
-## Reporting a vulnerability
-If you have identified a security vulnerability, submit your findings to [security@plane.so](mailto:security@plane.so). 
-Ensure your report includes all relevant information needed for us to reproduce and assess the issue. Include the IP address or URL of the affected system.
+Sistem ini menyimpan data kerja internal PT Paradise Perkasa: work item, catatan
+waktu kerja, dokumentasi perusahaan, dan daftar karyawan beserta perannya.
 
-To ensure a responsible and effective disclosure process, please adhere to the following:
+## Melaporkan kerentanan
 
-- Maintain confidentiality and refrain from publicly disclosing the vulnerability until we have had the opportunity to investigate and address the issue.
-- Refrain from running automated vulnerability scans on our infrastructure or dashboard without prior consent. Contact us to set up a sandbox environment if necessary.
-- Do not exploit any discovered vulnerabilities for malicious purposes, such as accessing or altering user data.
-- Do not engage in physical security attacks, social engineering, distributed denial of service (DDoS) attacks, spam campaigns, or attacks on third-party applications as part of your vulnerability testing.
+Laporkan temuan keamanan **langsung ke bagian IT PT Paradise Perkasa**, bukan
+lewat GitHub issue publik dan bukan ke pihak lain.
 
-## Out of scope
-While we appreciate all efforts to assist in improving our security, please note that the following types of vulnerabilities are considered out of scope:
+> Alamat kontak IT belum diisi di berkas ini. Isi begitu ada alamat resminya.
+> Sengaja tidak dicantumkan alamat karangan — laporan keamanan yang dikirim ke
+> alamat yang tidak dibaca lebih buruk daripada tidak ada alamat sama sekali.
 
-- Vulnerabilities requiring man-in-the-middle (MITM) attacks or physical access to a user’s device.
-- Content spoofing or text injection issues without a clear attack vector or the ability to modify HTML/CSS.
-- Issues related to email spoofing.
-- Missing DNSSEC, CAA, or CSP headers.
-- Absence of secure or HTTP-only flags on non-sensitive cookies.
+Sertakan dalam laporan:
 
-## Our commitment
+- Langkah yang bisa diulang untuk memunculkan masalahnya
+- URL atau bagian sistem yang terpengaruh
+- Dampak yang kamu perkirakan
+- Akun/peran yang dipakai saat menemukannya (Admin / Member / Guest)
 
-At Plane, we are committed to maintaining transparent and collaborative communication throughout the vulnerability resolution process. Here's what you can expect from us:
+## Yang diminta dari pelapor
 
-- **Response Time** <br/>
-We will acknowledge receipt of your vulnerability report within three business days and provide an estimated timeline for resolution.
-- **Legal Protection** <br/>
-We will not initiate legal action against you for reporting vulnerabilities, provided you adhere to the reporting guidelines.
-- **Confidentiality** <br/>
-Your report will be treated with confidentiality. We will not disclose your personal information to third parties without your consent.
-- **Recognition** <br/>
-With your permission, we are happy to publicly acknowledge your contribution to improving our security once the issue is resolved.
-- **Timely Resolution** <br/>
-We are committed to working closely with you throughout the resolution process, providing timely updates as necessary. Our goal is to address all reported vulnerabilities swiftly, and we will actively engage with you to coordinate a responsible disclosure once the issue is fully resolved.
+- **Jangan sebarkan dulu** sebelum diperbaiki.
+- **Jangan menjalankan pemindaian otomatis** ke instance yang dipakai kerja —
+  sistem ini dipakai 79 orang setiap hari.
+- **Jangan mengeksploitasi** temuan untuk mengakses atau mengubah data orang
+  lain. Cukup buktikan bahwa celahnya ada.
+- Jangan melakukan rekayasa sosial, DDoS, atau serangan fisik.
 
-We appreciate your help in ensuring the security of our platform. Your contributions are crucial to protecting our users and maintaining a secure environment. Thank you for working with us to keep Plane safe.
+## Cakupan
+
+**Termasuk:** aplikasi web, halaman publik (space), panel admin/God Mode, API,
+server kolaborasi, dan konfigurasi deployment di `paradise/`.
+
+**Di luar cakupan:** kerentanan yang butuh akses fisik ke perangkat pengguna
+atau posisi man-in-the-middle, spoofing email, dan ketiadaan header DNS
+(DNSSEC/CAA) selama sistem masih berjalan di jaringan internal.
+
+## Kerentanan pada basis kode upstream
+
+Sistem ini dibangun di atas Plane Community Edition (lihat [NOTICE.md](NOTICE.md)).
+Kerentanan yang berasal dari kode upstream — bukan dari modifikasi kami —
+sebaiknya **juga** dilaporkan ke proyek upstream supaya pengguna lain ikut
+terlindungi, setelah IT internal diberi tahu lebih dulu.
+
+## Catatan keadaan saat ini
+
+Sistem masih tahap pengembangan dan **belum berjalan di server produksi**.
+Hal-hal yang sudah diketahui dan wajib dibereskan sebelum produksi
+terdokumentasi di `paradise/` — antara lain kredensial default pada layanan
+infrastruktur internal. Jangan anggap keadaan development sebagai gambaran
+konfigurasi produksi.

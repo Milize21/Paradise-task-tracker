@@ -1,165 +1,153 @@
-<br /><br />
+# Paradise Task Tracker
 
-<p align="center">
-<a href="https://plane.so">
-  <img src="https://media.docs.plane.so/logo/plane_github_readme.png" alt="Plane Logo" width="400">
-</a>
-</p>
-<p align="center"><b>Modern project management for all teams</b></p>
+Sistem manajemen kerja internal **PT Paradise Perkasa** — pelacakan work item,
+pencatatan waktu kerja, dokumentasi perusahaan, dan pelaporan per divisi, jalan
+di server sendiri tanpa langganan pihak ketiga.
 
-<p align="center">
-    <a href="https://plane.so/"><b>Website</b></a> •
-    <a href="https://forum.plane.so"><b>Forum</b></a> •
-    <a href="https://x.com/planepowers"><b>X</b></a> •
-    <a href="https://docs.plane.so/"><b>Documentation</b></a>
-</p>
+Dipakai lintas **16 divisi** dengan **79 akun karyawan** dalam satu workspace.
 
-<p>
-    <a href="https://app.plane.so/#gh-light-mode-only" target="_blank">
-      <img
-        src="https://media.docs.plane.so/GitHub-readme/github-top.webp"
-        alt="Plane Screens"
-        width="100%"
-      />
-    </a>
-</p>
+---
 
-Meet [Plane](https://plane.so/), an open-source project management tool to track issues, run ~sprints~ cycles, and manage product roadmaps without the chaos of managing the tool itself. 🧘‍♀️
+## Yang dibangun sendiri
 
-> Plane is evolving every day. Your suggestions, ideas, and reported bugs help us immensely. Do not hesitate to join in the conversation on [Forum](https://forum.plane.so) or raise a GitHub issue. We read everything and respond to most.
+Fondasi aplikasinya open-source (lihat [Asal-usul](#asal-usul)), tapi delapan
+kemampuan di bawah ini **tidak ada di dalamnya** dan dibangun dari nol — model
+database, migrasi, endpoint API, aturan izin, sampai antarmukanya.
 
-## 🚀 Installation
+### 🕒 Time Tracking
 
-Getting started with Plane is simple. Choose the setup that works best for you:
+Model `IssueWorkLog` + API `/work-logs/`. Anggota mencatat dan menghapus worklog
+miliknya sendiri; admin project melihat dan mengelola semuanya. Terpasang
+langsung di sidebar detail work item.
 
-- **Plane Cloud**
-  Sign up for a free account on [Plane Cloud](https://app.plane.so)—it's the fastest way to get up and running without worrying about infrastructure.
+### 🏷️ Work Item Types & Custom Properties
 
-- **Self-host Plane**
-  Prefer full control over your data and infrastructure? Install and run Plane on your own servers. Follow our detailed [deployment guides](https://developers.plane.so/self-hosting/overview) to get started.
+Tipe work item per project (khusus admin), plus properti kustom dengan **6 jenis
+field**: teks, desimal, boolean, tanggal-waktu, pilihan, dan anggota. Model
+`IssueProperty` / `IssuePropertyOption` / `IssuePropertyValue`, dengan validasi
+nilai bertipe di sisi server — opsi harus milik propertinya, anggota harus
+benar-benar anggota project.
 
-| Installation methods | Docs link                                                                                                                                                                               |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Docker               | [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://developers.plane.so/self-hosting/methods/docker-compose)         |
-| Kubernetes           | [![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)](https://developers.plane.so/self-hosting/methods/kubernetes) |
+### 📋 Templates & Recurring Issues
 
-`Instance admins` can configure instance settings with [God mode](https://developers.plane.so/self-hosting/govern/instance-admin).
+Template work item yang bisa diterapkan anggota, plus penjadwalan berulang lewat
+Celery beat. `advance_schedule()` **melewati jadwal yang terlewat** alih-alih
+merapelnya — laptop mati semalam tidak menghasilkan tumpukan tugas palsu esok
+paginya.
 
-## 🌟 Features
+### 📚 Workspace Wiki — tiga fase
 
-- **Work Items**
-  Efficiently create and manage tasks with a robust rich text editor that supports file uploads. Enhance organization and tracking by adding sub-properties and referencing related issues.
+Dokumentasi perusahaan sebagai project khusus, dibangun bertahap:
 
-- **Cycles**
-  Maintain your team’s momentum with Cycles. Track progress effortlessly using burn-down charts and other insightful tools.
+| Fase  | Isi                                                                                                                                               |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A** | Halaman menerima **semua tipe berkas** (pdf, docx, mp4, zip) s/d 100 MB, plus node "File" di editor dengan pratinjau PDF di dalam halaman         |
+| **B** | **Kontrol edit per-folder** — tiap folder tingkat atas dimiliki satu atau lebih divisi; hanya anggotanya yang boleh menyunting, sisanya baca-saja |
+| **C** | **Pohon halaman bertingkat** — sub-halaman terlihat dan bisa dibuka (sebelumnya 404)                                                              |
 
-- **Modules**
-  Simplify complex projects by dividing them into smaller, manageable modules.
+Fase B ditegakkan di **dua lapis**: REST API dan server kolaborasi real-time.
+Endpoint `can-edit/` sengaja **tidak menyalin** aturan izin — ia memanggil kelas
+permission yang sama lewat request tiruan, jadi REST dan editor kolaboratif
+mustahil berbeda pendapat.
 
-- **Views**
-  Customize your workflow by creating filters to display only the most relevant issues. Save and share these views with ease.
+### 📊 Dashboard Divisi
 
-- **Pages**
-  Capture and organize ideas using Plane Pages, complete with AI capabilities and a rich text editor. Format text, insert images, add hyperlinks, or convert your notes into actionable items.
+Rekap per project yang diikuti user: total / terbuka / lewat tenggat / selesai,
+menit worklog total dan bulan berjalan, jumlah anggota. Plus **ekspor CSV**
+laporan waktu (BOM UTF-8, siap dibuka Excel). Isolasi teruji: staf hanya melihat
+project yang ia ikuti.
 
-- **Analytics**
-  Access real-time insights across all your Plane data. Visualize trends, remove blockers, and keep your projects moving forward.
+### 🎯 Initiatives
 
-## 🛠️ Local development
+Sasaran tingkat workspace yang menaut beberapa project divisi, dengan rollup
+progres dihitung dari seluruh work item di project tertaut.
 
-See [CONTRIBUTING](./CONTRIBUTING.md)
+### 📜 Audit Logs
 
-## ⚙️ Built with
+Perekaman siapa-mengubah-apa pada model akses dan konten (Project, ProjectMember,
+WorkspaceMember, Issue, Page). Aktor terekam pada jalur HTTP nyata **maupun**
+lewat editor kolaboratif. API baca khusus admin dengan filter model / aksi /
+aktor dan pagination.
 
-[![React Router](https://img.shields.io/badge/-React%20Router-CA4245?logo=react-router&style=for-the-badge&logoColor=white)](https://reactrouter.com/)
-[![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green)](https://www.djangoproject.com/)
-[![Node JS](https://img.shields.io/badge/node.js-339933?style=for-the-badge&logo=Node.js&logoColor=white)](https://nodejs.org/en)
+### 🔐 Kontrol akses per folder Wiki
 
-## 📸 Screenshots
+Pemetaan folder → divisi, dengan pewarisan ke sub-halaman dan override admin.
+Dibangun tanpa dependency baru: keanggotaan divisi bersifat dinamis, jadi grant
+statis justru rawan melenceng dari keadaan sebenarnya.
 
-  <p>
-    <a href="https://plane.so" target="_blank">
-      <img
-        src="https://media.docs.plane.so/GitHub-readme/github-work-items.webp"
-        alt="Plane Views"
-        width="100%"
-      />
-    </a>
-  </p>
-  <p>
-    <a href="https://plane.so" target="_blank">
-      <img
-        src="https://media.docs.plane.so/GitHub-readme/github-cycles.webp"
-        width="100%"
-      />
-    </a>
-  </p>
-  <p>
-    <a href="https://plane.so" target="_blank">
-      <img
-        src="https://media.docs.plane.so/GitHub-readme/github-modules.webp"
-        alt="Plane Cycles and Modules"
-        width="100%"
-      />
-    </a>
-  </p>
-  <p>
-    <a href="https://plane.so" target="_blank">
-      <img
-        src="https://media.docs.plane.so/GitHub-readme/github-views.webp"
-        alt="Plane Analytics"
-        width="100%"
-      />
-    </a>
-  </p>
-   <p>
-    <a href="https://plane.so" target="_blank">
-      <img
-        src="https://media.docs.plane.so/GitHub-readme/github-analytics.webp"
-        alt="Plane Pages"
-        width="100%"
-      />
-    </a>
-  </p>
-</p>
+---
 
-## 📝 Documentation
+## Operasional
 
-Explore Plane's [product documentation](https://docs.plane.so/) and [developer documentation](https://developers.plane.so/) to learn about features, setup, and usage.
+Bukan cuma fitur — sisi operasionalnya juga dibangun sendiri:
 
-## ❤️ Community
+- **CI/CD** — tiap push ke `main` membangun 6 image ke GHCR lewat
+  `docker buildx bake`; tag = commit SHA, lalu `latest` digeser dengan
+  `imagetools create` (salin manifest, bukan build ulang). Deploy manual di
+  server lewat `paradise/bin/deploy.sh`, rollback dengan `APP_RELEASE=<sha>`.
+- **Backup** — `paradise/bin/backup-db.sh`: `pg_dump` terkompresi dengan
+  retensi, verifikasi hasil tidak kosong, dan menunggu Postgres benar-benar
+  siap (`pg_isready`) alih-alih menyerah saat Docker belum naik.
+- **Healthcheck** — `paradise/bin/healthcheck.sh` untuk seluruh layanan.
+- **Penjadwalan** — `paradise/bin/register-schedule.ps1` (Windows Task
+  Scheduler, tanpa perlu hak admin).
 
-Join the Plane community on [GitHub Discussions](https://github.com/orgs/makeplane/discussions) and our [Forum](https://forum.plane.so). We follow a [Code of conduct](https://github.com/makeplane/plane/blob/master/CODE_OF_CONDUCT.md) in all our community channels.
+---
 
-Feel free to ask questions, report bugs, participate in discussions, share ideas, request features, or showcase your projects. We’d love to hear from you!
+## Menjalankan
 
-## 🛡️ Security
+**Prasyarat:** Docker, Node 20+, pnpm.
 
-If you discover a security vulnerability in Plane, please report it responsibly instead of opening a public issue. We take all legitimate reports seriously and will investigate them promptly. See [Security policy](https://github.com/makeplane/plane/blob/master/SECURITY.md) for more info.
+```bash
+cp .env.example .env
+cp .env.example apps/api/.env
 
-To disclose any security issues, please email us at security@plane.so.
+# backend + infrastruktur
+COMPOSE_FILE=docker-compose-local.yml docker compose up -d
 
-## 🤝 Contributing
+# frontend
+pnpm install
+pnpm dev
+```
 
-There are many ways you can contribute to Plane:
+| Layanan                | Port     |
+| ---------------------- | -------- |
+| Web                    | **4000** |
+| Admin / God Mode       | 3001     |
+| Space (halaman publik) | 3002     |
+| Live (kolaborasi)      | 3100     |
+| API                    | 8000     |
 
-- Report [bugs](https://github.com/makeplane/plane/issues/new?assignees=srinivaspendem%2Cpushya22&labels=%F0%9F%90%9Bbug&projects=&template=--bug-report.yaml&title=%5Bbug%5D%3A+) or submit [feature requests](https://github.com/makeplane/plane/issues/new?assignees=srinivaspendem%2Cpushya22&labels=%E2%9C%A8feature&projects=&template=--feature-request.yaml&title=%5Bfeature%5D%3A+).
-- Review the [documentation](https://docs.plane.so/) and submit [pull requests](https://github.com/makeplane/docs) to improve it—whether it's fixing typos or adding new content.
-- Talk or write about Plane or any other ecosystem integration and [let us know](https://forum.plane.so)!
-- Show your support by upvoting [popular feature requests](https://github.com/makeplane/plane/issues).
+> Ubah kode backend → `docker compose restart api`.
+> Ubah `.env` → `docker compose up -d`, **bukan** `restart` — `restart` tidak
+> membaca ulang `env_file`.
 
-Please read [CONTRIBUTING.md](https://github.com/makeplane/plane/blob/master/CONTRIBUTING.md) for details on the process for submitting pull requests to us.
+Panduan deploy produksi, keamanan pra-produksi, dan sinkronisasi upstream ada di
+`paradise/`.
 
-### Repo activity
+---
 
-![Plane Repo Activity](https://repobeats.axiom.co/api/embed/2523c6ed2f77c082b7908c33e2ab208981d76c39.svg "Repobeats analytics image")
+## Stack
 
-### We couldn't have done this without you.
+Django REST Framework · PostgreSQL · Redis · RabbitMQ + Celery · MinIO ·
+React + React Router · TypeScript · MobX · Tailwind · Hocuspocus (Y.js) ·
+Docker Compose · Caddy
 
-<a href="https://github.com/makeplane/plane/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=makeplane/plane" />
-</a>
+---
 
-## License
+## Asal-usul
 
-This project is licensed under the [GNU Affero General Public License v3.0](https://github.com/makeplane/plane/blob/master/LICENSE.txt).
+Dibangun di atas **Plane Community Edition v0.24.0**, dilisensikan
+**GNU AGPL-3.0**. Rincian atribusi dan kewajiban lisensinya ada di
+**[NOTICE.md](NOTICE.md)** dan **[LICENSE.txt](LICENSE.txt)**.
+
+Merek produk upstream sudah dihapus dari antarmuka — sistem ini bukan produk
+vendor dan tidak dijual. Yang tetap dipertahankan adalah **atribusi hukum**:
+header hak cipta di berkas sumber, teks lisensi, dan berkas NOTICE. AGPL §13
+berlaku untuk pemakaian lewat jaringan, terlepas dijual atau tidak.
+
+---
+
+## Lisensi
+
+GNU Affero General Public License v3.0 — lihat [LICENSE.txt](LICENSE.txt).
