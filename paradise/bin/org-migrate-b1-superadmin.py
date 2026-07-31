@@ -19,6 +19,14 @@ from plane.license.models import Instance, InstanceAdmin
 
 APPLY = os.environ.get("ORG_APPLY") == "1"
 
+# Org Directory menandai TIGA orang sebagai "Super Admin": Henry Leo,
+# Vennysia Margaretha, dan Ignatius Warsito. Ignatius belum punya email (K5),
+# jadi belum bisa diangkat.
+MANAJEMEN = [
+    "henry@paradiseperkasa.com",
+    "secre_dir@paradiseperkasa.com",
+]
+
 # K9: seluruh tim IT. Sengaja bertentangan dengan Org Directory, yang hanya
 # menandai Suarno & Fran sebagai Admin — poin 9 diberikan belakangan dan
 # menang. Dicatat di sini supaya tidak dikira kekeliruan.
@@ -49,7 +57,7 @@ print(f"\nSuper Admin sekarang: {len(sebelum)}")
 
 print("\n1) Angkat jadi instance admin")
 tambah = 0
-for email in TIM_IT:
+for email in MANAJEMEN + TIM_IT:
     u = User.objects.filter(email=email, is_active=True).first()
     if not u:
         print(f"   ! {email:<40} akun tidak ada / nonaktif — DILEWATI")

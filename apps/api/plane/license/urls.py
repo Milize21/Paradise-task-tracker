@@ -20,6 +20,7 @@ from plane.license.api.views import (
     InstanceWorkSpaceEndpoint,
     InstanceAuditLogEndpoint,
     InstanceTrashEndpoint,
+    InstanceMemberEndpoint,
 )
 
 urlpatterns = [
@@ -83,4 +84,7 @@ urlpatterns = [
         InstanceTrashEndpoint.as_view(),
         name="instance-trash-item",
     ),
+    # Kelola member — satu-satunya pintu masuk akun selama signup mati.
+    path("members/", InstanceMemberEndpoint.as_view(), name="instance-members"),
+    path("members/<uuid:pk>/", InstanceMemberEndpoint.as_view(), name="instance-member"),
 ]

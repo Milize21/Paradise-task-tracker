@@ -30,3 +30,4 @@ from .workspace import (
 # Kustomisasi Paradise (B.E.R) — jejak audit hanya boleh dibaca dari God Mode.
 from .audit_log import InstanceAuditLogEndpoint
 from .trash import InstanceTrashEndpoint
+from .member import InstanceMemberEndpoint

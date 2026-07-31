@@ -26,6 +26,8 @@ export default [
     route("logs", "./(all)/(dashboard)/logs/page.tsx"),
     // TPA — tong sampah lintas project, hanya Super Admin.
     route("trash", "./(all)/(dashboard)/trash/page.tsx"),
+    // Kelola member — satu-satunya pintu masuk akun selama signup mati.
+    route("members", "./(all)/(dashboard)/members/page.tsx"),
   ]),
   // Catch-all route for 404 handling - must be last
   route("*", "./components/404.tsx"),

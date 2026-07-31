@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { Image, BrainCog, Cog, Mail, ScrollText, Trash2 } from "lucide-react";
+import { Image, BrainCog, Cog, Mail, ScrollText, Trash2, Users } from "lucide-react";
 // plane imports
 import { LockIcon, WorkspaceIcon } from "@plane/propel/icons";
 // types
@@ -18,7 +18,8 @@ export type TCoreSidebarMenuKey =
   | "ai"
   | "image"
   | "logs"
-  | "trash";
+  | "trash"
+  | "members";
 
 export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem> = {
   general: {
@@ -71,5 +72,11 @@ export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem>
     name: "TPA",
     description: "Barang terhapus dari seluruh project.",
     href: `/trash/`,
+  },
+  members: {
+    Icon: Users,
+    name: "Member",
+    description: "Buat akun, atur hak akses, pantau aktivitas.",
+    href: `/members/`,
   },
 };
