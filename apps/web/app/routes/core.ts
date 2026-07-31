@@ -62,10 +62,12 @@ export const coreRoutes: RouteConfigEntry[] = [
         // Workspace Home
         route(":workspaceSlug", "./(all)/[workspaceSlug]/(projects)/page.tsx"),
 
-        // Active Cycles
-        layout("./(all)/[workspaceSlug]/(projects)/active-cycles/layout.tsx", [
-          route(":workspaceSlug/active-cycles", "./(all)/[workspaceSlug]/(projects)/active-cycles/page.tsx"),
-        ]),
+        // Route Active Cycles DIBUANG, sama alasannya dengan Billing di bawah:
+        // di community edition seluruh halamannya HANYA berisi ajakan upgrade ke
+        // tier berbayar (`ce/components/active-cycles/root.tsx` merender
+        // `WorkspaceActiveCyclesUpgrade` dan tidak ada yang lain). Itemnya memang
+        // tidak terdaftar di sidebar, tapi tanpa membuang route-nya halaman itu
+        // masih bisa dibuka dengan mengetik URL.
 
         // Analytics
         layout("./(all)/[workspaceSlug]/(projects)/analytics/[tabId]/layout.tsx", [

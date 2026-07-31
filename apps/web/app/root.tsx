@@ -116,12 +116,14 @@ export const meta: Route.MetaFunction = () => [
     name: "keywords",
     content: "manajemen proyek, task tracker, internal, PT Paradise Perkasa",
   },
-  { name: "twitter:site", content: "@planepowers" },
+  // `twitter:site` DIBUANG: isinya akun vendor `@planepowers`, dan kantor ini
+  // tidak punya akun penggantinya. Mengarang handle lebih buruk daripada tidak
+  // ada — tag ini memang opsional.
   { name: "twitter:card", content: "summary_large_image" },
   { name: "twitter:image", content: ogImage },
   { name: "twitter:image:width", content: "1200" },
   { name: "twitter:image:height", content: "630" },
-  { name: "twitter:image:alt", content: "Plane - Modern project management" },
+  { name: "twitter:image:alt", content: "Paradise Task Tracker" },
 ];
 
 export default function Root() {

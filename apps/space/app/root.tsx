@@ -80,7 +80,7 @@ export const meta: Route.MetaFunction = () => [
     name: "keywords",
     content: "manajemen proyek, halaman publik, internal, PT Paradise Perkasa",
   },
-  { name: "twitter:site", content: "@planepowers" },
+  // `twitter:site` DIBUANG — lihat alasan yang sama di apps/web/app/root.tsx.
 ];
 
 export default function Root() {
