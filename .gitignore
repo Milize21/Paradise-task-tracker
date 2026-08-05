@@ -56,7 +56,14 @@ staticfiles
 mediafiles
 .env
 .DS_Store
-logs/
+# Keluaran log runtime Django. DIBATASI ke path-nya sendiri, jangan `logs/`
+# telanjang: pola tanpa slash depan cocok di KEDALAMAN MANA PUN, dan itu ikut
+# menelan `apps/admin/app/(all)/(dashboard)/logs/` — direktori SUMBER halaman
+# jejak audit di God Mode. Akibatnya `logs/page.tsx` tidak pernah ter-commit,
+# tidak pernah muncul di `git status` (berkas ter-ignore memang disembunyikan),
+# lokal selalu jalan, dan CI selalu gagal karena berkasnya tidak ada di
+# checkout. `paradise-build` merah 5 hari karena ini. → BUG-07
+/apps/api/plane/logs/
 htmlcov/
 .coverage
 
