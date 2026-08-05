@@ -20,6 +20,32 @@ from plane.settings.redis import redis_instance
 from plane.license.models import Instance
 
 
+@pytest.fixture(autouse=True)
+def _reset_throttle_cache():
+    """Kosongkan penghitung throttle sebelum & sesudah SETIAP test di modul ini.
+
+    `AuthenticationThrottle` itu `AnonRateThrottle` berbudget 10/menit yang
+    dikunci per-IP. Di dalam test semua permintaan datang dari IP yang sama
+    (`testserver`), jadi budget itu dipakai BERSAMA oleh seluruh test autentikasi
+    dalam satu run — bukan per test. Begitu gabungannya lewat 10, test yang
+    kebetulan berjalan belakangan menerima 429 `RATE_LIMIT_EXCEEDED` dan gagal
+    karena ulah tetangganya, bukan karena ada yang rusak.
+
+    Sebelumnya tiap class memasang sendiri pembersih ini, dan empat class
+    terlewat — `TestMagicLinkGenerate`, `TestSignInEndpoint`, `TestMagicSignIn`,
+    `TestMagicSignUp`. Dua yang terakhir menyumbang 8 kegagalan palsu di suite
+    penuh, padahal lolos kalau dijalankan sendirian. Menaruhnya di level modul
+    menutup celah itu sekaligus untuk class yang ditambahkan nanti.
+
+    TIDAK mematikan throttle-nya: `TestAuthenticationThrottle` memang menguji
+    throttle itu bekerja, dan ia menumpuk permintaan DI DALAM satu test — yang
+    tetap utuh karena pembersihan hanya terjadi di batas antar-test.
+    """
+    cache.clear()
+    yield
+    cache.clear()
+
+
 @pytest.fixture
 def setup_instance(db):
     """Create and configure an instance for authentication tests"""
