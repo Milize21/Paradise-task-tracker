@@ -15,15 +15,16 @@ import { LogoSpinner } from "@/components/common/logo-spinner";
 import globalStyles from "@/styles/globals.css?url";
 import { AppProviders } from "@/providers";
 import type { Route } from "./+types/root";
-// fonts
+// fonts (side-effect imports — memuat font global)
+// oxlint-disable no-unassigned-import
 import "@fontsource-variable/inter";
 import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 import "@fontsource/material-symbols-rounded";
 import "@fontsource/ibm-plex-mono";
+// oxlint-enable no-unassigned-import
 
-const APP_TITLE = "Plane | Simple, extensible, open-source project management tool.";
-const APP_DESCRIPTION =
-  "Open-source project management tool to manage work items, sprints, and product roadmaps with peace of mind.";
+const APP_TITLE = "God Mode — Paradise Task Tracker";
+const APP_DESCRIPTION = "Panel administrasi instance Paradise Task Tracker.";
 
 export const links: LinksFunction = () => [
   { rel: "apple-touch-icon", sizes: "180x180", href: appleTouchIcon },
@@ -63,13 +64,11 @@ export const meta: Route.MetaFunction = () => [
   { name: "description", content: APP_DESCRIPTION },
   { property: "og:title", content: APP_TITLE },
   { property: "og:description", content: APP_DESCRIPTION },
-  { property: "og:url", content: "https://plane.so/" },
-  {
-    name: "keywords",
-    content:
-      "software development, customer feedback, software, accelerate, code management, release management, project management, work items tracking, agile, scrum, kanban, collaboration",
-  },
-  { name: "twitter:site", content: "@planepowers" },
+  // `og:url`, `keywords`, dan `twitter:site` DIBUANG. Ketiganya hanya berguna
+  // kalau halaman ini dibagikan ke luar atau diindeks mesin pencari — dan God
+  // Mode tidak pernah keduanya: ia panel internal di balik login. Yang tersisa
+  // isinya milik vendor (`plane.so`, `@planepowers`), jadi menyimpannya berarti
+  // merawat merek orang lain untuk halaman yang tidak seorang pun bagikan.
 ];
 
 export default function Root() {

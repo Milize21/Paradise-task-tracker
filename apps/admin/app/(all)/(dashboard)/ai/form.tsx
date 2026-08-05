@@ -125,14 +125,12 @@ export function InstanceAIForm(props: IInstanceAIForm) {
           {isSubmitting ? "Saving" : "Save changes"}
         </Button>
 
+        {/* Ajakan "hubungi kami" DIBUANG: tautannya ke formulir kontak penjualan
+            vendor (`plane.so/contact`), yang tidak melayani instance kantor ini.
+            Vendor model AI di sini ditentukan IT sendiri lewat kolom di atas. */}
         <div className="relative inline-flex items-center gap-1.5 rounded-sm border border-accent-subtle bg-accent-subtle px-4 py-2 text-caption-sm-regular text-accent-secondary">
           <Lightbulb className="size-4" />
-          <div>
-            If you have a preferred AI models vendor, please get in{" "}
-            <a className="font-medium underline" href="https://plane.so/contact">
-              touch with us.
-            </a>
-          </div>
+          <div>Kredensial ini dipakai bersama oleh seluruh workspace di instance ini.</div>
         </div>
       </div>
     </div>

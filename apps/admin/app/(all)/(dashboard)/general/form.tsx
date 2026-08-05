@@ -107,18 +107,14 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
               </div>
             </div>
             <div className="grow">
-              <div className="text-13 leading-5 font-medium text-primary">Let Plane collect anonymous usage data</div>
+              <div className="text-13 leading-5 font-medium text-primary">Kirim data pemakaian anonim ke vendor</div>
+              {/* Tautan ke kebijakan telemetri vendor DIBUANG — tapi tombolnya
+                  TIDAK, dan teksnya sengaja diperjelas siapa penerimanya.
+                  Saklar ini benar-benar mengirim data keluar ke Plane; menyamarkan
+                  itu demi debranding akan menyesatkan orang yang menyalakannya. */}
               <div className="text-11 leading-5 font-regular text-tertiary">
-                No PII is collected.This anonymized data is used to understand how you use Plane and build new features
-                in line with{" "}
-                <a
-                  href="https://developers.plane.so/self-hosting/telemetry"
-                  target="_blank"
-                  className="text-accent-primary hover:underline"
-                  rel="noreferrer"
-                >
-                  our Telemetry Policy.
-                </a>
+                Tidak ada data pribadi yang dikirim. Data anonim ini dikirim ke pembuat perangkat lunak (Plane), bukan
+                ke internal kantor. Matikan kalau instance ini harus benar-benar tertutup.
               </div>
             </div>
           </div>

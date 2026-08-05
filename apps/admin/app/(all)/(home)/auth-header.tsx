@@ -7,6 +7,12 @@
 import Link from "next/link";
 import { PlaneLockup } from "@plane/propel/icons";
 
+// `PlaneLockup` HANYA namanya yang masih Plane — isinya sudah ditukar dan
+// merender logo + teks "Paradise Perkasa" (lihat
+// `packages/propel/src/icons/brand/plane-lockup.tsx`). Jadi layar login ini
+// TIDAK memasang logo vendor, meski grep atas kata "Plane" menuduhnya begitu.
+// Dibiarkan bernama lama karena mengganti namanya menyentuh 8 berkas di tiga app
+// tanpa satu piksel pun berubah di layar.
 export function AuthHeader() {
   return (
     <div className="sticky top-0 flex w-full flex-shrink-0 items-center justify-between gap-6">
