@@ -47,6 +47,19 @@ if SECRET_KEY in _INSECURE_SECRET_KEYS:
         "python3 -c \"from django.utils.crypto import get_random_secret_key; print(get_random_secret_key())\""
     )
 
+# Kustomisasi Paradise Task Tracker (B.E.R) — frasa konfirmasi untuk MEMBERI
+# Super Admin dari God Mode. Punya God Mode saja tidak cukup: memberi Super Admin
+# berarti memberi akses ke SELURUH project sekaligus, jadi aksi itu minta
+# konfirmasi sekali lagi.
+#
+# Dibaca dari environment, TIDAK pernah ditulis di source: repo ini publik, jadi
+# frasa yang ditulis di kode akan terbit ke GitHub dan gerbangnya jadi hiasan.
+# Tempatnya `apps/api/.env`, yang gitignored — sama seperti SECRET_KEY.
+#
+# Kosong = memberi Super Admin DITOLAK (gagal-tertutup). Lebih baik menolak
+# dengan pesan yang jelas daripada diam-diam melewati satu-satunya gerbang.
+SUPER_ADMIN_GRANT_PASSPHRASE = os.environ.get("SUPER_ADMIN_GRANT_PASSPHRASE", "")
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = int(os.environ.get("DEBUG", "0"))
 

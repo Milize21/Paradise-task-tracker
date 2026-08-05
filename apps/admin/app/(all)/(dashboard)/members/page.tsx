@@ -5,8 +5,8 @@
  * See the LICENSE file for details.
  */
 
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, ShieldCheck, UserPlus } from "lucide-react";
+import { Fragment, useState } from "react";
+import { ChevronLeft, ChevronRight, Pencil, UserPlus } from "lucide-react";
 import useSWR from "swr";
 // plane imports
 import { Button } from "@plane/propel/button";
@@ -15,6 +15,11 @@ import { InstanceMemberService, type TInstanceMember, type TMemberFilter } from 
 import { Loader, ToggleSwitch } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
+// local
+import { inputClass, PERAN } from "./constants";
+import { EditMember } from "./edit-member";
+import { GrantSuperAdmin } from "./grant-super-admin";
+import { SuperAdminCell } from "./super-admin-cell";
 // types
 import type { Route } from "./+types/page";
 
@@ -29,9 +34,6 @@ const URUTAN: { value: NonNullable<TMemberFilter["sort"]>; label: string }[] = [
   { value: "last_login", label: "Terakhir masuk" },
   { value: "created", label: "Terbaru dibuat" },
 ];
-
-const inputClass =
-  "rounded border border-subtle bg-layer-1 px-2 py-1.5 text-body-sm-regular text-primary outline-none focus:border-accent-primary";
 
 const toastError = (err: unknown, fallback: string) => {
   const message = (err as { error?: string })?.error ?? fallback;
@@ -49,13 +51,13 @@ function waktu(iso: string | null) {
   });
 }
 
-const PERAN: Record<number, string> = { 20: "Admin", 15: "Member", 5: "Guest" };
-
 const MembersPage = function MembersPage(_props: Route.ComponentProps) {
   const [filter, setFilter] = useState<TMemberFilter>({ page: 1, per_page: 50, sort: "name" });
   const [buatTerbuka, setBuatTerbuka] = useState(false);
   const [form, setForm] = useState({ email: "", display_name: "", password: "" });
   const [sibuk, setSibuk] = useState<string | null>(null);
+  const [sedangDiubah, setSedangDiubah] = useState<string | null>(null);
+  const [sedangDiangkat, setSedangDiangkat] = useState<string | null>(null);
 
   const { data, isLoading, error, mutate } = useSWR(["INSTANCE_MEMBERS", filter], () => memberService.list(filter), {
     revalidateOnFocus: false,
@@ -207,43 +209,76 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
                   <th className="px-3 py-2 text-left font-medium">Terakhir keluar</th>
                   <th className="px-3 py-2 text-center font-medium">Super Admin</th>
                   <th className="px-3 py-2 text-center font-medium">Aktif</th>
+                  <th className="px-3 py-2 text-center font-medium">Ubah</th>
                 </tr>
               </thead>
               <tbody>
                 {data.results.map((m) => (
-                  <tr key={m.id} className="border-t border-subtle">
-                    <td className="px-3 py-2">
-                      <span className="text-primary">{m.display_name}</span>
-                      <span className="ml-2 text-placeholder">{m.email}</span>
-                    </td>
-                    <td className="px-3 py-2 text-secondary">
-                      {m.workspace_role ? (PERAN[m.workspace_role] ?? m.workspace_role) : "—"}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-secondary">{waktu(m.last_active)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-secondary">
-                      {waktu(m.last_login_time)}
-                      {m.last_login_ip ? <span className="ml-1 text-placeholder">{m.last_login_ip}</span> : null}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-secondary">{waktu(m.last_logout_time)}</td>
-                    <td className="px-3 py-2 text-center">
-                      <button
-                        type="button"
-                        disabled={sibuk === m.id}
-                        onClick={() => handleUbah(m, { is_super_admin: !m.is_super_admin })}
-                        title={m.is_super_admin ? "Cabut status Super Admin" : "Jadikan Super Admin"}
-                        className={m.is_super_admin ? "text-accent-primary" : "text-placeholder"}
-                      >
-                        <ShieldCheck className="size-4" />
-                      </button>
-                    </td>
-                    <td className="px-3 py-2 text-center">
-                      <ToggleSwitch
-                        value={m.is_active}
-                        onChange={() => handleUbah(m, { is_active: !m.is_active })}
-                        disabled={sibuk === m.id}
-                      />
-                    </td>
-                  </tr>
+                  <Fragment key={m.id}>
+                    {/* Garis kiri kuning: Super Admin harus bisa dipindai
+                        sekilas di antara 90 baris, bukan dicari satu-satu. */}
+                    <tr
+                      className={`border-t border-subtle ${
+                        m.is_super_admin ? "border-l-warning-primary border-l-2 bg-warning-subtle/20" : ""
+                      }`}
+                    >
+                      <td className="px-3 py-2">
+                        <span className="text-primary">{m.display_name}</span>
+                        <span className="ml-2 text-placeholder">{m.email}</span>
+                      </td>
+                      <td className="px-3 py-2 text-secondary">
+                        {m.workspace_role ? (PERAN[m.workspace_role] ?? m.workspace_role) : "—"}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-secondary">{waktu(m.last_active)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-secondary">
+                        {waktu(m.last_login_time)}
+                        {m.last_login_ip ? <span className="ml-1 text-placeholder">{m.last_login_ip}</span> : null}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-secondary">{waktu(m.last_logout_time)}</td>
+                      <td className="px-3 py-2 text-center">
+                        <SuperAdminCell
+                          member={m}
+                          sibuk={sibuk === m.id}
+                          onMintaAngkat={() => {
+                            setSedangDiubah(null);
+                            setSedangDiangkat((id) => (id === m.id ? null : m.id));
+                          }}
+                          onCabut={() => handleUbah(m, { is_super_admin: false })}
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <ToggleSwitch
+                          value={m.is_active}
+                          onChange={() => handleUbah(m, { is_active: !m.is_active })}
+                          disabled={sibuk === m.id}
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => setSedangDiubah((id) => (id === m.id ? null : m.id))}
+                          title="Ubah nama, email, hak akses, password"
+                          className={sedangDiubah === m.id ? "text-accent-primary" : "text-placeholder"}
+                        >
+                          <Pencil className="size-4" />
+                        </button>
+                      </td>
+                    </tr>
+                    {sedangDiangkat === m.id && (
+                      <tr>
+                        <td colSpan={8} className="p-0">
+                          <GrantSuperAdmin member={m} onSelesai={mutate} onTutup={() => setSedangDiangkat(null)} />
+                        </td>
+                      </tr>
+                    )}
+                    {sedangDiubah === m.id && (
+                      <tr>
+                        <td colSpan={8} className="p-0">
+                          <EditMember member={m} onSelesai={mutate} onTutup={() => setSedangDiubah(null)} />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>

@@ -35,6 +35,27 @@ export type TInstanceMemberResponse = {
   results: TInstanceMember[];
 };
 
+export type TMemberUpdate = {
+  display_name?: string;
+  /** Identitas login (`USERNAME_FIELD`), bukan sekadar kontak. Mengakhiri sesi. */
+  email?: string;
+  /** Reset oleh admin. Minimal 8 karakter. Mengakhiri sesi. */
+  password?: string;
+  /** 20 Admin · 15 Member · 5 Guest. */
+  workspace_role?: number;
+  is_active?: boolean;
+  is_super_admin?: boolean;
+  /**
+   * Frasa konfirmasi, WAJIB saat `is_super_admin: true`. Diperiksa server
+   * terhadap `SUPER_ADMIN_GRANT_PASSPHRASE` (`apps/api/.env`) — tidak ada
+   * salinannya di sisi klien, jadi tidak ada yang bisa dibaca dari bundle.
+   */
+  grant_passphrase?: string;
+};
+
+/** Balasan `PATCH`: member sesudah diubah + berapa sesi yang ikut diakhiri. */
+export type TInstanceMemberUpdated = TInstanceMember & { sessions_ended: number };
+
 export type TMemberFilter = {
   search?: string;
   status?: "active" | "inactive";
@@ -73,7 +94,15 @@ export class InstanceMemberService extends APIService {
       });
   }
 
-  async update(id: string, data: { is_active?: boolean; is_super_admin?: boolean }): Promise<TInstanceMember> {
+  /**
+   * Semua kolom opsional — kirim hanya yang berubah. Yang tidak dikirim tidak
+   * disentuh, jadi form parsial tidak menimpa sisanya dengan nilai kosong.
+   *
+   * `password` dan `email` mengakhiri seluruh sesi orang itu (lihat
+   * `sessions_ended` di balasan): reset password yang membiarkan tab lama tetap
+   * sah bukan reset.
+   */
+  async update(id: string, data: TMemberUpdate): Promise<TInstanceMemberUpdated> {
     return this.patch(`/api/instances/members/${id}/`, data)
       .then((r) => r?.data)
       .catch((e) => {
