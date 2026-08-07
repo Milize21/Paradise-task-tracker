@@ -76,7 +76,12 @@ class InstanceAdminEndpoint(BaseAPIView):
                 {"error": "Instance is not registered yet"},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        instance_admins = InstanceAdmin.objects.filter(instance=instance)
+        # Urutkan eksplisit. Tanpa ORDER BY, Postgres bebas mengembalikan baris
+        # dalam urutan apa pun dan urutan itu bisa berubah sendiri sesudah UPDATE
+        # atau VACUUM. Halaman General di God Mode menampilkan `instanceAdmins[0]`
+        # sebagai "Email" instance, jadi tanpa ini isinya berganti-ganti tanpa ada
+        # yang mengubah apa pun. Yang tertua = admin pertama instance ini.
+        instance_admins = InstanceAdmin.objects.filter(instance=instance).order_by("created_at")
         serializer = InstanceAdminSerializer(instance_admins, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
