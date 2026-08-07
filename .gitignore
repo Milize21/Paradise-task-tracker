@@ -144,3 +144,6 @@ paradise/*.log
 
 # Vault Obsidian catatan pribadi (knowledge base proyek)
 /PP_TaskMgr/
+
+# Paket migrasi ke server (dump DB + env produksi berisi secret)
+/migrasi/
