@@ -42,6 +42,32 @@ upstream:
 | `apps/api/plane/app/views/asset/v2.py`                          | Gate lampiran Wiki — **upstream berkala mau membuang `import Page` yang jadi sandarannya**                                              |
 | `packages/i18n/src/locales/`                                    | Debranding, ~1.700 baris di 19 locale                                                                                                   |
 | `apps/web/core/components/instance/edition-badge.tsx`           | Modal ajakan upgrade dibuang (KEP-14) — **upstream berkala memasangnya lagi**                                                           |
+| `apps/api/plane/authentication/utils/login.py`                  | Satu panggilan `LoginActivity.catat()` sesudah `session.save()`                                                                         |
+| `apps/api/plane/authentication/views/{app,space}/signout.py`    | Satu panggilan `LoginActivity.catat()` **sebelum** `logout()`                                                                           |
+| `apps/api/plane/settings/common.py`                             | `LastActiveMiddleware` di `MIDDLEWARE` + `login_activity_retention` di `CELERY_IMPORTS`                                                 |
+| `apps/api/plane/celery.py`                                      | Jadwal `bersihkan-login-activity` (17:00 UTC = 00:00 WIB)                                                                               |
+| `apps/admin/app/routes.ts` + `hooks/use-sidebar-menu/`          | Rute & menu God Mode: Jejak audit, TPA, Member, Aktivitas                                                                               |
+
+### Jebakan pemantauan aktivitas (2026-08-07)
+
+Empat titik sambung di atas masing-masing cuma satu-dua baris, dan itu justru
+bahayanya: patch yang gagal di sana **tidak menimbulkan error apa pun**, hanya
+membuat angka di dashboard diam-diam jadi nol. Sesudah tiap sync, periksa:
+
+- `LoginActivity.catat()` masih terpanggil di jalur login **dan** ketiga logout.
+  Hilang di logout saja → sesi menggantung selamanya, durasi tak terhitung.
+- `session_key` diambil **sesudah** `request.session.save()`. Django membuat ulang
+  kunci saat login; membaca lebih awal memasangkan logout ke login yang salah.
+- `LastActiveMiddleware` masih **setelah** `AuthenticationMiddleware`. Kalau
+  urutannya berubah, `request.user` belum ada dan middleware diam seribu bahasa.
+- Task retensi terdaftar di **worker**, bukan cuma beat:
+  `docker compose exec worker celery -A plane inspect registered | grep login_activity`.
+  Beat saja = task dikirim, worker menjawab "unregistered", pesannya dibuang.
+
+Selebihnya berkas milik kita sendiri (`db/models/login_activity.py`,
+`middleware/last_active.py`, `bgtasks/login_activity_retention.py`,
+`license/api/views/activity.py`, `apps/admin/.../activity/`) — tidak akan pernah
+bentrok dengan upstream.
 
 ## Saat patch gagal
 
