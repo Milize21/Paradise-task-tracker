@@ -203,21 +203,43 @@ class InstanceActivityEndpoint(BaseAPIView):
         # Keluar-masuk: berapa kali tiap orang login dalam rentang ini. Inilah
         # yang tidak mungkin dijawab sebelum tabel login_activities ada —
         # `last_login_time` cuma satu nilai yang ditimpa tiap login.
-        per_user = login_qs.values("user_id").annotate(n=Count("id"))
+        per_user = list(login_qs.values("user_id").annotate(n=Count("id")))
         jumlah_login = [p["n"] for p in per_user]
         total_login = sum(jumlah_login)
 
+        # Sepuluh terbanyak. "Seberapa sering keluar-masuk" adalah pertanyaan
+        # per-orang; angka rata-rata menyembunyikan satu orang yang login 40 kali
+        # sehari karena sesinya terus putus.
+        teratas = sorted(per_user, key=lambda p: -p["n"])[:10]
+        nama = dict(
+            User.objects.filter(id__in=[p["user_id"] for p in teratas]).values_list(
+                "id", "email"
+            )
+        )
+        teraktif = [
+            {
+                "user_id": str(p["user_id"]),
+                "email": nama.get(p["user_id"], ""),
+                "login": p["n"],
+            }
+            for p in teratas
+        ]
+
         # Aktif harian: berapa orang berbeda yang login tiap hari.
-        harian = {}
-        for row in (
-            login_qs.values("terjadi_pada__date")
-            .annotate(orang=Count("user_id", distinct=True), login=Count("id"))
-            .order_by("terjadi_pada__date")
-        ):
-            harian[str(row["terjadi_pada__date"])] = {
+        # Daftar, bukan objek — urutan waktu adalah bagian dari maknanya, dan
+        # objek JSON menyerahkan urutan itu ke cara klien mem-parsing kuncinya.
+        harian = [
+            {
+                "tgl": str(row["terjadi_pada__date"]),
                 "orang": row["orang"],
                 "login": row["login"],
             }
+            for row in (
+                login_qs.values("terjadi_pada__date")
+                .annotate(orang=Count("user_id", distinct=True), login=Count("id"))
+                .order_by("terjadi_pada__date")
+            )
+        ]
 
         # Impor lokal: bgtasks menarik Celery, dan modul view ini dimuat saat
         # URLconf disusun.
@@ -240,6 +262,7 @@ class InstanceActivityEndpoint(BaseAPIView):
                     "rata_login_per_user": round(total_login / len(jumlah_login), 1) if jumlah_login else 0,
                 },
                 "harian": harian,
+                "teraktif": teraktif,
                 # Sumbernya sama persis dengan yang dipakai task pembersih, jadi
                 # peringatan di layar tidak mungkin berbeda dari yang benar-benar
                 # akan dihapus.

@@ -33,10 +33,10 @@ export function SessionCell({ userId, nama, masihLogin, sedangMemakai, diriSendi
   const [sibuk, setSibuk] = useState(false);
 
   const status = sedangMemakai
-    ? { warna: "bg-green-500", label: "Sedang memakai", judul: "Ada request dalam beberapa menit terakhir" }
+    ? { warna: "bg-green-600", label: "Sedang memakai", judul: "Ada request dalam beberapa menit terakhir" }
     : masihLogin
-      ? { warna: "bg-amber-500", label: "Masih login", judul: "Sesi masih hidup, tapi tidak ada aktivitas terbaru" }
-      : { warna: "bg-custom-border-300", label: "Keluar", judul: "Tidak ada sesi hidup" };
+      ? { warna: "bg-amber-600", label: "Masih login", judul: "Sesi masih hidup, tapi tidak ada aktivitas terbaru" }
+      : { warna: "bg-placeholder", label: "Keluar", judul: "Tidak ada sesi hidup" };
 
   // Hanya logout paksa. Menonaktifkan akun sudah punya kontrolnya sendiri di
   // kolom "Aktif", dan backend-nya memang sekalian memutus sesi
@@ -69,7 +69,7 @@ export function SessionCell({ userId, nama, masihLogin, sedangMemakai, diriSendi
     <div className="flex items-center justify-center gap-2">
       <span className="flex items-center gap-1.5" title={status.judul}>
         <span className={`size-2 rounded-full ${status.warna}`} aria-hidden />
-        <span className="text-xs text-custom-text-300 whitespace-nowrap">{status.label}</span>
+        <span className="text-11 whitespace-nowrap text-secondary">{status.label}</span>
       </span>
 
       {masihLogin && !diriSendiri ? (
@@ -77,7 +77,7 @@ export function SessionCell({ userId, nama, masihLogin, sedangMemakai, diriSendi
           type="button"
           disabled={sibuk}
           onClick={() => kick()}
-          className="text-custom-text-300 hover:bg-custom-background-80 hover:text-red-500 rounded p-1 disabled:opacity-40"
+          className="hover:text-red-600 rounded p-1 text-secondary hover:bg-layer-1 disabled:opacity-40"
           title="Putuskan sesi — dia harus login lagi"
           aria-label={`Putuskan sesi ${nama}`}
         >

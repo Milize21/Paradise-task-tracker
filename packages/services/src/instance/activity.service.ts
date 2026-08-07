@@ -65,7 +65,11 @@ export type TActivitySummary = {
     user_yang_login: number;
     rata_login_per_user: number;
   };
-  harian: Record<string, { orang: number; login: number }>;
+  /** Sudah terurut naik menurut tanggal dari server — jangan diurutkan ulang. */
+  harian: { tgl: string; orang: number; login: number }[];
+  /** 10 terbanyak. Rata-rata menyembunyikan satu orang yang login 40x sehari
+   *  karena sesinya terus putus — itu justru yang perlu terlihat. */
+  teraktif: { user_id: string; email: string; login: number }[];
   retensi: TRetensi;
 };
 
