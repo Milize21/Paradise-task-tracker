@@ -13,3 +13,15 @@ export type TInstanceEmailConfigurationKeys =
   | "EMAIL_USE_SSL"
   | "EMAIL_FROM"
   | "ENABLE_SMTP";
+
+/**
+ * Email MASUK. Tersimpan tapi BELUM DIBACA apa pun — Plane CE tidak punya
+ * pemroses inbound. Dipisah dari tipe SMTP supaya tidak ada kode yang
+ * mengiranya bagian dari alur kirim yang sudah jalan.
+ */
+export type TInstanceImapConfigurationKeys =
+  | "IMAP_HOST"
+  | "IMAP_PORT"
+  | "IMAP_HOST_USER"
+  | "IMAP_HOST_PASSWORD"
+  | "IMAP_USE_SSL";

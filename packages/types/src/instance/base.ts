@@ -8,6 +8,7 @@ import type { IUserLite } from "../users";
 import type {
   TInstanceAIConfigurationKeys,
   TInstanceEmailConfigurationKeys,
+  TInstanceImapConfigurationKeys,
   TInstanceImageConfigurationKeys,
   TInstanceAuthenticationKeys,
   TInstanceWorkspaceConfigurationKeys,
@@ -83,6 +84,7 @@ export interface IInstanceAdmin {
 export type TInstanceConfigurationKeys =
   | TInstanceAIConfigurationKeys
   | TInstanceEmailConfigurationKeys
+  | TInstanceImapConfigurationKeys
   | TInstanceImageConfigurationKeys
   | TInstanceAuthenticationKeys
   | TInstanceWorkspaceConfigurationKeys;

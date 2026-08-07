@@ -193,6 +193,46 @@ smtp_config_variables = [
         "category": "SMTP",
         "is_encrypted": False,
     },
+    # --- Email MASUK (Paradise / B.E.R) -----------------------------------
+    # Kategori IMAP sengaja dipisah dari SMTP: keduanya server berbeda dengan
+    # port dan kredensial berbeda, dan menyatukannya di satu kategori membuat
+    # `DisableEmailFeatureEndpoint` ikut mengosongkannya saat SMTP dimatikan.
+    #
+    # PERINGATAN JUJUR: nilai-nilai ini TERSIMPAN tapi BELUM DIBACA apa pun.
+    # Plane CE tidak punya pemroses email masuk sama sekali — tidak ada IMAP,
+    # POP3, maupun jalur inbound. Kolomnya ada supaya setelan mail kantor
+    # tercatat di satu tempat dan siap dipakai kalau nanti dibangun; jangan
+    # menyangka email akan terproses hanya karena kolomnya terisi.
+    {
+        "key": "IMAP_HOST",
+        "value": os.environ.get("IMAP_HOST", ""),
+        "category": "IMAP",
+        "is_encrypted": False,
+    },
+    {
+        "key": "IMAP_PORT",
+        "value": os.environ.get("IMAP_PORT", "993"),
+        "category": "IMAP",
+        "is_encrypted": False,
+    },
+    {
+        "key": "IMAP_HOST_USER",
+        "value": os.environ.get("IMAP_HOST_USER", ""),
+        "category": "IMAP",
+        "is_encrypted": False,
+    },
+    {
+        "key": "IMAP_HOST_PASSWORD",
+        "value": os.environ.get("IMAP_HOST_PASSWORD", ""),
+        "category": "IMAP",
+        "is_encrypted": True,
+    },
+    {
+        "key": "IMAP_USE_SSL",
+        "value": os.environ.get("IMAP_USE_SSL", "1"),
+        "category": "IMAP",
+        "is_encrypted": False,
+    },
 ]
 
 llm_config_variables = [

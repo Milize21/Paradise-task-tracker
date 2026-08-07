@@ -17,6 +17,7 @@ import { useInstance } from "@/hooks/store";
 import type { Route } from "./+types/page";
 // local
 import { InstanceEmailForm } from "./email-config-form";
+import { InstanceImapForm } from "./imap-config-form";
 
 const InstanceEmailPage = observer(function InstanceEmailPage(_props: Route.ComponentProps) {
   // store
@@ -82,7 +83,26 @@ const InstanceEmailPage = observer(function InstanceEmailPage(_props: Route.Comp
       {isSMTPEnabled && !isLoading && (
         <>
           {formattedConfig ? (
-            <InstanceEmailForm config={formattedConfig} />
+            <div className="space-y-10">
+              {/* Dua server berbeda dengan port dan kredensial berbeda. Dulu
+                  halaman ini hanya menampilkan yang keluar tanpa menyebutnya,
+                  jadi tidak ada petunjuk bahwa yang masuk memang belum ada. */}
+              <section>
+                <h3 className="text-13 font-medium text-primary">Email KELUAR (SMTP)</h3>
+                <p className="mb-4 text-11 font-regular text-tertiary">
+                  Dipakai instance untuk mengirim undangan, reset password, dan notifikasi.
+                </p>
+                <InstanceEmailForm config={formattedConfig} />
+              </section>
+
+              <section className="border-t border-subtle pt-8">
+                <h3 className="text-13 font-medium text-primary">Email MASUK (IMAP)</h3>
+                <p className="mb-4 text-11 font-regular text-tertiary">
+                  Server kotak masuk kantor. Disimpan di sini supaya satu tempat dengan setelan kirim.
+                </p>
+                <InstanceImapForm config={formattedConfig} />
+              </section>
+            </div>
           ) : (
             <Loader className="space-y-10">
               <Loader.Item height="50px" width="75%" />
