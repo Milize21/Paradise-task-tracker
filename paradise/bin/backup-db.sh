@@ -42,5 +42,23 @@ docker exec -e PGPASSWORD="${POSTGRES_PASSWORD}" "$CID" \
 # Verifikasi hasil tidak kosong (backup rusak = lebih bahaya dari tidak ada)
 [ -s "$FILE" ] || { echo "ERROR: backup kosong, hapus."; rm -f "$FILE"; exit 1; }
 
+# Lampiran MinIO. pg_dump tidak menyentuh volume ini, padahal baris file_assets
+# di DB menunjuk objek yang HANYA ada di sana. Database selamat + volume hilang
+# = tiap lampiran jadi 404 tanpa satu pun error di log. Ketahuan 2026-08-07,
+# setelah berminggu-minggu backup "hijau" yang sebenarnya separuh.
+# MSYS_NO_PATHCONV: Git Bash di Windows mengubah /to jadi path Windows.
+UFILE="$OUT_DIR/paradise-uploads-${STAMP}.tar.gz"
+VOL="$(docker volume ls -q | grep -E '_uploads$' | head -1)"
+if [ -n "$VOL" ]; then
+  echo "Uploads  -> $UFILE"
+  MSYS_NO_PATHCONV=1 docker run --rm -v "$VOL":/from:ro -v "$(cd "$OUT_DIR" && pwd)":/to \
+    alpine tar czf "/to/paradise-uploads-${STAMP}.tar.gz" -C /from .
+  [ -s "$UFILE" ] || { echo "ERROR: backup uploads kosong, hapus."; rm -f "$UFILE"; exit 1; }
+else
+  echo "ERROR: volume *_uploads tidak ditemukan - lampiran TIDAK ter-backup."
+  exit 1
+fi
+
 find "$OUT_DIR" -name 'paradise-*.sql.gz' -mtime "+$RETENTION_DAYS" -delete
-echo "OK ($(du -h "$FILE" | cut -f1)). Retensi ${RETENTION_DAYS} hari."
+find "$OUT_DIR" -name 'paradise-uploads-*.tar.gz' -mtime "+$RETENTION_DAYS" -delete
+echo "OK (db $(du -h "$FILE" | cut -f1), uploads $(du -h "$UFILE" | cut -f1)). Retensi ${RETENTION_DAYS} hari."
