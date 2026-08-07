@@ -7,6 +7,7 @@
 
 import { Fragment, useState } from "react";
 import { ChevronLeft, ChevronRight, Pencil, UserPlus } from "lucide-react";
+import { observer } from "mobx-react";
 import useSWR from "swr";
 // plane imports
 import { Button } from "@plane/propel/button";
@@ -15,10 +16,13 @@ import { InstanceMemberService, type TInstanceMember, type TMemberFilter } from 
 import { Loader, ToggleSwitch } from "@plane/ui";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
+// hooks
+import { useUser } from "@/hooks/store";
 // local
 import { inputClass, PERAN } from "./constants";
 import { EditMember } from "./edit-member";
 import { GrantSuperAdmin } from "./grant-super-admin";
+import { SessionCell } from "./session-cell";
 import { SuperAdminCell } from "./super-admin-cell";
 // types
 import type { Route } from "./+types/page";
@@ -58,6 +62,9 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
   const [sibuk, setSibuk] = useState<string | null>(null);
   const [sedangDiubah, setSedangDiubah] = useState<string | null>(null);
   const [sedangDiangkat, setSedangDiangkat] = useState<string | null>(null);
+  // Dipakai menyembunyikan tombol kick di baris sendiri — backend menolaknya,
+  // dan tombol yang selalu gagal lebih buruk daripada tombol yang tidak ada.
+  const { currentUser } = useUser();
 
   const { data, isLoading, error, mutate } = useSWR(["INSTANCE_MEMBERS", filter], () => memberService.list(filter), {
     revalidateOnFocus: false,
@@ -204,6 +211,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
                 <tr>
                   <th className="px-3 py-2 text-left font-medium">Nama</th>
                   <th className="px-3 py-2 text-left font-medium">Peran</th>
+                  <th className="px-3 py-2 text-center font-medium">Sesi</th>
                   <th className="px-3 py-2 text-left font-medium">Terakhir aktif</th>
                   <th className="px-3 py-2 text-left font-medium">Terakhir masuk</th>
                   <th className="px-3 py-2 text-left font-medium">Terakhir keluar</th>
@@ -228,6 +236,16 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
                       </td>
                       <td className="px-3 py-2 text-secondary">
                         {m.workspace_role ? (PERAN[m.workspace_role] ?? m.workspace_role) : "—"}
+                      </td>
+                      <td className="px-3 py-2">
+                        <SessionCell
+                          userId={m.id}
+                          nama={m.display_name || m.email}
+                          masihLogin={m.masih_login}
+                          sedangMemakai={m.sedang_memakai}
+                          diriSendiri={m.id === currentUser?.id}
+                          onSelesai={() => mutate()}
+                        />
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-secondary">{waktu(m.last_active)}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-secondary">
@@ -266,14 +284,14 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
                     </tr>
                     {sedangDiangkat === m.id && (
                       <tr>
-                        <td colSpan={8} className="p-0">
+                        <td colSpan={9} className="p-0">
                           <GrantSuperAdmin member={m} onSelesai={mutate} onTutup={() => setSedangDiangkat(null)} />
                         </td>
                       </tr>
                     )}
                     {sedangDiubah === m.id && (
                       <tr>
-                        <td colSpan={8} className="p-0">
+                        <td colSpan={9} className="p-0">
                           <EditMember member={m} onSelesai={mutate} onTutup={() => setSedangDiubah(null)} />
                         </td>
                       </tr>
@@ -315,4 +333,4 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
   );
 };
 
-export default MembersPage;
+export default observer(MembersPage);

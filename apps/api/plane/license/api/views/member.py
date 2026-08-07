@@ -97,7 +97,13 @@ def _akhiri_sesi(user_id):
     return Session.objects.filter(user_id=str(user_id)).delete()[0]
 
 
-def _serialize(u, super_admin_ids, ws_role):
+def _serialize(u, super_admin_ids, ws_role, sesi_hidup=None, batas_aktif=None):
+    """`sesi_hidup` = himpunan user_id (string) yang punya sesi belum kedaluwarsa.
+
+    Dihitung SEKALI untuk seluruh halaman oleh pemanggil, bukan per baris —
+    50 baris x 1 query akan jadi 50 query untuk informasi yang satu query bisa
+    jawab sekaligus.
+    """
     return {
         "id": str(u.id),
         "email": u.email,
@@ -115,6 +121,17 @@ def _serialize(u, super_admin_ids, ws_role):
         "last_login_ip": u.last_login_ip,
         "last_login_medium": u.last_login_medium,
         "created_at": u.created_at,
+        # Dua keadaan yang berbeda: sesi bisa hidup berhari-hari sesudah
+        # orangnya pulang. "sedang memakai" mensyaratkan keduanya karena
+        # last_active ber-default timezone.now, jadi akun yang baru dibuat
+        # akan terbaca aktif tanpa pernah login.
+        "masih_login": str(u.id) in (sesi_hidup or set()),
+        "sedang_memakai": (
+            str(u.id) in (sesi_hidup or set())
+            and batas_aktif is not None
+            and u.last_active is not None
+            and u.last_active >= batas_aktif
+        ),
     }
 
 
@@ -161,12 +178,27 @@ class InstanceMemberEndpoint(BaseAPIView):
         sa = super_admin_user_ids()
         ws_role = dict(WorkspaceMember.objects.filter(member__in=page.object_list).values_list("member_id", "role"))
 
+        # Keadaan sesi untuk seluruh halaman dalam satu query.
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from plane.db.models import AMBANG_AKTIF_MENIT, Session
+
+        sesi_hidup = set(
+            Session.objects.filter(
+                expire_date__gt=timezone.now(),
+                user_id__in=[str(u.id) for u in page.object_list],
+            ).values_list("user_id", flat=True)
+        )
+        batas_aktif = timezone.now() - timedelta(minutes=AMBANG_AKTIF_MENIT)
+
         return Response(
             {
                 "count": paginator.count,
                 "total_pages": paginator.num_pages,
                 "page": page.number,
-                "results": [_serialize(u, sa, ws_role) for u in page.object_list],
+                "results": [_serialize(u, sa, ws_role, sesi_hidup, batas_aktif) for u in page.object_list],
             },
             status=status.HTTP_200_OK,
         )

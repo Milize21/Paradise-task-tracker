@@ -9,3 +9,4 @@ export * from "./instance.service";
 export * from "./audit-log.service";
 export * from "./trash.service";
 export * from "./member.service";
+export * from "./activity.service";

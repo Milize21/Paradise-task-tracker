@@ -26,6 +26,10 @@ export type TInstanceMember = {
   last_login_ip: string | null;
   last_login_medium: string | null;
   created_at: string;
+  /** Ada sesi belum kedaluwarsa. Bisa bertahan berhari-hari sesudah orangnya pulang. */
+  masih_login: boolean;
+  /** Sesi hidup DAN ada request beberapa menit terakhir — benar-benar di depan layar. */
+  sedang_memakai: boolean;
 };
 
 export type TInstanceMemberResponse = {

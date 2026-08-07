@@ -28,6 +28,8 @@ export default [
     route("trash", "./(all)/(dashboard)/trash/page.tsx"),
     // Kelola member — satu-satunya pintu masuk akun selama signup mati.
     route("members", "./(all)/(dashboard)/members/page.tsx"),
+    // Pemantauan sesi & keaktifan — siapa sedang memakai, kick, riwayat 3 bulan.
+    route("activity", "./(all)/(dashboard)/activity/page.tsx"),
   ]),
   // Catch-all route for 404 handling - must be last
   route("*", "./components/404.tsx"),

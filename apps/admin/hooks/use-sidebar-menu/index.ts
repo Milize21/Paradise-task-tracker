@@ -14,6 +14,9 @@ export function useSidebarMenu(): TSidebarMenuItem[] {
     coreSidebarMenuLinks.email,
     coreSidebarMenuLinks.authentication,
     coreSidebarMenuLinks.members,
+    // Tepat di bawah Member: dua halaman ini dipakai bergantian — lihat siapa
+    // sedang aktif di sini, lalu tindak orangnya di Member.
+    coreSidebarMenuLinks.activity,
     coreSidebarMenuLinks.workspace,
     coreSidebarMenuLinks.ai,
     coreSidebarMenuLinks.image,
