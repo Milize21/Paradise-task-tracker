@@ -10,7 +10,7 @@ from django.utils import timezone
 
 # Module imports
 from plane.authentication.utils.host import user_ip, base_host
-from plane.db.models import User
+from plane.db.models import LoginActivity, User
 
 
 class SignOutAuthEndpoint(View):
@@ -21,6 +21,16 @@ class SignOutAuthEndpoint(View):
             user.last_logout_ip = user_ip(request=request)
             user.last_logout_time = timezone.now()
             user.save()
+            # Jejak logout (B.E.R) — dicatat SEBELUM logout(), setelah itu
+            # session_key sudah hilang dan pasangannya dengan login tak bisa
+            # ditemukan lagi untuk menghitung durasi.
+            LoginActivity.catat(
+                user=user,
+                jenis=LoginActivity.Jenis.LOGOUT,
+                request=request,
+                permukaan="app",
+                session_key=request.session.session_key or "",
+            )
             # Log the user out
             logout(request)
             return HttpResponseRedirect(base_host(request=request, is_app=True))

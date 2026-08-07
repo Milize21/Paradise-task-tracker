@@ -10,7 +10,7 @@ from django.utils import timezone
 
 # Module imports
 from plane.authentication.utils.host import base_host, user_ip
-from plane.db.models import User
+from plane.db.models import LoginActivity, User
 from plane.utils.path_validator import get_safe_redirect_url
 
 
@@ -24,6 +24,15 @@ class SignOutAuthSpaceEndpoint(View):
             user.last_logout_ip = user_ip(request=request)
             user.last_logout_time = timezone.now()
             user.save()
+            # Jejak logout (B.E.R) — SEBELUM logout(); sesudahnya session_key
+            # hilang dan pasangannya dengan login tak bisa dicari lagi.
+            LoginActivity.catat(
+                user=user,
+                jenis=LoginActivity.Jenis.LOGOUT,
+                request=request,
+                permukaan="space",
+                session_key=request.session.session_key or "",
+            )
             # Log the user out
             logout(request)
             url = get_safe_redirect_url(base_url=base_host(request=request, is_space=True), next_path=next_path)

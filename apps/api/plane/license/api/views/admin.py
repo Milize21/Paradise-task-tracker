@@ -30,7 +30,7 @@ from plane.license.api.serializers import (
     InstanceAdminSerializer,
 )
 from plane.license.models import Instance, InstanceAdmin
-from plane.db.models import User, Profile
+from plane.db.models import LoginActivity, Profile, User
 from plane.utils.cache import cache_response, invalidate_cache
 from plane.authentication.utils.login import user_login
 from plane.authentication.utils.host import base_host, user_ip
@@ -440,6 +440,15 @@ class InstanceAdminSignOutEndpoint(View):
             user.last_logout_ip = user_ip(request=request)
             user.last_logout_time = timezone.now()
             user.save()
+            # Jejak logout (B.E.R) — SEBELUM logout(); sesudahnya session_key
+            # hilang dan pasangannya dengan login tak bisa dicari lagi.
+            LoginActivity.catat(
+                user=user,
+                jenis=LoginActivity.Jenis.LOGOUT,
+                request=request,
+                permukaan="admin",
+                session_key=request.session.session_key or "",
+            )
             # Log the user out
             logout(request)
             url = get_safe_redirect_url(base_url=base_host(request=request, is_admin=True), next_path="")

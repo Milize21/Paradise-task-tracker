@@ -145,6 +145,9 @@ MIDDLEWARE = [
     # Audit trail: menangkap aktor + IP per request. Harus setelah Authentication.
     "auditlog.middleware.AuditlogMiddleware",
     "django.middleware.gzip.GZipMiddleware",
+    # Paradise (B.E.R): stempel "sedang memakai". Harus SETELAH Authentication —
+    # sebelum itu request.user belum ada dan middleware ini diam saja.
+    "plane.middleware.last_active.LastActiveMiddleware",
     "plane.middleware.request_body_size.RequestBodySizeLimitMiddleware",
     "plane.middleware.logger.APITokenLogMiddleware",
     "plane.middleware.logger.RequestLoggerMiddleware",
@@ -360,6 +363,7 @@ CELERY_IMPORTS = (
     "plane.bgtasks.cleanup_task",
     # Paradise (B.E.R): tanpa baris ini worker buang task dari beat "unregistered"
     "plane.bgtasks.recurring_issue_task",
+    "plane.bgtasks.login_activity_retention",
     "plane.license.bgtasks.telemetry_metrics",
     # management tasks
     "plane.bgtasks.dummy_data_task",

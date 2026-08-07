@@ -31,3 +31,8 @@ from .workspace import (
 from .audit_log import InstanceAuditLogEndpoint
 from .trash import InstanceTrashEndpoint
 from .member import InstanceMemberEndpoint
+from .activity import (
+    InstanceActivityEndpoint,
+    InstanceLoginHistoryEndpoint,
+    InstanceMemberSessionEndpoint,
+)

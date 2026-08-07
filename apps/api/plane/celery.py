@@ -52,6 +52,12 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.recurring_issue_task.create_recurring_issues",
         "schedule": crontab(minute="*/15"),  # Every 15 minutes
     },
+    # Paradise (B.E.R): buang riwayat login >3 bulan, peringatkan sebelum dibuang.
+    # 17:00 UTC = 00:00 WIB, jam yang sama dengan backup harian.
+    "bersihkan-login-activity": {
+        "task": "plane.bgtasks.login_activity_retention.bersihkan_login_activity",
+        "schedule": crontab(hour=17, minute=0),
+    },
     "push-instance-metrics": {
         "task": "plane.license.bgtasks.telemetry_metrics.push_instance_metrics",
         "schedule": schedule(run_every=timedelta(minutes=METRICS_PUSH_INTERVAL_MINUTES)),

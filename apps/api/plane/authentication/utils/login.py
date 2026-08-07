@@ -9,6 +9,7 @@ from django.conf import settings
 # Module imports
 from plane.utils.host import base_host
 from plane.utils.ip_address import get_client_ip
+from plane.db.models import LoginActivity
 
 
 def user_login(request, user, is_app=False, is_admin=False, is_space=False):
@@ -25,4 +26,17 @@ def user_login(request, user, is_app=False, is_admin=False, is_space=False):
     }
     request.session["device_info"] = device_info
     request.session.save()
+
+    # Jejak login (B.E.R). Dicatat SESUDAH session.save() supaya session_key
+    # sudah pasti final — Django membuat ulang kunci saat login (cycle_key),
+    # jadi membaca sebelum save() memberi kunci lama dan pemasangan
+    # login->logout untuk menghitung durasi jadi meleset.
+    LoginActivity.catat(
+        user=user,
+        jenis=LoginActivity.Jenis.LOGIN,
+        request=request,
+        medium=getattr(user, "last_login_medium", "") or "",
+        permukaan="admin" if is_admin else ("space" if is_space else "app"),
+        session_key=request.session.session_key or "",
+    )
     return

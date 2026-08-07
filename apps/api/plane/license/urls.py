@@ -21,6 +21,9 @@ from plane.license.api.views import (
     InstanceAuditLogEndpoint,
     InstanceTrashEndpoint,
     InstanceMemberEndpoint,
+    InstanceActivityEndpoint,
+    InstanceLoginHistoryEndpoint,
+    InstanceMemberSessionEndpoint,
 )
 
 urlpatterns = [
@@ -87,4 +90,16 @@ urlpatterns = [
     # Kelola member — satu-satunya pintu masuk akun selama signup mati.
     path("members/", InstanceMemberEndpoint.as_view(), name="instance-members"),
     path("members/<uuid:pk>/", InstanceMemberEndpoint.as_view(), name="instance-member"),
+    # Paradise (B.E.R): pemantauan sesi & aktivitas
+    path(
+        "members/<uuid:pk>/sessions/",
+        InstanceMemberSessionEndpoint.as_view(),
+        name="instance-member-sessions",
+    ),
+    path("activity/", InstanceActivityEndpoint.as_view(), name="instance-activity"),
+    path(
+        "login-history/",
+        InstanceLoginHistoryEndpoint.as_view(),
+        name="instance-login-history",
+    ),
 ]
