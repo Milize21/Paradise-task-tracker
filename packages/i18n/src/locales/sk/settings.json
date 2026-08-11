@@ -110,7 +110,8 @@
       "assigned": "Priradené",
       "created": "Vytvorené",
       "subscribed": "Odobierané",
-      "activity": "Aktivita"
+      "activity": "Aktivita",
+      "calendar": "Kalendár"
     },
     "empty_state": {
       "activity": {

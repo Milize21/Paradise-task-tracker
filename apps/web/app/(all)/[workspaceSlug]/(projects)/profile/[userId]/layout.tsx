@@ -48,8 +48,16 @@ function UseProfileLayout({ params }: Route.ComponentProps) {
     userService.getUserProfileProjectsSegregation(workspaceSlug, userId)
   );
   // derived values
+  // Tab calendar ikut dijaga sama seperti assigned/created/subscribed: isinya
+  // pekerjaan orang lain, jadi pengunjung tanpa hak tidak boleh menembusnya
+  // lewat URL langsung meski tabnya memang tidak ditampilkan untuk dia.
   const isAuthorizedPath =
-    pathname.includes("assigned") || pathname.includes("created") || pathname.includes("subscribed");
+    pathname.includes("assigned") ||
+    pathname.includes("created") ||
+    pathname.includes("subscribed") ||
+    pathname.includes("calendar");
+  // Sengaja TANPA calendar: baris ini menyalakan pemilih layout list/kanban,
+  // yang tidak berlaku di kalender dan hanya membingungkan kalau muncul.
   const isIssuesTab = pathname.includes("assigned") || pathname.includes("created") || pathname.includes("subscribed");
 
   const tabsList = isAuthorized ? [...PROFILE_VIEWER_TAB, ...PROFILE_ADMINS_TAB] : PROFILE_VIEWER_TAB;

@@ -31,7 +31,12 @@ export type CalendarStoreType =
   | EIssuesStoreType.PROJECT_VIEW
   | EIssuesStoreType.TEAM
   | EIssuesStoreType.TEAM_VIEW
-  | EIssuesStoreType.EPIC;
+  | EIssuesStoreType.EPIC
+  // Kustomisasi Paradise (Yorukaze Production): tab Calendar di halaman Your Work.
+  // Store PROFIL memakai `fetchIssues(loadType, options, viewId)` dengan tanda
+  // tangan yang sama, jadi kalender bisa memakainya apa adanya selama viewId
+  // ("assigned"/"created"/"subscribed") diteruskan.
+  | EIssuesStoreType.PROFILE;
 
 interface IBaseCalendarRoot {
   QuickActions: FC<IQuickActionProps>;
@@ -137,12 +142,12 @@ export const BaseCalendarRoot = observer(function BaseCalendarRoot(props: IBaseC
 
   const getPaginationData = useCallback(
     (groupId: string | undefined) => issues?.getPaginationData(groupId, undefined),
-    [issues?.getPaginationData]
+    [issues]
   );
 
   const getGroupIssueCount = useCallback(
     (groupId: string | undefined) => issues?.getGroupIssueCount(groupId, undefined, false),
-    [issues?.getGroupIssueCount]
+    [issues]
   );
 
   const canEditProperties = useCallback(

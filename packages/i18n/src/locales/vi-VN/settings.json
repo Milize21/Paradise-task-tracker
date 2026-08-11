@@ -110,7 +110,8 @@
       "assigned": "Đã giao",
       "created": "Đã tạo",
       "subscribed": "Đã đăng ký",
-      "activity": "Hoạt động"
+      "activity": "Hoạt động",
+      "calendar": "Lịch"
     },
     "empty_state": {
       "activity": {

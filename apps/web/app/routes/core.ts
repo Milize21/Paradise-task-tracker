@@ -114,6 +114,12 @@ export const coreRoutes: RouteConfigEntry[] = [
             ":workspaceSlug/profile/:userId/activity",
             "./(all)/[workspaceSlug]/(projects)/profile/[userId]/activity/page.tsx"
           ),
+          // Kustomisasi Paradise (Yorukaze Production): tab Calendar.
+          // Segmen statis, jadi ia menang atas `:profileViewId` di atas.
+          route(
+            ":workspaceSlug/profile/:userId/calendar",
+            "./(all)/[workspaceSlug]/(projects)/profile/[userId]/calendar/page.tsx"
+          ),
         ]),
 
         // Stickies

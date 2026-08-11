@@ -41,6 +41,15 @@ export const PROFILE_ADMINS_TAB = [
     i18n_label: "profile.tabs.activity",
     selected: "/activity/",
   },
+  // Kustomisasi Paradise (Yorukaze Production): pandangan tenggat dalam bentuk
+  // kalender. Hanya memuat work item yang DIBEBANKAN ke orangnya dan punya
+  // target_date; yang tanpa tenggat memang tidak punya tempat di kalender.
+  {
+    key: "calendar",
+    route: "calendar",
+    i18n_label: "profile.tabs.calendar",
+    selected: "/calendar/",
+  },
 ];
 
 export const PREFERENCE_OPTIONS: {

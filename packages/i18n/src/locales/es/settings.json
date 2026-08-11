@@ -110,7 +110,8 @@
       "assigned": "Asignado",
       "created": "Creado",
       "subscribed": "Suscrito",
-      "activity": "Actividad"
+      "activity": "Actividad",
+      "calendar": "Calendario"
     },
     "empty_state": {
       "activity": {

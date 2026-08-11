@@ -110,7 +110,8 @@
       "assigned": "Atanan",
       "created": "Oluşturulan",
       "subscribed": "Abone olunan",
-      "activity": "Aktivite"
+      "activity": "Aktivite",
+      "calendar": "Takvim"
     },
     "empty_state": {
       "activity": {
