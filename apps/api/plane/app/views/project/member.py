@@ -158,13 +158,33 @@ class ProjectMemberViewSet(BaseViewSet):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def list(self, request, slug, project_id):
         # Get the list of project members for the project
-        project_members = ProjectMember.objects.filter(
-            project_id=project_id,
-            workspace__slug=slug,
-            member__is_bot=False,
-            is_active=True,
-            member__member_workspace__workspace__slug=slug,
-            member__member_workspace__is_active=True,
+        #
+        # `sembunyikan()` WAJIB di sini. Method ini membangun querysetnya sendiri
+        # dan TIDAK memanggil `self.get_queryset()`, jadi penyaring Super Admin
+        # yang dipasang di sana terlewat sama sekali. Akibatnya nyata dan sempat
+        # tampil ke user: dropdown assignee memuat 18 orang padahal daftar
+        # anggota workspace cuma mengakui 6 di antaranya, sehingga 12 sisanya
+        # dirender sebagai avatar "?" tanpa nama. Frontend mengambil ID dari
+        # sini tapi NAMA dari endpoint workspace, jadi kedua daftar itu harus
+        # menyaring orang yang sama persis.
+        #
+        # Ini juga menutup kebocoran: tanpa filter ini, id Super Admin ikut
+        # terkirim ke browser siapa pun yang membuka project.
+        #
+        # `member_workspace__deleted_at__isnull=True` ikut ditambahkan karena
+        # `is_active=True` saja tidak melihat baris keanggotaan yang sudah
+        # ter-soft-delete, dan itu meloloskan akun lama yang keanggotaan
+        # workspace-nya sudah dicabut (mis. "Tester Dua").
+        project_members = sembunyikan(
+            ProjectMember.objects.filter(
+                project_id=project_id,
+                workspace__slug=slug,
+                member__is_bot=False,
+                is_active=True,
+                member__member_workspace__workspace__slug=slug,
+                member__member_workspace__is_active=True,
+                member__member_workspace__deleted_at__isnull=True,
+            )
         ).select_related("project", "member", "workspace")
 
         serializer = ProjectMemberRoleSerializer(project_members, fields=("id", "member", "role"), many=True)
