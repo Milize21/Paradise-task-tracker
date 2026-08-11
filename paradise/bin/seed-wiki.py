@@ -1,4 +1,4 @@
-# Seed Workspace Wiki — Paradise Task Tracker (B.E.R)
+# Seed Workspace Wiki — Paradise Task Tracker (Yorukaze Production)
 # Jalankan: docker exec -i pradise_plane-api-1 python manage.py shell < paradise/bin/seed-wiki.py
 # Idempotent: aman dijalankan ulang (get_or_create semua).
 #

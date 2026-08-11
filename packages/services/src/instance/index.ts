@@ -5,7 +5,7 @@
  */
 
 export * from "./instance.service";
-// Kustomisasi Paradise (B.E.R)
+// Kustomisasi Paradise (Yorukaze Production)
 export * from "./audit-log.service";
 export * from "./trash.service";
 export * from "./member.service";

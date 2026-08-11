@@ -1,4 +1,4 @@
-# Bagian B1 — angkat tim IT jadi Super Admin & sinkronkan aksesnya (B.E.R)
+# Bagian B1 — angkat tim IT jadi Super Admin & sinkronkan aksesnya (Yorukaze Production)
 #
 # Jalankan:
 #   docker exec -i pradise_plane-api-1 python manage.py shell < paradise/bin/org-migrate-b1-superadmin.py

@@ -36,7 +36,7 @@ class WorkSpaceMemberViewSet(BaseViewSet):
     use_read_replica = True
 
     def get_queryset(self):
-        # Super Admin disembunyikan (B.E.R): mereka anggota supaya bisa
+        # Super Admin disembunyikan (Yorukaze Production): mereka anggota supaya bisa
         # memantau semua project, tapi keberadaannya tidak boleh terlihat
         # user maupun admin project. Lihat plane/db/superadmin.py.
         return self.filter_queryset(

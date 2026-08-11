@@ -11,4 +11,4 @@ export default function ResetPasswordLayout() {
   return <Outlet />;
 }
 
-export const meta: Route.MetaFunction = () => [{ title: "Reset Password - Plane" }];
+export const meta: Route.MetaFunction = () => [{ title: "Atur Ulang Kata Sandi - Paradise Task Tracker" }];

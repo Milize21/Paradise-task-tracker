@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — Super Admin tersembunyi (B.E.R)
+# Kustomisasi Paradise Task Tracker — Super Admin tersembunyi (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 """Super Admin: akses ke semua project tanpa perlu di-assign, dan tidak terlihat.

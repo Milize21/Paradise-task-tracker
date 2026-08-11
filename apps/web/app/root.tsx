@@ -66,9 +66,9 @@ export function Layout({ children }: { children: ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#fff" />
-        {/* Paradise Task Tracker — dibangun & dikustomisasi oleh B.E.R (Bintang Eko Ramadhan) */}
-        <meta name="author" content="B.E.R" />
-        <meta name="generator" content="B.E.R" />
+        {/* Paradise Task Tracker — dibangun & dikustomisasi oleh Yorukaze Production (Bintang Eko Ramadhan) */}
+        <meta name="author" content="Yorukaze Production" />
+        <meta name="generator" content="Yorukaze Production" />
         {/* Meta info for PWA */}
         <meta name="application-name" content="Paradise Task Tracker" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -140,7 +140,7 @@ export default function Root() {
 
 export function HydrateFallback() {
   // Render pertama client HARUS sama dengan shell server (<div />) agar hydration
-  // tidak mismatch; spinner baru dirender setelah mount (B.E.R fix hydration).
+  // tidak mismatch; spinner baru dirender setelah mount (fix hidrasi, commit de98db2).
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {

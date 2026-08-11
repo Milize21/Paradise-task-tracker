@@ -114,8 +114,8 @@ class EmailCredentialCheckEndpoint(BaseAPIView):
             use_ssl=EMAIL_USE_SSL == "1",
         )
         # Prepare email details
-        subject = "Email Notification from Plane"
-        message = "This is a sample email notification sent from Plane application."
+        subject = "Notifikasi email dari Paradise Task Tracker"
+        message = "Ini contoh notifikasi email yang dikirim dari Paradise Task Tracker."
         # Send the email
         try:
             msg = EmailMultiAlternatives(

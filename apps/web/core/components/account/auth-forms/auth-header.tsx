@@ -27,29 +27,29 @@ type TAuthHeader = {
 const Titles = {
   [EAuthModes.SIGN_IN]: {
     [EAuthSteps.EMAIL]: {
-      header: "Work in all dimensions.",
+      header: "Selamat datang.",
       subHeader: "Welcome back to Paradise Task Tracker.",
     },
     [EAuthSteps.PASSWORD]: {
-      header: "Work in all dimensions.",
+      header: "Selamat datang.",
       subHeader: "Welcome back to Paradise Task Tracker.",
     },
     [EAuthSteps.UNIQUE_CODE]: {
-      header: "Work in all dimensions.",
+      header: "Selamat datang.",
       subHeader: "Welcome back to Paradise Task Tracker.",
     },
   },
   [EAuthModes.SIGN_UP]: {
     [EAuthSteps.EMAIL]: {
-      header: "Work in all dimensions.",
+      header: "Selamat datang.",
       subHeader: "Create your Paradise Task Tracker account.",
     },
     [EAuthSteps.PASSWORD]: {
-      header: "Work in all dimensions.",
+      header: "Selamat datang.",
       subHeader: "Create your Paradise Task Tracker account.",
     },
     [EAuthSteps.UNIQUE_CODE]: {
-      header: "Work in all dimensions.",
+      header: "Selamat datang.",
       subHeader: "Create your Paradise Task Tracker account.",
     },
   },

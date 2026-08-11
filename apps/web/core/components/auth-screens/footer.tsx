@@ -4,12 +4,15 @@
  * See the LICENSE file for details.
  */
 
+// components
+import { PoweredByYorukaze } from "@/components/common/powered-by-yorukaze";
+
 export function AuthFooter() {
   return (
     <div className="flex flex-col items-center gap-2">
       <span className="text-13 whitespace-nowrap text-tertiary">Paradise Perkasa — internal task tracker</span>
-      {/* Tanda pembuat — jangan dihapus. Built by B.E.R (Bintang Eko Ramadhan) */}
-      <span className="text-11 whitespace-nowrap text-tertiary/70">Built by B.E.R</span>
+      {/* Tanda produksi — jangan dihapus. Yorukaze Production (Bintang Eko Ramadhan) */}
+      <PoweredByYorukaze />
     </div>
   );
 }

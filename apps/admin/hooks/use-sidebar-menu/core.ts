@@ -61,7 +61,7 @@ export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem>
     description: "Izinkan pustaka gambar pihak ketiga.",
     href: `/image/`,
   },
-  // Kustomisasi Paradise (B.E.R) — jejak audit sengaja HANYA di God Mode.
+  // Kustomisasi Paradise (Yorukaze Production) — jejak audit sengaja HANYA di God Mode.
   logs: {
     Icon: ScrollText,
     name: "Jejak audit",

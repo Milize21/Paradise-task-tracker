@@ -41,7 +41,7 @@ export const getSidebarNavigationItemIcon = (key: string, className: string = ""
       return <ArchiveIcon className={cn("size-4 flex-shrink-0", className)} />;
     case "stickies":
       return <MultipleStickyIcon className={cn("size-4 flex-shrink-0", className)} />;
-    // Item kustom Paradise/B.E.R. Tanpa case di sini switch mengembalikan
+    // Item kustom Paradise/Yorukaze Production. Tanpa case di sini switch mengembalikan
     // undefined dan itemnya tampil TANPA ikon — itu yang terjadi pada
     // dashboard_divisi & initiatives sejak dibuat.
     case "wiki":

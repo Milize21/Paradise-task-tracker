@@ -42,7 +42,7 @@ class S3Storage(S3Boto3Storage):
                 endpoint_protocol = "https"
             else:
                 endpoint_protocol = request.scheme if request else "http"
-            # Paradise (B.E.R): tanpa reverse-proxy (dev), URL presigned berbasis host API
+            # Paradise (Yorukaze Production): tanpa reverse-proxy (dev), URL presigned berbasis host API
             # akan 404 karena tidak ada yang meneruskan /uploads ke MinIO. Override ini
             # mengarahkan URL yang dilihat browser langsung ke port publik MinIO.
             minio_public_endpoint = os.environ.get("MINIO_PUBLIC_ENDPOINT_URL")

@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — jejak "sedang memakai" (B.E.R)
+# Kustomisasi Paradise Task Tracker — jejak "sedang memakai" (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 """Memperbarui `User.last_active` dari lalu lintas yang memang sudah terjadi.

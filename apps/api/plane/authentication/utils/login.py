@@ -27,7 +27,7 @@ def user_login(request, user, is_app=False, is_admin=False, is_space=False):
     request.session["device_info"] = device_info
     request.session.save()
 
-    # Jejak login (B.E.R). Dicatat SESUDAH session.save() supaya session_key
+    # Jejak login (Yorukaze Production). Dicatat SESUDAH session.save() supaya session_key
     # sudah pasti final — Django membuat ulang kunci saat login (cycle_key),
     # jadi membaca sebelum save() memberi kunci lama dan pemasangan
     # login->logout untuk menghitung durasi jadi meleset.

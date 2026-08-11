@@ -193,7 +193,7 @@ smtp_config_variables = [
         "category": "SMTP",
         "is_encrypted": False,
     },
-    # --- Email MASUK (Paradise / B.E.R) -----------------------------------
+    # --- Email MASUK (Paradise / Yorukaze Production) -----------------------------------
     # Kategori IMAP sengaja dipisah dari SMTP: keduanya server berbeda dengan
     # port dan kredensial berbeda, dan menyatukannya di satu kategori membuat
     # `DisableEmailFeatureEndpoint` ikut mengosongkannya saat SMTP dimatikan.

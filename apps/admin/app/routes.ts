@@ -21,7 +21,7 @@ export default [
     route("authentication/gitea", "./(all)/(dashboard)/authentication/gitea/page.tsx"),
     route("ai", "./(all)/(dashboard)/ai/page.tsx"),
     route("image", "./(all)/(dashboard)/image/page.tsx"),
-    // Kustomisasi Paradise (B.E.R) — jejak audit sengaja HANYA di sini, tidak
+    // Kustomisasi Paradise (Yorukaze Production) — jejak audit sengaja HANYA di sini, tidak
     // ada padanannya di aplikasi utama.
     route("logs", "./(all)/(dashboard)/logs/page.tsx"),
     // TPA — tong sampah lintas project, hanya Super Admin.

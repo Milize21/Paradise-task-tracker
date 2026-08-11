@@ -111,7 +111,7 @@ def soft_delete_related_objects(app_label, model_name, instance_pk, using=None):
 def restore_related_objects(app_label, model_name, instance_pk, cutoff, using=None):
     """Kembalikan objek beserta anak-anak yang ikut terhapus bersamanya.
 
-    Kustomisasi Paradise (B.E.R) — kebalikan dari `soft_delete_related_objects`,
+    Kustomisasi Paradise (Yorukaze Production) — kebalikan dari `soft_delete_related_objects`,
     dipakai Trashbin (per project) dan TPA (God Mode).
 
     `cutoff` adalah `deleted_at` milik objek induk. HANYA anak dengan

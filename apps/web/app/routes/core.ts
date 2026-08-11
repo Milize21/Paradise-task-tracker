@@ -74,17 +74,17 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/analytics/:tabId", "./(all)/[workspaceSlug]/(projects)/analytics/[tabId]/page.tsx"),
         ]),
 
-        // Dashboard Divisi (Paradise/B.E.R)
+        // Dashboard Divisi (Paradise/Yorukaze Production)
         layout("./(all)/[workspaceSlug]/(projects)/dashboard-divisi/layout.tsx", [
           route(":workspaceSlug/dashboard-divisi", "./(all)/[workspaceSlug]/(projects)/dashboard-divisi/page.tsx"),
         ]),
 
-        // Initiatives (Paradise/B.E.R)
+        // Initiatives (Paradise/Yorukaze Production)
         layout("./(all)/[workspaceSlug]/(projects)/initiatives/layout.tsx", [
           route(":workspaceSlug/initiatives", "./(all)/[workspaceSlug]/(projects)/initiatives/page.tsx"),
         ]),
 
-        // Wiki (Paradise/B.E.R) — pintasan yang meresolusi project WIKI lalu
+        // Wiki (Paradise/Yorukaze Production) — pintasan yang meresolusi project WIKI lalu
         // redirect. Tanpa layout: halamannya cuma redirect, tidak punya chrome.
         route(":workspaceSlug/wiki", "./(all)/[workspaceSlug]/(projects)/wiki/page.tsx"),
 
@@ -353,22 +353,22 @@ export const coreRoutes: RouteConfigEntry[] = [
               ":workspaceSlug/settings/projects/:projectId/estimates",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/estimates/page.tsx"
             ),
-            // Work Item Types & Custom Properties (Paradise/B.E.R)
+            // Work Item Types & Custom Properties (Paradise/Yorukaze Production)
             route(
               ":workspaceSlug/settings/projects/:projectId/work-item-types",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/work-item-types/page.tsx"
             ),
-            // Templates & Recurring Work Items (Paradise/B.E.R)
+            // Templates & Recurring Work Items (Paradise/Yorukaze Production)
             route(
               ":workspaceSlug/settings/projects/:projectId/templates",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/templates/page.tsx"
             ),
-            // Wiki per-folder access control (Paradise/B.E.R)
+            // Wiki per-folder access control (Paradise/Yorukaze Production)
             route(
               ":workspaceSlug/settings/projects/:projectId/wiki-access",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/wiki-access/page.tsx"
             ),
-            // Trashbin per project (Paradise/B.E.R) — pasangan TPA di God Mode
+            // Trashbin per project (Paradise/Yorukaze Production) — pasangan TPA di God Mode
             route(
               ":workspaceSlug/settings/projects/:projectId/trash",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/trash/page.tsx"

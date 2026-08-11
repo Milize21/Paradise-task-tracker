@@ -1,4 +1,4 @@
-# Bagian A1 — buat project sub-divisi dari Org Directory (B.E.R)
+# Bagian A1 — buat project sub-divisi dari Org Directory (Yorukaze Production)
 #
 # Jalankan:
 #   docker exec -i pradise_plane-api-1 python manage.py shell < paradise/bin/org-migrate-a1-projects.py

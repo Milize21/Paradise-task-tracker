@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — Granular Access Control Wiki (B.E.R)
+# Kustomisasi Paradise Task Tracker — Granular Access Control Wiki (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 

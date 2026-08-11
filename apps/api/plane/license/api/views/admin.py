@@ -440,7 +440,7 @@ class InstanceAdminSignOutEndpoint(View):
             user.last_logout_ip = user_ip(request=request)
             user.last_logout_time = timezone.now()
             user.save()
-            # Jejak logout (B.E.R) — SEBELUM logout(); sesudahnya session_key
+            # Jejak logout (Yorukaze Production) — SEBELUM logout(); sesudahnya session_key
             # hilang dan pasangannya dengan login tak bisa dicari lagi.
             LoginActivity.catat(
                 user=user,

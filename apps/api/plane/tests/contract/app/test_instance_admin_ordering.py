@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — urutan daftar instance admin (B.E.R)
+# Kustomisasi Paradise Task Tracker — urutan daftar instance admin (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 """`GET /api/instances/admins/` — urutannya harus tetap, bukan kebetulan.

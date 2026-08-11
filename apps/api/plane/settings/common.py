@@ -47,7 +47,7 @@ if SECRET_KEY in _INSECURE_SECRET_KEYS:
         "python3 -c \"from django.utils.crypto import get_random_secret_key; print(get_random_secret_key())\""
     )
 
-# Kustomisasi Paradise Task Tracker (B.E.R) — frasa konfirmasi untuk MEMBERI
+# Kustomisasi Paradise Task Tracker (Yorukaze Production) — frasa konfirmasi untuk MEMBERI
 # Super Admin dari God Mode. Punya God Mode saja tidak cukup: memberi Super Admin
 # berarti memberi akses ke SELURUH project sekaligus, jadi aksi itu minta
 # konfirmasi sekali lagi.
@@ -145,7 +145,7 @@ MIDDLEWARE = [
     # Audit trail: menangkap aktor + IP per request. Harus setelah Authentication.
     "auditlog.middleware.AuditlogMiddleware",
     "django.middleware.gzip.GZipMiddleware",
-    # Paradise (B.E.R): stempel "sedang memakai". Harus SETELAH Authentication —
+    # Paradise (Yorukaze Production): stempel "sedang memakai". Harus SETELAH Authentication —
     # sebelum itu request.user belum ada dan middleware ini diam saja.
     "plane.middleware.last_active.LastActiveMiddleware",
     "plane.middleware.request_body_size.RequestBodySizeLimitMiddleware",
@@ -361,7 +361,7 @@ CELERY_IMPORTS = (
     "plane.bgtasks.file_asset_task",
     "plane.bgtasks.email_notification_task",
     "plane.bgtasks.cleanup_task",
-    # Paradise (B.E.R): tanpa baris ini worker buang task dari beat "unregistered"
+    # Paradise (Yorukaze Production): tanpa baris ini worker buang task dari beat "unregistered"
     "plane.bgtasks.recurring_issue_task",
     "plane.bgtasks.login_activity_retention",
     "plane.license.bgtasks.telemetry_metrics",

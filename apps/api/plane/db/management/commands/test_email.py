@@ -44,7 +44,7 @@ class Command(BaseCommand):
             timeout=30,
         )
         # Prepare email details
-        subject = "Test email from Plane"
+        subject = "Email uji dari Paradise Task Tracker"
 
         html_content = render_to_string("emails/test_email.html")
         text_content = strip_tags(html_content)

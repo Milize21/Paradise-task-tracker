@@ -1,7 +1,7 @@
 """
 Paradise Task Tracker — tanda pembuat (builder attribution).
 
-Dibangun & dikustomisasi oleh B.E.R (Bintang Eko Ramadhan).
+Dibangun & dikustomisasi oleh Yorukaze Production (Bintang Eko Ramadhan).
 Modul ini menanamkan atribusi kepengarangan dan memberi PERINGATAN di log
 bila tanda pembuat diubah/dihapus (tamper-evident).
 
@@ -16,13 +16,16 @@ import logging
 logger = logging.getLogger("plane")
 
 # Tanda pembuat — JANGAN DIHAPUS.
-BUILDER_MARK = "B.E.R"
-BUILDER_FULL = "Bintang Eko Ramadhan"
+# Nama produksi dipakai sebagai tanda yang tampil; nama pribadi tetap dibawa di
+# BUILDER_FULL karena hak cipta melekat pada orang, bukan pada nama dagang.
+BUILDER_MARK = "Yorukaze Production"
+BUILDER_FULL = "Yorukaze Production (Bintang Eko Ramadhan)"
 PRODUCT_NAME = "Paradise Task Tracker"
 
 # Sidik jari yang diharapkan dari tanda pembuat. Bila BUILDER_MARK/BUILDER_FULL
 # diubah tanpa memperbarui nilai ini, verify_builder_mark() akan memperingatkan.
-_EXPECTED_FINGERPRINT = "815de5564bf34b557e7165a0cd79f41ee02df6029b695a39e625efaae57b7336"
+# Hitung ulang dengan: python -m plane.builder
+_EXPECTED_FINGERPRINT = "67d9b5148bd1b7a780f575296e68cb27e912651836de79e4d76a9b8f96589768"
 
 
 def _fingerprint() -> str:
@@ -33,7 +36,9 @@ def _fingerprint() -> str:
 def verify_builder_mark() -> bool:
     """Log banner atribusi; peringatkan bila tanda pembuat tampak diubah."""
     ok = _fingerprint() == _EXPECTED_FINGERPRINT
-    banner = f"{PRODUCT_NAME} | Built by {BUILDER_MARK} ({BUILDER_FULL})"
+    # BUILDER_FULL sudah memuat BUILDER_MARK di dalamnya, jadi jangan disisipkan
+    # dua-duanya — hasilnya kurung bersarang "Yorukaze Production (Yorukaze ...)".
+    banner = f"{PRODUCT_NAME} | Powered by {BUILDER_FULL}"
     print(banner, flush=True)  # selalu tampil di log startup (docker logs)
     logger.info(banner)
     if not ok:
@@ -47,5 +52,14 @@ def verify_builder_mark() -> bool:
 
 
 if __name__ == "__main__":
-    # Cetak fingerprint aktual — dipakai sekali untuk mengunci _EXPECTED_FINGERPRINT.
-    print(_fingerprint())
+    # Cetak fingerprint aktual — dipakai untuk mengunci _EXPECTED_FINGERPRINT.
+    aktual = _fingerprint()
+    print(aktual)
+    # Pemeriksaan mandiri: gagal keras di sini jauh lebih baik daripada setiap
+    # container startup diam-diam mencetak "PERINGATAN INTEGRITAS" ke log.
+    assert aktual == _EXPECTED_FINGERPRINT, (
+        f"_EXPECTED_FINGERPRINT usang.\n  diharapkan: {_EXPECTED_FINGERPRINT}\n  aktual    : {aktual}\n"
+        "Perbarui _EXPECTED_FINGERPRINT dengan nilai aktual di atas."
+    )
+    assert verify_builder_mark() is True
+    print("OK — tanda pembuat utuh.")

@@ -26,7 +26,7 @@ import icon512 from "@/app/assets/icons/icon-512x512.png?url";
 import { AppProvider } from "./provider";
 
 export const meta = () => [
-  { title: "Plane | Simple, extensible, open-source project management tool." },
+  { title: "Paradise Task Tracker | Manajemen proyek & issue internal kantor." },
   { name: "description", content: SITE_DESCRIPTION },
   {
     name: "keywords",
@@ -59,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="/site.webmanifest.json" />
         <link rel="shortcut icon" href={faviconIco} />
         {/* Meta info for PWA */}
-        <meta name="application-name" content="Plane" />
+        <meta name="application-name" content="Paradise Task Tracker" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content={SITE_NAME} />

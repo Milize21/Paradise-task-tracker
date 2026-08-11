@@ -227,7 +227,7 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
-  // Wiki perusahaan (Paradise/B.E.R). href SENGAJA statis `/wiki/` — halaman itu
+  // Wiki perusahaan (Paradise/Yorukaze Production). href SENGAJA statis `/wiki/` — halaman itu
   // meresolusi project ber-identifier WIKI lalu redirect. Jangan menaruh UUID
   // project di sini: UUID-nya berbeda di tiap instance, jadi akan salah di server
   // produksi.

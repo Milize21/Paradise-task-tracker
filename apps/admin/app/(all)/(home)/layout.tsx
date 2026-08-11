@@ -8,6 +8,8 @@ import { useEffect } from "react";
 import { observer } from "mobx-react";
 import { useRouter } from "next/navigation";
 import { Outlet } from "react-router";
+// components
+import { PoweredByYorukaze } from "@/components/common/powered-by-yorukaze";
 // hooks
 import { useUser } from "@/hooks/store/use-user";
 
@@ -24,6 +26,8 @@ function RootLayout() {
   return (
     <div className="relative z-10 flex h-screen w-screen flex-col items-center overflow-hidden overflow-y-auto bg-surface-1 px-8 pt-6 pb-10">
       <Outlet />
+      {/* Tanda produksi — jangan dihapus. Yorukaze Production (Bintang Eko Ramadhan) */}
+      <PoweredByYorukaze className="mt-auto pt-6" />
     </div>
   );
 }

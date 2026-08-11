@@ -77,7 +77,7 @@ export const onAuthenticate = async ({
     userId: context.userId,
   });
 
-  // Gerbang izin edit (fork B.E.R). Autentikasi hanya menjawab "siapa kamu";
+  // Gerbang izin edit (fork Yorukaze Production). Autentikasi hanya menjawab "siapa kamu";
   // tanpa langkah ini siapa pun yang bisa login dapat mengetik di halaman mana
   // pun lewat websocket dan melewati seluruh izin REST, termasuk ACL folder Wiki.
   // Backend yang memutuskan — kita cuma menerapkan hasilnya sebagai read-only.

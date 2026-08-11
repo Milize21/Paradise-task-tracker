@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — Settings Akses Wiki per-folder (B.E.R)
+ * Kustomisasi Paradise Task Tracker — Settings Akses Wiki per-folder (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -148,7 +148,7 @@ function WikiAccessSettingsPage() {
                 Aktifkan akses per folder di project ini
               </label>
               <p className="text-xs pl-6 text-tertiary">
-                Saat mati, project ini memakai izin halaman Plane biasa (semua member bisa mengedit).
+                Saat mati, project ini memakai izin halaman bawaan (semua member bisa mengedit).
               </p>
             </div>
 

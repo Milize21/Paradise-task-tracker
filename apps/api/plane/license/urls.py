@@ -77,7 +77,7 @@ urlpatterns = [
         name="instance-workspace-availability",
     ),
     path("workspaces/", InstanceWorkSpaceEndpoint.as_view(), name="instance-workspace"),
-    # Kustomisasi Paradise (B.E.R). Menggantikan endpoint workspace-level lama
+    # Kustomisasi Paradise (Yorukaze Production). Menggantikan endpoint workspace-level lama
     # di app/urls/paradise.py: jejak audit sengaja hanya terbaca dari God Mode.
     path("audit-logs/", InstanceAuditLogEndpoint.as_view(), name="instance-audit-logs"),
     # TPA — tong sampah lintas project, hanya Super Admin.
@@ -90,7 +90,7 @@ urlpatterns = [
     # Kelola member — satu-satunya pintu masuk akun selama signup mati.
     path("members/", InstanceMemberEndpoint.as_view(), name="instance-members"),
     path("members/<uuid:pk>/", InstanceMemberEndpoint.as_view(), name="instance-member"),
-    # Paradise (B.E.R): pemantauan sesi & aktivitas
+    # Paradise (Yorukaze Production): pemantauan sesi & aktivitas
     path(
         "members/<uuid:pk>/sessions/",
         InstanceMemberSessionEndpoint.as_view(),

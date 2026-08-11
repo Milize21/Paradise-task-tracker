@@ -47,12 +47,12 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.email_notification_task.stack_email_notification",
         "schedule": crontab(minute="*/5"),  # Every 5 minutes
     },
-    # Paradise (B.E.R): buat work item berulang dari template
+    # Paradise (Yorukaze Production): buat work item berulang dari template
     "create-recurring-issues": {
         "task": "plane.bgtasks.recurring_issue_task.create_recurring_issues",
         "schedule": crontab(minute="*/15"),  # Every 15 minutes
     },
-    # Paradise (B.E.R): buang riwayat login >3 bulan, peringatkan sebelum dibuang.
+    # Paradise (Yorukaze Production): buang riwayat login >3 bulan, peringatkan sebelum dibuang.
     # 17:00 UTC = 00:00 WIB, jam yang sama dengan backup harian.
     "bersihkan-login-activity": {
         "task": "plane.bgtasks.login_activity_retention.bersihkan_login_activity",

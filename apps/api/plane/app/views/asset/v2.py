@@ -36,7 +36,7 @@ IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg", "image
 def allowed_mime_types(entity_type):
     """Tipe berkas yang boleh diunggah untuk `entity_type`.
 
-    Kustomisasi Paradise (B.E.R): isi halaman Wiki boleh menerima semua tipe
+    Kustomisasi Paradise (Yorukaze Production): isi halaman Wiki boleh menerima semua tipe
     lampiran (pdf/docx/xlsx/mp4/zip dst, lihat settings.ATTACHMENT_MIME_TYPES),
     bukan cuma gambar. Entity lain tidak berubah.
 
@@ -599,7 +599,7 @@ class ProjectAssetEndpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ACL Wiki (fork B.E.R): unggah ke halaman di Wiki ber-governance hanya
+        # ACL Wiki (fork Yorukaze Production): unggah ke halaman di Wiki ber-governance hanya
         # boleh oleh admin project atau anggota divisi pemilik folder — biar gate
         # ini tidak jadi celah samping dari izin halaman.
         if (

@@ -1,4 +1,4 @@
-# Bagian A3 — keanggotaan & peran project (B.E.R)
+# Bagian A3 — keanggotaan & peran project (Yorukaze Production)
 #
 # Jalankan:
 #   docker exec -i pradise_plane-api-1 python manage.py shell < paradise/bin/org-migrate-a3-members.py

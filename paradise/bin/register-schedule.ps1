@@ -1,4 +1,4 @@
-# Daftarkan scheduled task backup DB + healthcheck. Built by B.E.R.
+# Daftarkan scheduled task backup DB + healthcheck. Built by Yorukaze Production.
 # Jalankan sekali: klik-kanan > Run with PowerShell, ATAU dari PowerShell:
 #   powershell -ExecutionPolicy Bypass -File "paradise\bin\register-schedule.ps1"
 #
@@ -96,7 +96,7 @@ $bkTriggers = @"
     </LogonTrigger>
 "@
 Register-FromXml "Paradise - Backup DB" (New-TaskXml `
-    -Description "Backup PostgreSQL harian + retensi 14 hari (B.E.R)" `
+    -Description "Backup PostgreSQL harian + retensi 14 hari (Yorukaze Production)" `
     -Arguments $bkArgs -TriggersXml $bkTriggers -TimeLimit "PT30M")
 Write-Host "OK: 'Paradise - Backup DB' terdaftar (02:00 + saat logon +5m)." -ForegroundColor Green
 
@@ -125,7 +125,7 @@ $hcTriggers = @"
     </LogonTrigger>
 "@
 Register-FromXml "Paradise - Healthcheck" (New-TaskXml `
-    -Description "Cek kesehatan layanan tiap 30 menit (B.E.R) - nonaktif sampai ada server produksi" `
+    -Description "Cek kesehatan layanan tiap 30 menit (Yorukaze Production) - nonaktif sampai ada server produksi" `
     -Arguments $hcArgs -TriggersXml $hcTriggers -TimeLimit "PT5M" -Enabled "false")
 Write-Host "OK: 'Paradise - Healthcheck' terdaftar NONAKTIF (sengaja)." -ForegroundColor Yellow
 Write-Host "    Nyalakan saat produksi siap: schtasks /change /tn ""Paradise - Healthcheck"" /enable" -ForegroundColor DarkGray
