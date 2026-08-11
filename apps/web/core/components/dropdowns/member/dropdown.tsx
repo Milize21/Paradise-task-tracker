@@ -29,8 +29,9 @@ export const MemberDropdown = observer(function MemberDropdown(props: TMemberDro
   // store hooks
   const {
     getUserDetails,
+    getMemberIds,
     project: { getProjectMemberIds, fetchProjectMembers },
-    workspace: { workspaceMemberIds },
+    workspace: { workspaceMemberIds, fetchWorkspaceMembers },
   } = useMember();
 
   const memberIds = propsMemberIds
@@ -41,6 +42,18 @@ export const MemberDropdown = observer(function MemberDropdown(props: TMemberDro
 
   const onDropdownOpen = () => {
     if (!memberIds && projectId && workspaceSlug) fetchProjectMembers(workspaceSlug.toString(), projectId);
+    // Daftar di atas hanya berisi ID. NAMA-nya diambil `getUserDetails` dari
+    // `memberRoot.memberMap`, dan di seluruh apps/web map itu cuma punya SATU
+    // penulis: `fetchWorkspaceMembers` (workspace-member.store.ts:240), yang
+    // dipanggil sekali saja di WorkspaceAuthWrapper lewat useSWR ber-
+    // `revalidateIfStale: false`.
+    //
+    // Akibatnya kalau map itu kosong saat dropdown dibuka, tiap baris tampil
+    // sebagai avatar "?" tanpa nama, dan TIDAK ADA yang akan mengisinya:
+    // membuka-tutup dropdown pun tidak menolong karena hanya anggota project
+    // yang dimuat ulang. Muat-malas namanya di sini, memakai pola yang sudah
+    // dipakai baris di atas untuk anggota project.
+    if (workspaceSlug && getMemberIds().length === 0) fetchWorkspaceMembers(workspaceSlug.toString());
   };
 
   return (
