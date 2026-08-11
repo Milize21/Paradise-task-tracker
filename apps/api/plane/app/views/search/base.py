@@ -29,6 +29,7 @@ from rest_framework.response import Response
 # Module imports
 from plane.app.views.base import BaseAPIView
 from plane.app.permissions import WorkspaceUserPermission
+from plane.db.superadmin import sembunyikan
 from plane.db.models import (
     Workspace,
     Project,
@@ -328,13 +329,20 @@ class SearchEndpoint(BaseAPIView):
                         for field in fields:
                             q |= Q(**{f"{field}__icontains": query})
 
+                    # sembunyikan(): pemilih mention "@" ini mengirim
+                    # display_name langsung ke browser, jadi tanpa penyaring
+                    # Super Admin muncul LENGKAP DENGAN NAMANYA ke semua orang.
+                    # Ini kebocoran yang lebih telanjang daripada dropdown
+                    # assignee, yang setidaknya hanya membocorkan id.
                     users = (
-                        ProjectMember.objects.filter(
-                            q,
-                            is_active=True,
-                            workspace__slug=slug,
-                            member__is_bot=False,
-                            project_id=project_id,
+                        sembunyikan(
+                            ProjectMember.objects.filter(
+                                q,
+                                is_active=True,
+                                workspace__slug=slug,
+                                member__is_bot=False,
+                                project_id=project_id,
+                            )
                         )
                         .annotate(
                             member__avatar_url=Case(
@@ -540,12 +548,16 @@ class SearchEndpoint(BaseAPIView):
                     if query:
                         for field in fields:
                             q |= Q(**{f"{field}__icontains": query})
+                    # sembunyikan(): sama seperti cabang project di atas, tapi
+                    # untuk mention di luar konteks project.
                     users = (
-                        WorkspaceMember.objects.filter(
-                            q,
-                            is_active=True,
-                            workspace__slug=slug,
-                            member__is_bot=False,
+                        sembunyikan(
+                            WorkspaceMember.objects.filter(
+                                q,
+                                is_active=True,
+                                workspace__slug=slug,
+                                member__is_bot=False,
+                            )
                         )
                         .annotate(
                             member__avatar_url=Case(

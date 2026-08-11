@@ -11,6 +11,7 @@ from .. import BaseViewSet
 from plane.app.serializers import IssueSubscriberSerializer, ProjectMemberLiteSerializer
 from plane.app.permissions import ProjectEntityPermission, ProjectLitePermission
 from plane.db.models import IssueSubscriber, ProjectMember
+from plane.db.superadmin import sembunyikan
 
 
 class IssueSubscriberViewSet(BaseViewSet):
@@ -50,8 +51,12 @@ class IssueSubscriberViewSet(BaseViewSet):
         )
 
     def list(self, request, slug, project_id, issue_id):
-        members = ProjectMember.objects.filter(
-            workspace__slug=slug, project_id=project_id, is_active=True
+        # sembunyikan(): daftar ini dipakai pemilih "siapa yang mengikuti work
+        # item ini" dan mengirim data anggota lengkap ke browser, jadi tanpa
+        # penyaring ia membocorkan Super Admin sama seperti daftar anggota
+        # project dan pemilih mention.
+        members = sembunyikan(
+            ProjectMember.objects.filter(workspace__slug=slug, project_id=project_id, is_active=True)
         ).select_related("member")
         serializer = ProjectMemberLiteSerializer(members, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

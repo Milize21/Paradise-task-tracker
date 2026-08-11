@@ -14,6 +14,7 @@ from rest_framework.permissions import AllowAny
 from .base import BaseAPIView
 from plane.app.serializers import DeployBoardSerializer
 from plane.db.models import Project, DeployBoard, ProjectMember
+from plane.db.superadmin import sembunyikan
 
 
 class ProjectDeployBoardPublicSettingsEndpoint(BaseAPIView):
@@ -73,10 +74,18 @@ class ProjectMembersEndpoint(BaseAPIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        members = ProjectMember.objects.filter(
-            project=deploy_board.project,
-            workspace=deploy_board.workspace,
-            is_active=True,
+        # sembunyikan(): endpoint ini `AllowAny`, jadi TANPA LOGIN sama sekali.
+        # Tanpa penyaring, siapa pun yang memegang tautan papan publik bisa
+        # membaca daftar lengkap anggota project berikut display_name-nya,
+        # termasuk seluruh Super Admin yang justru dirancang tak terlihat.
+        # Saat ini belum ada papan publik yang diterbitkan, jadi kebocorannya
+        # laten; ia akan hidup begitu ada satu papan diterbitkan.
+        members = sembunyikan(
+            ProjectMember.objects.filter(
+                project=deploy_board.project,
+                workspace=deploy_board.workspace,
+                is_active=True,
+            )
         ).values(
             "id",
             "member",
