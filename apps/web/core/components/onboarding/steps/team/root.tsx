@@ -209,7 +209,10 @@ const InviteMemberInput = observer(function InviteMemberInput(props: InviteMembe
                     style={styles.popper}
                     {...attributes.popper}
                   >
-                    {Object.entries(ROLE_DETAILS).map(([key, value]) => (
+                    {/* `roleDetail`, bukan `value`: nama itu sudah dipakai field
+                        Controller di lingkup luar, dan membayanginya membuat
+                        pembaca mengira keduanya benda yang sama. */}
+                    {Object.entries(ROLE_DETAILS).map(([key, roleDetail]) => (
                       <Listbox.Option
                         as="div"
                         key={key}
@@ -223,8 +226,8 @@ const InviteMemberInput = observer(function InviteMemberInput(props: InviteMembe
                         {({ selected }) => (
                           <div className="flex items-center gap-2 p-1 text-wrap">
                             <div className="flex flex-col">
-                              <div className="text-13 font-medium">{t(value.i18n_title)}</div>
-                              <div className="flex text-11 text-tertiary">{t(value.i18n_description)}</div>
+                              <div className="text-13 font-medium">{t(roleDetail.i18n_title)}</div>
+                              <div className="flex text-11 text-tertiary">{t(roleDetail.i18n_description)}</div>
                             </div>
                             {selected && <CheckIcon className="h-4 w-4 shrink-0" />}
                           </div>
@@ -290,28 +293,29 @@ export const InviteTeamStep = observer(function InviteTeamStep(props: Props) {
     let payload = { ...formData };
     payload = { emails: payload.emails.filter((email) => email.email !== "") };
 
-    await workspaceService
-      .inviteWorkspace(workspace.slug, {
+    // try/await, bukan rantai .then(): rantai lamanya melanggar
+    // promise/always-return.
+    try {
+      await workspaceService.inviteWorkspace(workspace.slug, {
         emails: payload.emails.map((email) => ({
           email: email.email,
           role: email.role,
         })),
-      })
-      .then(async () => {
-        setToast({
-          type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Invitations sent successfully.",
-        });
-        await nextStep();
-      })
-      .catch((err) => {
-        setToast({
-          type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: err?.error,
-        });
       });
+
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "Success!",
+        message: "Invitations sent successfully.",
+      });
+      await nextStep();
+    } catch (err: any) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Error!",
+        message: err?.error,
+      });
+    }
   };
 
   const appendField = () => {
@@ -343,7 +347,7 @@ export const InviteTeamStep = observer(function InviteTeamStep(props: Props) {
     >
       <CommonOnboardingHeader
         title="Invite your teammates"
-        description="Work in plane happens best with your team. Invite them now to use Plane to its potential."
+        description="Kerja paling enak kalau timnya lengkap. Undang mereka sekarang supaya Paradise Task Tracker terpakai sepenuhnya."
       />
       <div className="w-full py-4 text-13">
         <div className="group relative mx-8 grid grid-cols-10 gap-4 py-2">

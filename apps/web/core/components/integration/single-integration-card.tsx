@@ -37,12 +37,12 @@ const integrationDetails: { [key: string]: any } = {
   github: {
     logo: GithubLogo,
     installed: "Activate GitHub on individual projects to sync with specific repositories.",
-    notInstalled: "Connect with GitHub with your Plane workspace to sync project work items.",
+    notInstalled: "Hubungkan GitHub ke workspace Paradise Task Tracker untuk menyinkronkan work item.",
   },
   slack: {
     logo: SlackLogo,
     installed: "Activate Slack on individual projects to sync with specific channels.",
-    notInstalled: "Connect with Slack with your Plane workspace to sync project work items.",
+    notInstalled: "Hubungkan Slack ke workspace Paradise Task Tracker untuk menyinkronkan work item.",
   },
 };
 
@@ -77,31 +77,32 @@ export const SingleIntegrationCard = observer(function SingleIntegrationCard({ i
 
     setDeletingIntegration(true);
 
-    await integrationService
-      .deleteWorkspaceIntegration(workspaceSlug, workspaceIntegrationId ?? "")
-      .then(() => {
-        mutate<IWorkspaceIntegration[]>(
-          WORKSPACE_INTEGRATIONS(workspaceSlug),
-          (prevData) => prevData?.filter((i) => i.id !== workspaceIntegrationId),
-          false
-        );
-        setDeletingIntegration(false);
+    // try/await, bukan rantai .then(): rantai lamanya melanggar
+    // promise/always-return, dan `finally` menjamin tombolnya lepas dari
+    // keadaan "sedang menghapus" di kedua jalur.
+    try {
+      await integrationService.deleteWorkspaceIntegration(workspaceSlug, workspaceIntegrationId ?? "");
 
-        setToast({
-          type: TOAST_TYPE.SUCCESS,
-          title: "Deleted successfully!",
-          message: `${integration.title} integration deleted successfully.`,
-        });
-      })
-      .catch(() => {
-        setDeletingIntegration(false);
+      mutate<IWorkspaceIntegration[]>(
+        WORKSPACE_INTEGRATIONS(workspaceSlug),
+        (prevData) => prevData?.filter((i) => i.id !== workspaceIntegrationId),
+        false
+      );
 
-        setToast({
-          type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: `${integration.title} integration could not be deleted. Please try again.`,
-        });
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "Deleted successfully!",
+        message: `${integration.title} integration deleted successfully.`,
       });
+    } catch {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Error!",
+        message: `${integration.title} integration could not be deleted. Please try again.`,
+      });
+    } finally {
+      setDeletingIntegration(false);
+    }
   };
 
   const isInstalled = workspaceIntegrations?.find((i: any) => i.integration_detail.id === integration.id);
