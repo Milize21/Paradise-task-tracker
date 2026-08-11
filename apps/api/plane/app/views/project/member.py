@@ -36,7 +36,7 @@ class ProjectMemberViewSet(BaseViewSet):
         # memantau semua project, tapi keberadaannya tidak boleh terlihat
         # user maupun admin project. Lihat plane/db/superadmin.py.
         return self.filter_queryset(
-            sembunyikan(super().get_queryset())
+            sembunyikan(super().get_queryset(), project_id=self.kwargs.get("project_id"))
             .filter(workspace__slug=self.kwargs.get("slug"))
             .filter(project_id=self.kwargs.get("project_id"))
             .filter(member__is_bot=False)
@@ -184,7 +184,8 @@ class ProjectMemberViewSet(BaseViewSet):
                 member__member_workspace__workspace__slug=slug,
                 member__member_workspace__is_active=True,
                 member__member_workspace__deleted_at__isnull=True,
-            )
+            ),
+            project_id=project_id,
         ).select_related("project", "member", "workspace")
 
         serializer = ProjectMemberRoleSerializer(project_members, fields=("id", "member", "role"), many=True)

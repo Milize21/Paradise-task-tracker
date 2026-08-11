@@ -51,14 +51,71 @@ def super_admin_user_ids():
     return set(InstanceAdmin.objects.values_list("user_id", flat=True))
 
 
-def sembunyikan(queryset, field="member_id"):
-    """Buang Super Admin dari queryset keanggotaan mana pun.
+def sembunyikan(queryset, field="member_id", project_id=None):
+    """Buang Super Admin dari queryset keanggotaan SEBUAH PROJECT.
 
-    Dipakai semua endpoint yang mengembalikan daftar anggota. Satu fungsi supaya
-    kalau kelak ada daftar baru, cukup dipanggil — bukan disalin logikanya.
+    Dipakai semua endpoint yang mengembalikan daftar anggota project. Satu
+    fungsi supaya kalau kelak ada daftar baru, cukup dipanggil, bukan disalin
+    logikanya.
+
+    `project_id` WAJIB diisi untuk daftar per-project. Tanpa itu penyaringan
+    berlaku menyeluruh, dan itulah yang dulu merusak: seseorang yang disaring
+    dari SEMUA project ikut hilang dari project tempat ia benar-benar bekerja,
+    sehingga tim IT tak bisa diberi tugas di project IT sendiri.
+
+    Super Admin yang punya baris `SuperAdminTerlihatDiProject` untuk project
+    tersebut TIDAK disembunyikan: di situ ia anggota asli, bukan pengawas.
+
+    CATATAN PENTING: jangan pernah memakai fungsi ini pada daftar anggota
+    WORKSPACE. Nama setiap orang di seluruh aplikasi diresolusi dari daftar itu;
+    menyembunyikan seseorang di sana membuat namanya mustahil dirender di mana
+    pun, dan hasilnya avatar "?" tanpa nama di dropdown assignee, mention, dan
+    kartu work item.
     """
     ids = super_admin_user_ids()
+    if not ids:
+        return queryset
+
+    if project_id:
+        # Impor di dalam fungsi: models mengimpor modul ini lewat apps.ready,
+        # jadi impor di tingkat modul akan melingkar.
+        from plane.db.models import SuperAdminTerlihatDiProject  # noqa: PLC0415
+
+        terlihat = set(
+            SuperAdminTerlihatDiProject.objects.filter(
+                project_id=project_id, member_id__in=ids
+            ).values_list("member_id", flat=True)
+        )
+        ids = ids - terlihat
+
     return queryset.exclude(**{f"{field}__in": ids}) if ids else queryset
+
+
+def sembunyikan_lintas_project(queryset, field="member_id"):
+    """Varian `sembunyikan()` untuk queryset yang MENCAKUP BANYAK PROJECT.
+
+    Dipakai endpoint yang mengembalikan keanggotaan beberapa project sekaligus,
+    sehingga tidak ada satu `project_id` yang bisa diberikan. Pengecualian
+    diperiksa per-baris: sebuah baris ikut tampil bila si Super Admin punya
+    penanda "anggota asli" untuk project pada baris itu sendiri.
+
+    Memakai `Exists` alih-alih mengambil daftar id lebih dulu, supaya tetap satu
+    query dan tidak melebar mengikuti jumlah project.
+    """
+    from django.db.models import Exists, OuterRef
+
+    from plane.db.models import SuperAdminTerlihatDiProject  # noqa: PLC0415
+
+    ids = super_admin_user_ids()
+    if not ids:
+        return queryset
+
+    terlihat = SuperAdminTerlihatDiProject.objects.filter(
+        project_id=OuterRef("project_id"), member_id=OuterRef(field)
+    )
+    return queryset.annotate(_terlihat_di_project=Exists(terlihat)).exclude(
+        **{f"{field}__in": ids, "_terlihat_di_project": False}
+    )
 
 
 def _tambahkan_ke_project(user_ids, projects):

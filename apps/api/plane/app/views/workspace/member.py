@@ -11,7 +11,7 @@ from django.db.models.functions import Coalesce
 from rest_framework import status
 from rest_framework.response import Response
 
-from plane.db.superadmin import sembunyikan
+from plane.db.superadmin import sembunyikan_lintas_project
 from plane.app.permissions import WorkspaceEntityPermission, allow_permission, ROLE
 
 # Module imports
@@ -36,11 +36,16 @@ class WorkSpaceMemberViewSet(BaseViewSet):
     use_read_replica = True
 
     def get_queryset(self):
-        # Super Admin disembunyikan (Yorukaze Production): mereka anggota supaya bisa
-        # memantau semua project, tapi keberadaannya tidak boleh terlihat
-        # user maupun admin project. Lihat plane/db/superadmin.py.
+        # SENGAJA TANPA sembunyikan(). Daftar anggota workspace adalah direktori
+        # karyawan, dan seluruh aplikasi meresolusi NAMA orang dari sini.
+        # Menyembunyikan seseorang di sini membuat namanya mustahil dirender di
+        # mana pun: dropdown assignee, pemilih mention, dan kartu work item
+        # semuanya jatuh ke avatar "?" tanpa nama. Penyembunyian Super Admin
+        # dikerjakan di daftar anggota PROJECT, tempat ia memang bermakna.
+        # Lihat plane/db/superadmin.py.
         return self.filter_queryset(
-            sembunyikan(super().get_queryset())
+            super()
+            .get_queryset()
             .filter(workspace__slug=self.kwargs.get("slug"))
             .select_related("member", "member__avatar_asset")
         )
@@ -252,7 +257,9 @@ class WorkspaceProjectMemberEndpoint(BaseAPIView):
         )
 
         # Get all the project members in which the user is involved
-        project_members = sembunyikan(
+        # Varian lintas-project: satu queryset mencakup banyak project sekaligus,
+        # jadi pengecualian "anggota asli" diperiksa per baris, bukan sekali.
+        project_members = sembunyikan_lintas_project(
             ProjectMember.objects.filter(workspace__slug=slug, project_id__in=project_ids, is_active=True)
         ).select_related("project", "member", "workspace")
         project_members = ProjectMemberRoleSerializer(project_members, many=True).data

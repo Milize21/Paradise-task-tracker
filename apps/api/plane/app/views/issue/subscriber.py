@@ -56,7 +56,8 @@ class IssueSubscriberViewSet(BaseViewSet):
         # penyaring ia membocorkan Super Admin sama seperti daftar anggota
         # project dan pemilih mention.
         members = sembunyikan(
-            ProjectMember.objects.filter(workspace__slug=slug, project_id=project_id, is_active=True)
+            ProjectMember.objects.filter(workspace__slug=slug, project_id=project_id, is_active=True),
+            project_id=project_id,
         ).select_related("member")
         serializer = ProjectMemberLiteSerializer(members, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

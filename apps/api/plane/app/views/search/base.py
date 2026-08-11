@@ -342,7 +342,8 @@ class SearchEndpoint(BaseAPIView):
                                 workspace__slug=slug,
                                 member__is_bot=False,
                                 project_id=project_id,
-                            )
+                            ),
+                            project_id=project_id,
                         )
                         .annotate(
                             member__avatar_url=Case(
@@ -548,16 +549,17 @@ class SearchEndpoint(BaseAPIView):
                     if query:
                         for field in fields:
                             q |= Q(**{f"{field}__icontains": query})
-                    # sembunyikan(): sama seperti cabang project di atas, tapi
-                    # untuk mention di luar konteks project.
+                    # SENGAJA TANPA sembunyikan(): ini mention di luar konteks
+                    # project, jadi lingkupnya direktori karyawan workspace.
+                    # Menyaring di sini akan menyembunyikan orang dari daftar
+                    # karyawan, bukan dari keanggotaan project, dan itu bukan
+                    # yang dimaksud penyembunyian Super Admin.
                     users = (
-                        sembunyikan(
-                            WorkspaceMember.objects.filter(
-                                q,
-                                is_active=True,
-                                workspace__slug=slug,
-                                member__is_bot=False,
-                            )
+                        WorkspaceMember.objects.filter(
+                            q,
+                            is_active=True,
+                            workspace__slug=slug,
+                            member__is_bot=False,
                         )
                         .annotate(
                             member__avatar_url=Case(

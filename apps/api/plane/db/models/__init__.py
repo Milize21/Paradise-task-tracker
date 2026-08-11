@@ -85,6 +85,7 @@ from .issue_property import IssueProperty, IssuePropertyOption, IssuePropertyVal
 from .issue_template import IssueTemplate, RecurringIssue
 from .initiative import Initiative, InitiativeProject
 from .wiki_access import WikiGovernedProject, WikiFolderAccess
+from .superadmin_visibility import SuperAdminTerlihatDiProject
 from .login_activity import LoginActivity, AMBANG_AKTIF_MENIT, RETENSI_HARI
 
 from .recent_visit import UserRecentVisit
