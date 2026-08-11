@@ -58,6 +58,14 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.login_activity_retention.bersihkan_login_activity",
         "schedule": crontab(hour=17, minute=0),
     },
+    # Paradise (Yorukaze Production): pengingat tenggat 8 titik, H-7 sampai H+7.
+    # 01:00 UTC = 08:00 WIB, saat orang baru membuka email. Sengaja BUKAN tengah
+    # malam: pengingat yang tiba saat semua orang tidur akan tenggelam di bawah
+    # email semalaman sebelum sempat dibaca.
+    "pengingat-tenggat": {
+        "task": "plane.bgtasks.deadline_reminder_task.kirim_pengingat_tenggat",
+        "schedule": crontab(hour=1, minute=0),
+    },
     "push-instance-metrics": {
         "task": "plane.license.bgtasks.telemetry_metrics.push_instance_metrics",
         "schedule": schedule(run_every=timedelta(minutes=METRICS_PUSH_INTERVAL_MINUTES)),

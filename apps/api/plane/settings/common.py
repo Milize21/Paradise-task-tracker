@@ -364,6 +364,7 @@ CELERY_IMPORTS = (
     # Paradise (Yorukaze Production): tanpa baris ini worker buang task dari beat "unregistered"
     "plane.bgtasks.recurring_issue_task",
     "plane.bgtasks.login_activity_retention",
+    "plane.bgtasks.deadline_reminder_task",
     "plane.license.bgtasks.telemetry_metrics",
     # management tasks
     "plane.bgtasks.dummy_data_task",
