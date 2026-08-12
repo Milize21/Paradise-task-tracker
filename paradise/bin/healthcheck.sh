@@ -17,9 +17,22 @@ if [ -n "$bad" ]; then echo "TIDAK SEHAT:"; echo "$bad"; fail=1; fi
 echo "== HTTP $WEB_URL =="
 # curl sudah mencetak 000 sendiri saat koneksi gagal; `|| echo 000` yang dulu
 # ada di sini menambah satu lagi sehingga log berbunyi "HTTP 000000".
-code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$WEB_URL" || true)"
+# -L: ikuti pengalihan. Sejak HTTPS menyala, `http://localhost` menjawab 308 ke
+# https://space.paradiseperkasa.com, jadi tanpa ini healthcheck berteriak "ADA
+# MASALAH" pada setiap deploy yang justru berhasil. Sudah terjadi dua kali pada
+# 12 Agt 2026, dan alarm yang berbunyi saat semuanya baik adalah cara tercepat
+# melatih orang mengabaikan alarm.
+#
+# Yang diperiksa jadi hasil AKHIR rantai pengalihan, dan itu memang yang ingin
+# kita ketahui: apakah orang yang mengetik alamatnya sampai ke aplikasi.
+code="$(curl -sL -o /dev/null -w '%{http_code}' --max-time 15 "$WEB_URL" || true)"
 echo "HTTP $code"
-[ "$code" = "200" ] || [ "$code" = "302" ] || fail=1
+# 308 tetap diterima untuk jaga-jaga kalau -L gagal mengikuti (misalnya
+# sertifikat belum terbit di menit-menit pertama setelah domain diganti).
+case "$code" in
+  200 | 302 | 308) ;;
+  *) fail=1 ;;
+esac
 
 [ "$fail" = "0" ] && echo "== SEHAT ==" || echo "== ADA MASALAH =="
 exit "$fail"
