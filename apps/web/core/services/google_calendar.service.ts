@@ -13,7 +13,6 @@ export type TGoogleCalendarStatus = {
   /** false kalau instance ini belum diberi kredensial OAuth di God Mode. */
   tersedia: boolean;
   tersambung: boolean;
-  akun_email: string;
   terakhir_sinkron: string | null;
   galat_terakhir: string;
 };

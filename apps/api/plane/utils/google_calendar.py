@@ -30,7 +30,16 @@ from plane.license.utils.instance_value import get_configuration_value
 
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 API_DASAR = "https://www.googleapis.com/calendar/v3"
-USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+
+# Tidak ada pemanggilan userinfo di sini, dan itu disengaja. Scope yang kita
+# minta cuma `calendar.events`, yang TIDAK memberi izin membaca profil, jadi
+# endpoint userinfo selalu menolak. Versi pertama berkas ini memanggilnya untuk
+# menampilkan alamat email akun yang tersambung; panggilan itu tidak pernah
+# berhasil sekali pun, hanya tidak terlihat karena dibungkus try/except.
+#
+# Menambah scope `userinfo.email` akan membuatnya bekerja, tapi itu berarti
+# meminta izin tambahan ke 90 orang demi satu baris teks di halaman setelan.
+# Tidak sebanding.
 
 # Batas waktu tiap panggilan. Tanpa ini satu permintaan yang menggantung akan
 # menahan seluruh tugas sinkronisasi sampai worker Celery-nya dianggap mati.
@@ -97,15 +106,6 @@ def access_token(refresh_token):
     )
     r.raise_for_status()
     return r.json()["access_token"]
-
-
-def email_akun(token):
-    """Alamat email pemilik token, untuk ditampilkan di setelan."""
-    r = requests.get(
-        USERINFO_URL, headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT
-    )
-    r.raise_for_status()
-    return r.json().get("email", "")
 
 
 def _badan_acara(judul, tenggat, deskripsi, url):

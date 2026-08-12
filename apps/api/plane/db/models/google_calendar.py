@@ -37,10 +37,13 @@ class KalenderGoogle(BaseModel):
     )
     # Terenkripsi. Jangan pernah dikembalikan lewat API mana pun.
     refresh_token = models.TextField()
-    # Alamat email akun Google yang disambungkan. Disimpan supaya pengguna bisa
-    # melihat akun MANA yang tersambung; orang sering punya lebih dari satu dan
-    # menyambungkan yang salah tanpa sadar.
-    akun_email = models.EmailField(blank=True)
+    # TIDAK ADA medan alamat email di sini, dan itu keputusan sadar. Versi
+    # pertama menyimpannya supaya pengguna tahu akun MANA yang tersambung, tapi
+    # medan itu selamanya kosong: scope `calendar.events` tidak memberi izin
+    # membaca profil, jadi tidak ada cara mengisinya tanpa meminta izin
+    # tambahan ke semua orang. Medan yang selamanya kosong lebih buruk daripada
+    # tidak ada, karena ia mengundang orang berikutnya "memperbaikinya" dengan
+    # memperluas scope.
     # Hampir selalu "primary". Disediakan supaya orang yang memisahkan kalender
     # kerja dari pribadi bisa mengarahkannya, tanpa perlu ubah kode.
     calendar_id = models.CharField(max_length=255, default="primary")
@@ -61,7 +64,7 @@ class KalenderGoogle(BaseModel):
         ordering = ("-created_at",)
 
     def __str__(self):
-        return f"{self.user_id} -> {self.akun_email or self.calendar_id}"
+        return f"{self.user_id} -> {self.calendar_id}"
 
 
 class AcaraKalender(BaseModel):

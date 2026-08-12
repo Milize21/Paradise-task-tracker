@@ -111,9 +111,12 @@ export const ConnectionsProfileSettings = observer(function ConnectionsProfileSe
             </p>
 
             {status?.tersambung && (
+              // Tidak menampilkan alamat akun Google di sini: izin yang kita
+              // minta tidak mencakup pembacaan profil, jadi nilainya tidak
+              // tersedia tanpa meminta izin tambahan yang tidak sepadan.
               <dl className="text-sm mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-                <dt className="text-secondary">Akun</dt>
-                <dd>{status.akun_email || "(tidak diketahui)"}</dd>
+                <dt className="text-secondary">Status</dt>
+                <dd>Tersambung</dd>
                 <dt className="text-secondary">Sinkron terakhir</dt>
                 <dd>{waktuLokal(status.terakhir_sinkron)}</dd>
               </dl>

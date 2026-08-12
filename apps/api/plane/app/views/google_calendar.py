@@ -132,20 +132,11 @@ class GoogleCalendarCallbackEndpoint(BaseAPIView):
                     {"status": "gagal", "sebab": "Google tidak memberi refresh token"}
                 )
 
-            email = ""
-            try:
-                email = gcal.email_akun(token["access_token"])
-            except Exception:  # noqa: BLE001
-                # Alamat email hanya untuk ditampilkan. Gagal mengambilnya
-                # tidak boleh membatalkan sambungan yang sudah sah.
-                pass
-
             KalenderGoogle.objects.update_or_create(
                 user=pengguna,
                 deleted_at=None,
                 defaults={
                     "refresh_token": encrypt_data(refresh_token),
-                    "akun_email": email,
                     "galat_terakhir": "",
                 },
             )
@@ -168,7 +159,6 @@ class GoogleCalendarStatusEndpoint(BaseAPIView):
                 # membiarkan orang menekan tombol yang tidak akan pernah jalan.
                 "tersedia": bool(client_id),
                 "tersambung": bool(s),
-                "akun_email": s.akun_email if s else "",
                 "terakhir_sinkron": s.terakhir_sinkron if s else None,
                 "galat_terakhir": s.galat_terakhir if s else "",
             },
