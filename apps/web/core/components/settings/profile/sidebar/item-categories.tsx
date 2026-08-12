@@ -6,7 +6,7 @@
 
 import type React from "react";
 import type { LucideIcon } from "lucide-react";
-import { Bell, CircleUser, KeyRound, LockIcon, Settings2 } from "lucide-react";
+import { Bell, CircleUser, KeyRound, Link2, LockIcon, Settings2 } from "lucide-react";
 import { observer } from "mobx-react";
 import { useParams } from "react-router";
 // plane imports
@@ -27,6 +27,10 @@ const ICONS: Record<TProfileSettingsTabs, LucideIcon | React.FC<ISvgIcons>> = {
   security: LockIcon,
   preferences: Settings2,
   notifications: Bell,
+  // Record ini WAJIB memuat setiap tab. Tipe `Record<TProfileSettingsTabs, ...>`
+  // membuat tsc menolak kalau ada yang terlewat, dan itu memang disengaja: tab
+  // tanpa ikon di sini akan tampil polos tanpa satu pun pesan galat.
+  connections: Link2,
   "api-tokens": KeyRound,
 };
 

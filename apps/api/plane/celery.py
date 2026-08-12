@@ -66,6 +66,17 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.deadline_reminder_task.kirim_pengingat_tenggat",
         "schedule": crontab(hour=1, minute=0),
     },
+    # Paradise (Yorukaze Production): dorong tenggat ke Google Calendar tiap
+    # orang yang menyambungkan akunnya.
+    #
+    # Tiap 15 menit, bukan harian: ini menyamakan keadaan, bukan mengirim
+    # pemberitahuan. Orang yang menggeser tenggat pagi ini berharap kalendernya
+    # ikut bergeser hari ini juga, bukan besok pagi. Putarannya murah karena
+    # work item yang tidak berubah dilewati tanpa memanggil API Google.
+    "sinkron-google-calendar": {
+        "task": "plane.bgtasks.google_calendar_sync.sinkron_google_calendar",
+        "schedule": crontab(minute="*/15"),
+    },
     "push-instance-metrics": {
         "task": "plane.license.bgtasks.telemetry_metrics.push_instance_metrics",
         "schedule": schedule(run_every=timedelta(minutes=METRICS_PUSH_INTERVAL_MINUTES)),

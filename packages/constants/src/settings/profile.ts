@@ -45,6 +45,14 @@ export const PROFILE_SETTINGS: Record<
     key: "notifications",
     i18n_label: "profile.actions.notifications",
   },
+  // Memakai kunci `profile.actions.connections` yang SUDAH ada di 19 locale,
+  // bukan menambah kunci baru. Selain menghemat 19 berkas terjemahan, namanya
+  // juga tidak mengunci tab ini pada satu vendor: kalau nanti Outlook menyusul,
+  // ia tinggal masuk ke tab yang sama tanpa perlu ganti label.
+  connections: {
+    key: "connections",
+    i18n_label: "profile.actions.connections",
+  },
   "api-tokens": {
     key: "api-tokens",
     i18n_label: "profile.actions.api-tokens",
@@ -61,6 +69,7 @@ export const GROUPED_PROFILE_SETTINGS: Record<
     PROFILE_SETTINGS["general"],
     PROFILE_SETTINGS["preferences"],
     PROFILE_SETTINGS["notifications"],
+    PROFILE_SETTINGS["connections"],
     PROFILE_SETTINGS["security"],
   ],
   [PROFILE_SETTINGS_CATEGORY.DEVELOPER]: [PROFILE_SETTINGS["api-tokens"]],

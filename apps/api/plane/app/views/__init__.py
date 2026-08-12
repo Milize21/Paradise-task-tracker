@@ -189,6 +189,11 @@ from .page.base import (
 )
 from .page.version import PageVersionEndpoint
 from .page.can_edit import PageCanEditEndpoint
+from .google_calendar import (
+    GoogleCalendarCallbackEndpoint,
+    GoogleCalendarConnectEndpoint,
+    GoogleCalendarStatusEndpoint,
+)
 from .page.wiki_access import WikiAccessEndpoint, WikiFolderAccessEndpoint
 
 from .search.base import GlobalSearchEndpoint, SearchEndpoint
