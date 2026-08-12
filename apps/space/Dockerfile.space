@@ -53,7 +53,7 @@ ENV VITE_WEB_BASE_URL=$VITE_WEB_BASE_URL
 ARG VITE_WEB_BASE_PATH=""
 ENV VITE_WEB_BASE_PATH=$VITE_WEB_BASE_PATH
 
-# Default vendor (plane.so) dikosongkan — kalau diisi, nilainya ikut ter-bake ke
+# Default vendor (plane.so) dikosongkan, kalau diisi, nilainya ikut ter-bake ke
 # image produksi dan muncul di UI. VITE_WEBSITE_URL kosong juga membuat komponen
 # `PoweredBy` di halaman publik tidak merender apa pun (guard `if (!WEBSITE_URL)`).
 ARG VITE_WEBSITE_URL=""

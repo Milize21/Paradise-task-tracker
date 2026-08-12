@@ -1,4 +1,4 @@
-# React Doctor — finds security, performance, correctness, accessibility,
+# React Doctor, finds security, performance, correctness, accessibility,
 # bundle-size, and architecture issues in React codebases.
 #
 # Docs: https://www.react.doctor/ci
@@ -10,7 +10,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
   # Scans `main` on every push so you get a health-score trend on the
-  # default branch — useful for tracking the overall number commit-by-commit
+  # default branch, useful for tracking the overall number commit-by-commit
   # and catching regressions that slipped past PR review. PR-specific steps
   # (the sticky summary comment) are skipped automatically on `push` events.
   # Comment this block out if you only want PR-time scans.
@@ -26,7 +26,7 @@ permissions:
   # `read` to keep the changed-file scan but disable comment posting.
   pull-requests: write
   # The sticky-comment step uses GitHub's `issues.createComment` /
-  # `issues.updateComment` endpoints — those are the same APIs that back PR
+  # `issues.updateComment` endpoints, those are the same APIs that back PR
   # comments (PRs are issues under the hood). Not exercised on `push`
   # events, so safe to drop if you only run on `main`.
   issues: write
@@ -49,7 +49,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - uses: millionco/react-doctor@v2
-        # Common configuration knobs — uncomment any to override the default.
+        # Common configuration knobs, uncomment any to override the default.
         # Full reference: https://www.react.doctor/ci
         # with:
         #   blocking: warning        # Gate level: "error" (default) | "warning" | "none" (advisory)

@@ -2,7 +2,7 @@
 #
 # Cakupan sengaja dibatasi pada permukaan yang terlihat user: subjek email,
 # judul halaman & nama aplikasi, nama pelaku aktivitas, teks onboarding, dan
-# label locale. README/package.json/storybook/seed demo/komentar DITINGGAL —
+# label locale. README/package.json/storybook/seed demo/komentar DITINGGAL,
 # tidak ada yang melihatnya, dan menyentuhnya memperbesar konflik saat sync
 # upstream berikutnya tanpa manfaat.
 #
@@ -63,7 +63,7 @@ $peta = [ordered]@{
   '"plane_pro": "Plane Pro"'                                = '"plane_pro": "Paket Pro"'
 }
 
-# Berkas yang boleh disentuh. Daftar putih, bukan sapuan repo — supaya README,
+# Berkas yang boleh disentuh. Daftar putih, bukan sapuan repo, supaya README,
 # storybook, dan seed demo benar-benar tidak ikut terbawa.
 $sasaran = @(
   "apps\api\plane\bgtasks\*.py"
@@ -89,7 +89,7 @@ $ubah = 0; $totalGanti = 0
 foreach ($pola in $sasaran) {
   Get-ChildItem (Join-Path $root $pola) -ErrorAction SilentlyContinue | ForEach-Object {
     $path = $_.FullName
-    # UTF-8 eksplisit — `Get-Content -Raw` di PS 5.1 membaca UTF-8 tanpa BOM
+    # UTF-8 eksplisit, `Get-Content -Raw` di PS 5.1 membaca UTF-8 tanpa BOM
     # sebagai ANSI dan merusak karakter non-ASCII saat ditulis balik.
     $asli = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
     $c = $asli

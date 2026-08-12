@@ -1,4 +1,4 @@
-# Lanjutan rebrand permukaan terlihat user — sisa yang tidak tertangkap tahap 1.
+# Lanjutan rebrand permukaan terlihat user, sisa yang tidak tertangkap tahap 1.
 #
 # Menelusuri berkas lewat `git ls-files`, BUKAN Get-ChildItem berwildcard:
 # nama folder react-router memakai kurung siku (`[workspaceSlug]`, `[anchor]`)
@@ -50,10 +50,10 @@ $peta = [ordered]@{
 
 # CATATAN sengaja TIDAK diubah:
 #   - Teks telemetri di God Mode ("data dikirim ke pembuat perangkat lunak
-#     (Plane)") — itu FAKTA soal ke mana data pergi. Mengaburkannya membuat
+#     (Plane)"), itu FAKTA soal ke mana data pergi. Mengaburkannya membuat
 #     pernyataan privasi jadi menyesatkan.
-#   - manifest.json "(berbasis Plane CE)" — atribusi jujur atas basis kode.
-#   - billing/comparison/plans.tsx & base-paid-plan-card.tsx — kode mati, rutenya
+#   - manifest.json "(berbasis Plane CE)", atribusi jujur atas basis kode.
+#   - billing/comparison/plans.tsx & base-paid-plan-card.tsx, kode mati, rutenya
 #     sudah dibuang (routes/core.ts:285) dan tak satu pun berkas mengimpornya.
 
 $ubah = 0; $tot = 0

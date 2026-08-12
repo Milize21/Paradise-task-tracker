@@ -1,8 +1,8 @@
 # Buang merek & saluran vendor dari template email, pasang tanda Yorukaze Production.
 #
 # KENAPA TEKS, BUKAN GAMBAR
-# Server ini LAN-only di balik NAT, jadi URL gambar apa pun — termasuk logo
-# Yorukaze yang di-host sendiri — TIDAK bisa dijangkau Gmail/Outlook karyawan
+# Server ini LAN-only di balik NAT, jadi URL gambar apa pun, termasuk logo
+# Yorukaze yang di-host sendiri, TIDAK bisa dijangkau Gmail/Outlook karyawan
 # yang membuka email di luar kantor. Teks HTML selalu ter-render. Bonus: memuat
 # logo dari media.docs.plane.so berarti setiap email yang dibuka mengirim ping
 # ke server vendor. Itu kebocoran, bukan sekadar soal merek.
@@ -11,7 +11,7 @@
 # Percobaan pertama membuang tautan sosial dengan `<a ...>.*?</a>` dan MERUSAK
 # 3 template: template mail-builder ini punya `<a>` tak tertutup bawaan upstream
 # (project_invitation sudah 9 buka / 5 tutup sebelum disentuh), jadi `</a>`
-# pertama sesudah pola BUKAN pasangannya — pencocokan melompati beberapa `<td>`
+# pertama sesudah pola BUKAN pasangannya, pencocokan melompati beberapa `<td>`
 # dan melahapnya (46/46 sel jadi 35/38). Sekarang semua operasi bersifat
 # self-contained: mengganti tag void (`<img>`), mengganti nilai atribut, atau
 # mengganti satu baris `<p>` yang sudah seimbang. Tidak ada yang menjangkau
@@ -37,11 +37,11 @@ function New-Wordmark([string]$warna) {
 }
 
 # Pengganti paragraf pemasaran vendor: aslinya menyuruh karyawan melaporkan bug
-# ke Forum & GitHub milik vendor — saluran yang tidak melayani kantor ini.
+# ke Forum & GitHub milik vendor, saluran yang tidak melayani kantor ini.
 #
 # String yang IKUT DITULIS ke berkas wajib ASCII murni. Skrip .ps1 ini tersimpan
 # UTF-8 tanpa BOM, dan Windows PowerShell 5.1 membaca berkas skrip semacam itu
-# dengan codepage ANSI — jadi em-dash "—" di sini keluar sebagai "â€”" di HTML.
+# dengan codepage ANSI, jadi em-dash "—" di sini keluar sebagai "â€”" di HTML.
 # Sudah terjadi sekali. Menambah BOM juga menyembuhkan, tapi BOM gampang hilang
 # saat berkas disimpan ulang editor lain; ASCII tidak bisa rusak.
 $ParagrafInternal =
@@ -55,7 +55,7 @@ Get-ChildItem $root -Recurse -Filter *.html | ForEach-Object {
   # UTF-8 EKSPLISIT. `Get-Content -Raw` di Windows PowerShell 5.1 membaca berkas
   # UTF-8 tanpa BOM memakai codepage ANSI sistem; ditulis balik sebagai UTF-8
   # hasilnya dobel-encode ("doesn’t" -> "doesnâ€™t"). Terjadi sungguhan di sini
-  # dan baru ketahuan waktu template dibuka di browser — bukan dari uji teks.
+  # dan baru ketahuan waktu template dibuka di browser, bukan dari uji teks.
   $asli = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
   $c = $asli
 
@@ -74,16 +74,16 @@ Get-ChildItem $root -Recurse -Filter *.html | ForEach-Object {
   $c = [regex]::Replace($c, '<img[^>]*media\.docs\.plane\.so/logo/new-logo-white\.png[^>]*>', (New-Wordmark '#1f2937'))
 
   # 2) Ikon sosial vendor dibuang (tag void, aman). Anchor pembungkusnya
-  #    ditinggalkan kosong pada langkah 3 — merombak <td>-nya jauh lebih rawan.
+  #    ditinggalkan kosong pada langkah 3, merombak <td>-nya jauh lebih rawan.
   #    Daftar ikon lengkap: twitter, linkedin, github, website. Disajikan dari
   #    `{{ current_site }}/static/logos/`, jadi tidak tertangkap penyaringan
-  #    berbasis host — ketahuan justru dari kotak gambar rusak di screenshot.
+  #    berbasis host, ketahuan justru dari kotak gambar rusak di screenshot.
   #    JANGAN sentuh <img> ber-`avatar_url`: itu foto profil user sungguhan.
   $c = [regex]::Replace($c, '<img[^>]*(?:twitter_32px|linkedin_32px|github_32px|website_32px)[^>]*>', '')
 
   # 3) Paragraf pemasaran vendor -> catatan internal.
   #    Ketiganya blok <p> TANPA <p> bersarang, jadi `</p>` pertama sesudah teks
-  #    pembuka memang penutupnya. Ditemukan lewat MELIHAT email di browser —
+  #    pembuka memang penutupnya. Ditemukan lewat MELIHAT email di browser,
   #    ketiganya lolos pencarian teks karena tidak memuat kata "Plane".
   #    Jarak antar-tag ditulis `\s+`/`\s*`, BUKAN spasi harfiah: sebagian
   #    template termampat satu baris, sebagian lagi memecah <p> dan <span> ke
@@ -91,23 +91,23 @@ Get-ChildItem $root -Recurse -Filter *.html | ForEach-Object {
   #    yang termampat dan diam-diam melewatkan sisanya.
   $c = [regex]::Replace($c, '<p style="margin: 0">\s*<span style="\s*font-size: 12px;\s*"\s*>Note: Plane is still in its early days.*?</p>',
                         $ParagrafInternal, 'Singleline')
-  #    "Despite our popularity, we are humbly early-stage..." — ajakan vendor
+  #    "Despite our popularity, we are humbly early-stage...", ajakan vendor
   #    supaya pembaca mengirim feature request & melihat public roadmap mereka.
   $c = [regex]::Replace($c, '<p style="margin: 0">\s*<span style="font-size: 13px"\s*>Despite our popularity.*?</p>',
                         $ParagrafInternal, 'Singleline')
-  #    "Proudly made on Planet Earth" — tagline vendor.
+  #    "Proudly made on Planet Earth", tagline vendor.
   $c = [regex]::Replace($c, '<p style="\s*margin: 0;\s*font-size: 14px;\s*"\s*>\s*Proudly made on.*?</p>',
                         '<p style="margin: 0; font-size: 14px;">Sistem internal ' + $KANTOR + '.</p>', 'Singleline')
 
   # 3b) Gambar dari host pihak ketiga: ikon sosial/hiasan vendor & mail-builder.
   #     Tidak satu pun melayani kantor ini, dan tiap email yang dibuka memberi
-  #     tahu server mereka. Tag void — aman dibuang.
+  #     tahu server mereka. Tag void, aman dibuang.
   $c = [regex]::Replace($c, '<img[^>]*(?:plane-marketing\.s3[^>]*|creative-assets\.mailinblue\.com[^>]*|ik\.imagekit\.io[^>]*)>', '')
 
-  # 4) Tautan vendor dinetralkan (ganti NILAI atribut saja — struktur utuh).
+  # 4) Tautan vendor dinetralkan (ganti NILAI atribut saja, struktur utuh).
   #    CATATAN: daftar ini hasil MENDATA seluruh host di template, bukan menebak
   #    pola. Tebakan awal ('plane.so|planepowers') melewatkan `plane.sh` dan
-  #    `github.com/makeplane` polos. `www.w3.org` SENGAJA tidak disentuh — itu
+  #    `github.com/makeplane` polos. `www.w3.org` SENGAJA tidak disentuh, itu
   #    deklarasi namespace VML yang dibutuhkan Outlook, bukan merek.
   foreach ($u in @(
     'https://x\.com/planepowers',
@@ -131,7 +131,7 @@ Get-ChildItem $root -Recurse -Filter *.html | ForEach-Object {
   #    Tak terlihat user, tapi ikut terbawa kalau source disalin.
   $c = [regex]::Replace($c, '\bPLANE\b', 'PARADISE TASK TRACKER')
 
-  # 7) Tanda produksi sebelum </body> — sekali saja.
+  # 7) Tanda produksi sebelum </body>, sekali saja.
   if ($c -notmatch [regex]::Escape($MARK) -and $c -match '</body>') {
     $c = $c -replace '</body>', ((
       '<div style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; ' +

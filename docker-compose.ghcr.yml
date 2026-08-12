@@ -1,6 +1,6 @@
 # Overlay: pakai image hasil CI (GHCR) alih-alih build di server.
 #   docker compose -f docker-compose.yml -f docker-compose.ghcr.yml pull && ... up -d
-# Dipakai otomatis oleh paradise/bin/deploy.sh — jangan dipanggil sendirian.
+# Dipakai otomatis oleh paradise/bin/deploy.sh, jangan dipanggil sendirian.
 #
 # Service di bawah tetap punya blok build: dari file dasar (compose tidak bisa
 # menghapus key lewat overlay). Itu tidak masalah: `pull` mengambil image dari

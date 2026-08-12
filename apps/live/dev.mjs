@@ -13,7 +13,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 const ENTRY = "dist/start.mjs";
 const LOG_FILE = "live-dev.log";
-// ponytail: port duplicated from .env — read it here if it ever diverges
+// ponytail: port duplicated from .env, read it here if it ever diverges
 const HEALTH_URL = `http://localhost:${process.env.PORT ?? 3100}/live/health`;
 const BOOT_TIMEOUT_MS = 120_000;
 const POLL_MS = 2_000;

@@ -36,7 +36,7 @@ jobs:
         run: |
           # Keduanya gitignored, jadi tidak pernah ada di checkout CI. Tanpa ini
           # `config` gagal: docker-compose.yml menunjuk env_file ./apps/api/.env
-          # di 4 service. Isinya tidak dipakai — compose cuma butuh filenya ada.
+          # di 4 service. Isinya tidak dipakai, compose cuma butuh filenya ada.
           cp .env.example .env
           cp .env.example apps/api/.env
           docker compose -f docker-compose.yml config -q
@@ -63,12 +63,12 @@ jobs:
       #
       # JANGAN pakai deployments/cli/community/build.yml di sini: context-nya
       # ../../ padahal filenya tiga tingkat di bawah root, dan bake meresolusi
-      # context relatif ke direktori kerja — jadi tidak pernah menunjuk root repo.
+      # context relatif ke direktori kerja, jadi tidak pernah menunjuk root repo.
       #
       # Keenam target disebut eksplisit: worker/beat-worker/migrator memakai image
       # backend yang sama, tanpa ini image itu ter-build 4x.
       #
-      # ponytail: tanpa cache layer — build ~25 menit, dan menit Actions gratis untuk
+      # ponytail: tanpa cache layer, build ~25 menit, dan menit Actions gratis untuk
       # repo public. Tambahkan cache-from/to type=gha kalau waktunya mulai mengganggu.
       - name: Build & push (tag = commit sha)
         env:
@@ -77,7 +77,7 @@ jobs:
           docker buildx bake -f docker-compose.yml -f docker-compose.ghcr.yml --push \
             web admin space live api proxy
 
-      # Manifest copy, bukan rebuild — hitungan detik.
+      # Manifest copy, bukan rebuild, hitungan detik.
       - name: Geser tag `latest` ke build ini
         run: |
           for img in frontend space admin live backend proxy; do

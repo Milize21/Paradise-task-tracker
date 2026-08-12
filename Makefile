@@ -9,7 +9,7 @@ help: ## Tampilkan daftar perintah
 
 env: ## Siapkan .env dari template (tidak menimpa yang sudah ada)
 	@test -f .env || cp paradise/.env.example .env
-	@echo ".env siap — isi nilai <GANTI> (lihat paradise/SECURITY-CHECKLIST.md)"
+	@echo ".env siap, isi nilai <GANTI> (lihat paradise/SECURITY-CHECKLIST.md)"
 
 dev-up: ## Nyalakan dev environment (build dari source)
 	@paradise/bin/dev.sh up
