@@ -186,6 +186,16 @@ services:
       # ada di balik NAT dan tidak bisa dijangkau Let's Encrypt dari luar.
       CERT_ACME_DNS: ${CERT_ACME_DNS:-}
       CERT_ACME_CA: ${CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+    volumes:
+      # Kredensial acme-dns untuk tantangan DNS-01, dipakai kalau CERT_ACME_DNS
+      # menunjuk ke `acme_dns acmedns /etc/caddy/acmedns.json`.
+      #
+      # ⚠️ Berkas ini WAJIB SUDAH ADA sebelum `up -d`. Kalau belum, Docker
+      # membuat DIREKTORI kosong bernama sama di tempatnya, lalu Caddy gagal
+      # dengan pesan soal JSON yang tidak terbaca, bukan soal berkas yang
+      # hilang. Sebabnya jadi jauh dari gejalanya.
+      # Pulihkan dengan `rm -rf` direktori itu lalu buat berkasnya.
+      - ${ACMEDNS_CREDENTIALS_FILE:-./paradise/acmedns.json}:/etc/caddy/acmedns.json:ro
     depends_on:
       - web
       - api

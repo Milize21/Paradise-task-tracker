@@ -147,3 +147,6 @@ paradise/*.log
 
 # Paket migrasi ke server (dump DB + env produksi berisi secret)
 /migrasi/
+
+# Kredensial acme-dns (DNS-01). Dibuat per-server, jangan pernah di-commit.
+paradise/acmedns.json
