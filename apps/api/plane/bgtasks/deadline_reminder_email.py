@@ -6,7 +6,8 @@
 """Penyusun dan pengirim satu email pengingat tenggat, berikut lampiran .ics."""
 
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
+from datetime import timezone as dt_timezone
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection
@@ -22,6 +23,11 @@ KANTOR = "PT Paradise Perkasa"
 # memaksakannya justru membuat sebagian aplikasi kalender menolak berkasnya.
 # Titik overdue tetap diingatkan, tapi lewat email ini sendiri.
 ALARM_HARI = [7, 5, 3, 1]
+
+# Titik nol penomoran revisi acara. Sengaja bukan epoch Unix: sebagian klien
+# kalender menyimpan SEQUENCE sebagai integer 32-bit, dan detik Unix menembus
+# batas itu pada 2038. Dihitung dari sini, angkanya tetap kecil.
+EPOCH_SEQUENCE = datetime(2026, 1, 1, tzinfo=dt_timezone.utc)
 
 
 def _base_url() -> str:
@@ -66,6 +72,22 @@ def _lipat(baris: str) -> str:
     return "\r\n ".join(potongan)
 
 
+def _sequence(issue) -> int:
+    """Nomor revisi acara, wajib naik tiap kali work item-nya berubah.
+
+    UID yang sama membuat kiriman berikutnya menimpa acara lama, tapi hanya
+    kalau ia terbaca sebagai versi yang lebih baru. Tanpa SEQUENCE sebagian
+    klien kalender diam-diam mempertahankan tanggal yang lama, jadi tenggat
+    yang digeser di aplikasi tidak pernah sampai ke kalender orang.
+
+    `updated_at` naik sendiri tiap kali work item disunting, jadi delapan
+    pengingat untuk tenggat yang tidak berubah tetap bernomor sama. Itu memang
+    yang diinginkan: tidak ada perubahan, tidak ada yang perlu ditimpa.
+    """
+    diubah = getattr(issue, "updated_at", None) or EPOCH_SEQUENCE
+    return max(0, int((diubah - EPOCH_SEQUENCE).total_seconds()))
+
+
 def bangun_ics(issue, judul: str, deskripsi: str, url: str) -> str:
     """Susun satu VEVENT sepanjang hari untuk tanggal tenggat.
 
@@ -85,6 +107,7 @@ def bangun_ics(issue, judul: str, deskripsi: str, url: str) -> str:
         "METHOD:PUBLISH",
         "BEGIN:VEVENT",
         f"UID:workitem-{issue.id}@paradise-task-tracker",
+        f"SEQUENCE:{_sequence(issue)}",
         f"DTSTAMP:{stamp}",
         f"DTSTART;VALUE=DATE:{mulai.strftime('%Y%m%d')}",
         f"DTEND;VALUE=DATE:{selesai.strftime('%Y%m%d')}",
