@@ -180,6 +180,12 @@ services:
       BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}
       SITE_ADDRESS: ${SITE_ADDRESS:-:80}
       CERT_EMAIL: ${CERT_EMAIL:-}
+      # Caddyfile.ce memakai {$CERT_ACME_DNS} dan {$CERT_ACME_CA}, tapi keduanya
+      # tidak pernah diteruskan ke sini. Akibatnya tantangan DNS-01 mustahil
+      # dipakai: Caddy jatuh ke HTTP-01, yang selalu gagal di server ini karena
+      # ada di balik NAT dan tidak bisa dijangkau Let's Encrypt dari luar.
+      CERT_ACME_DNS: ${CERT_ACME_DNS:-}
+      CERT_ACME_CA: ${CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
     depends_on:
       - web
       - api
