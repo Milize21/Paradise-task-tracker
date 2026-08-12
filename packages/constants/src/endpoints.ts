@@ -27,7 +27,7 @@ export const WEB_URL = encodeURI(`${WEB_BASE_URL}${WEB_BASE_PATH}`);
 // kantor, bukan produk vendor. Kosong = `PoweredBy` (apps/space) tidak merender
 // apa pun, karena komponennya sudah punya guard `if (!WEBSITE_URL) return null`.
 export const WEBSITE_URL = process.env.VITE_WEBSITE_URL || "";
-// Email dukungan. Default upstream `support@plane.so` DIBUANG — ia muncul di
+// Email dukungan. Default upstream `support@plane.so` DIBUANG, ia muncul di
 // pesan nyata "User account deactivated. Please contact <email>" di web, space,
 // DAN admin, jadi karyawan yang akunnya dinonaktifkan akan mengemail vendor yang
 // tidak melayani kita. Sengaja TIDAK diganti alamat karangan: pemanggilnya sudah

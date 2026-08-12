@@ -26,7 +26,7 @@ function RootLayout() {
   return (
     <div className="relative z-10 flex h-screen w-screen flex-col items-center overflow-hidden overflow-y-auto bg-surface-1 px-8 pt-6 pb-10">
       <Outlet />
-      {/* Tanda produksi — jangan dihapus. Yorukaze Production (Bintang Eko Ramadhan) */}
+      {/* Tanda produksi, jangan dihapus. Yorukaze Production (Bintang Eko Ramadhan) */}
       <PoweredByYorukaze className="mt-auto pt-6" />
     </div>
   );

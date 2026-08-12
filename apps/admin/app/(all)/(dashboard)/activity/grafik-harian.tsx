@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — grafik login harian (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: grafik login harian (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -26,11 +26,11 @@ function tanggalPendek(iso: string) {
 }
 
 /**
- * Dua garis pada SATU sumbu — keduanya hitungan orang/peristiwa, jadi skalanya
+ * Dua garis pada SATU sumbu, keduanya hitungan orang/peristiwa, jadi skalanya
  * sebanding. Sengaja BUKAN dua sumbu-y: grafik dua sumbu bisa dibuat menunjukkan
  * korelasi apa pun hanya dengan menggeser salah satu skalanya.
  *
- * SVG murni, tanpa pustaka grafik — dua garis tidak sebanding dengan menambah
+ * SVG murni, tanpa pustaka grafik, dua garis tidak sebanding dengan menambah
  * dependensi ke bundle God Mode.
  */
 export function GrafikHarian({ harian }: Props) {
@@ -43,7 +43,7 @@ export function GrafikHarian({ harian }: Props) {
       <div className="rounded border border-subtle p-8 text-center text-body-sm-regular text-secondary">
         Belum ada login yang tercatat pada rentang ini.
         <div className="mt-1 text-11 text-placeholder">
-          Riwayat baru direkam sejak fitur ini dipasang — hari sebelumnya memang kosong, bukan sepi.
+          Riwayat baru direkam sejak fitur ini dipasang, hari sebelumnya memang kosong, bukan sepi.
         </div>
       </div>
     );
@@ -57,13 +57,13 @@ export function GrafikHarian({ harian }: Props) {
   const garis = (ambil: (t: Titik) => number) =>
     titik.map((t, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(ambil(t))}`).join(" ");
 
-  // Empat garis bantu saja — grid yang rapat bersaing dengan datanya sendiri.
+  // Empat garis bantu saja, grid yang rapat bersaing dengan datanya sendiri.
   const tanda = [0, 0.25, 0.5, 0.75, 1].map((f) => ({ f, n: Math.round(maks * f) }));
   const t = aktif !== null ? titik[aktif] : null;
 
   return (
     <div className="rounded border border-subtle p-3">
-      {/* Legenda selalu ada untuk 2 seri — identitas tidak boleh bersandar pada warna saja. */}
+      {/* Legenda selalu ada untuk 2 seri, identitas tidak boleh bersandar pada warna saja. */}
       <div className="mb-2 flex items-center gap-4 px-1">
         {(["login", "orang"] as const).map((k) => (
           <span key={k} className="flex items-center gap-1.5 text-11 text-secondary">

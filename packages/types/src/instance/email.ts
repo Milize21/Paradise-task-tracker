@@ -15,7 +15,7 @@ export type TInstanceEmailConfigurationKeys =
   | "ENABLE_SMTP";
 
 /**
- * Email MASUK. Tersimpan tapi BELUM DIBACA apa pun — Plane CE tidak punya
+ * Email MASUK. Tersimpan tapi BELUM DIBACA apa pun, Plane CE tidak punya
  * pemroses inbound. Dipisah dari tipe SMTP supaya tidak ada kode yang
  * mengiranya bagian dari alur kirim yang sudah jalan.
  */

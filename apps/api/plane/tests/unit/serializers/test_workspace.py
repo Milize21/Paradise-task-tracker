@@ -12,10 +12,10 @@ from plane.app.serializers import WorkSpaceSerializer
 from plane.license.api.serializers import WorkspaceSerializer as InstanceWorkspaceSerializer
 from plane.db.models import Workspace, User
 
-# Names with no letter or digit — must be rejected (issue #9255)
+# Names with no letter or digit, must be rejected (issue #9255)
 SYMBOL_ONLY_NAMES = ["-_________-", "---", "___", "- - -", "   ", "  -_ "]
 
-# Names containing at least one letter or digit — must be accepted, including
+# Names containing at least one letter or digit, must be accepted, including
 # international scripts, so the rule does not regress non-Latin workspace names
 VALID_NAMES = [
     "Acme Corp",
@@ -30,7 +30,7 @@ VALID_NAMES = [
     "محمد",
 ]
 
-# Names embedding a URL — must be rejected on both create paths
+# Names embedding a URL, must be rejected on both create paths
 URL_NAMES = ["https://evil.com", "www.example.com", "example.com"]
 
 

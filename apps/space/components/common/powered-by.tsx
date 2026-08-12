@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — tanda produksi Yorukaze (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: tanda produksi Yorukaze (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -18,15 +18,15 @@ type TPoweredBy = {
  * Badge "Powered by Paradise Perkasa · Yorukaze Production" di pojok kanan bawah
  * halaman publik (Space).
  *
- * Dulu ikonnya `PlaneLogo` milik vendor — dibuang, diganti logo Yorukaze.
+ * Dulu ikonnya `PlaneLogo` milik vendor, dibuang, diganti logo Yorukaze.
  *
  * Guard lama `if (!WEBSITE_URL) return null` DIBUANG. `WEBSITE_URL` sengaja
  * dikosongkan waktu debranding (endpoints.ts:29), jadi guard itu membuat badge
- * ini TIDAK PERNAH TAMPIL sama sekali — tanda produksinya ikut hilang tanpa ada
+ * ini TIDAK PERNAH TAMPIL sama sekali, tanda produksinya ikut hilang tanpa ada
  * yang sadar. Sekarang: ada URL → dibungkus tautan; tidak ada → tetap tampil
  * sebagai teks biasa.
  *
- * Logo terang/gelap dipilih lewat CSS (`dark:`), bukan `useTheme()` — bercabang
+ * Logo terang/gelap dipilih lewat CSS (`dark:`), bukan `useTheme()`, bercabang
  * di JS atas `resolvedTheme` melahirkan mismatch hidrasi (BUG-05), dan apps/space
  * ber-`ssr: true` sehingga justru paling rawan.
  */

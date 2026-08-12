@@ -1,11 +1,11 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — Super Admin tersembunyi (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: Super Admin tersembunyi (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 """Super Admin: akses ke semua project tanpa perlu di-assign, dan tidak terlihat.
 
 Yang diminta: Super Admin (instance admin / God Mode) bisa memantau dan
-mengerjakan apa pun di seluruh project — termasuk project yang baru dibuat —
+mengerjakan apa pun di seluruh project, termasuk project yang baru dibuat,
 tanpa ditambahkan manual, dan **keberadaannya tidak terlihat** oleh user maupun
 admin project.
 
@@ -14,7 +14,7 @@ admin project.
 Plane menentukan akses lewat keanggotaan: **33 berkas** menyaring queryset
 dengan `project__project_projectmember__member=request.user`. Menambahkan jalan
 pintas di lapisan izin berarti menyentuh ketiga puluh tiga tempat itu, dan satu
-kondisi yang salah tulis di antaranya membuka akses ke orang yang salah — pada
+kondisi yang salah tulis di antaranya membuka akses ke orang yang salah, pada
 instance berisi 79 orang.
 
 Jadi Super Admin tetap PUNYA baris `ProjectMember`, dibuatkan otomatis, lalu
@@ -23,7 +23,7 @@ sama dengan yang diminta, tanpa membongkar lapisan izin.
 
 > **Batas yang harus disadari:** ini menyembunyikan di lapisan tampilan, bukan
 > di penyimpanan. Barisnya tetap ada di tabel `project_members`. Siapa pun yang
-> bisa membaca database langsung akan melihatnya — dan itu wajar, karena orang
+> bisa membaca database langsung akan melihatnya, dan itu wajar, karena orang
 > yang punya akses database sudah punya akses ke segalanya.
 
 ## Kapan keanggotaan dibuat
@@ -125,7 +125,7 @@ def _tambahkan_ke_project(user_ids, projects):
     baris ber-`deleted_at`, jadi keanggotaan yang pernah dicabut tidak terlihat
     dan `get_or_create` akan membuat baris BARU untuk pasangan user+project yang
     sama. Itu langsung menabrak constraint unik `ProjectUserProperty` yang
-    dibuat signal Plane saat ProjectMember lahir — dan gagalnya baru muncul
+    dibuat signal Plane saat ProjectMember lahir, dan gagalnya baru muncul
     beberapa project kemudian, jauh dari sebabnya.
 
     Keanggotaan yang pernah dicabut **dihidupkan kembali**, bukan digandakan.
@@ -163,7 +163,7 @@ def project_baru_untuk_super_admin(sender, instance, created, **kwargs):
 def sinkronkan_super_admin(user_id=None):
     """Pastikan Super Admin jadi anggota SELURUH project yang ada.
 
-    Dipanggil setelah mengangkat Super Admin baru. Aman dijalankan ulang —
+    Dipanggil setelah mengangkat Super Admin baru. Aman dijalankan ulang,
     `get_or_create`, jadi tidak menggandakan.
     """
     from plane.db.models import Project

@@ -80,7 +80,7 @@ export const onAuthenticate = async ({
   // Gerbang izin edit (fork Yorukaze Production). Autentikasi hanya menjawab "siapa kamu";
   // tanpa langkah ini siapa pun yang bisa login dapat mengetik di halaman mana
   // pun lewat websocket dan melewati seluruh izin REST, termasuk ACL folder Wiki.
-  // Backend yang memutuskan — kita cuma menerapkan hasilnya sebagai read-only.
+  // Backend yang memutuskan, kita cuma menerapkan hasilnya sebagai read-only.
   connection.readOnly = !(await canEditDocument({
     cookie: context.cookie,
     workspaceSlug: context.workspaceSlug,
@@ -109,7 +109,7 @@ const canEditDocument = async ({
 }): Promise<boolean> => {
   if (!workspaceSlug || !projectId || !pageId) {
     logger.error(
-      `Tidak bisa memastikan izin edit (workspaceSlug=${workspaceSlug} projectId=${projectId} pageId=${pageId}) — read-only`
+      `Tidak bisa memastikan izin edit (workspaceSlug=${workspaceSlug} projectId=${projectId} pageId=${pageId}), read-only`
     );
     return false;
   }

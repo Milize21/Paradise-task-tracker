@@ -6,7 +6,7 @@
 
 import Script from "next/script";
 
-// styles (side-effect import — memuat CSS global)
+// styles (side-effect import, memuat CSS global)
 // oxlint-disable-next-line no-unassigned-import
 import "@/styles/globals.css";
 

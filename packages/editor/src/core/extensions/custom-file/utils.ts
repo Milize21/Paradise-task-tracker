@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — node berkas non-gambar (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: node berkas non-gambar (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -15,7 +15,7 @@ export const getFileComponentFileMap = (editor: Editor): CustomFileExtensionStor
   editor.storage[CORE_EXTENSIONS.CUSTOM_FILE]?.fileMap;
 
 /**
- * Dibaca dari editor.storage, bukan extension.storage — mengikuti pola node
+ * Dibaca dari editor.storage, bukan extension.storage, mengikuti pola node
  * gambar. extension.storage tidak selalu terisi saat node view pertama render.
  */
 export const getFileComponentMaxFileSize = (editor: Editor): number =>
@@ -61,15 +61,15 @@ export const resolveFileMimeType = (type: string | null, name: string | null): s
 };
 
 /**
- * Tipe teks yang benar-benar DIRENDER Chrome di dalam frame — bukan sekadar
+ * Tipe teks yang benar-benar DIRENDER Chrome di dalam frame, bukan sekadar
  * "kelihatannya teks". `text/csv` dan `text/markdown` sengaja TIDAK ada di sini:
  * Chrome tak punya renderer untuk keduanya dan mengubah navigasi frame jadi
  * unduhan, jadi bingkainya cuma putih kosong. Diuji langsung dengan berkas
- * nyata: csv kosong di sandbox="", tanpa sandbox, maupun allow-downloads —
+ * nyata: csv kosong di sandbox="", tanpa sandbox, maupun allow-downloads,
  * sementara txt render di semuanya. Tanpa sandbox ia malah mengunduh diam-diam
  * begitu halaman dibuka.
  *
- * Jangan diganti kembali jadi `startsWith("text/")` — itu justru asal masalahnya.
+ * Jangan diganti kembali jadi `startsWith("text/")`, itu justru asal masalahnya.
  */
 const FRAMEABLE_TEXT_MIME_TYPES = new Set([
   "text/plain",

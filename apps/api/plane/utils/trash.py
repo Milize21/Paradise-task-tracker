@@ -1,10 +1,10 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — isi Trashbin & TPA (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: isi Trashbin & TPA (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 """Sumber tunggal untuk Trashbin (per project) dan TPA (God Mode).
 
-Keduanya membaca data yang SAMA — barang ber-`deleted_at` — hanya cakupannya
+Keduanya membaca data yang SAMA, barang ber-`deleted_at`, hanya cakupannya
 yang berbeda: Trashbin dibatasi satu project dan dioperasikan admin project,
 TPA melihat seluruh instance dan dioperasikan Super Admin. Karena itu logikanya
 tinggal di sini, bukan disalin dua kali; kalau disalin, cepat atau lambat
@@ -15,7 +15,7 @@ keduanya akan berbeda pendapat soal apa yang sebenarnya ada di tong sampah.
 from django.conf import settings
 from django.utils import timezone
 
-# Auditlog (MIT, jazzband) — lihat NOTICE.md
+# Auditlog (MIT, jazzband), lihat NOTICE.md
 from auditlog.models import LogEntry
 
 # Module imports
@@ -24,7 +24,7 @@ from plane.db.models import Cycle, Issue, Module, Page
 
 
 def _filter_page_project(qs, project_id):
-    # Page tidak punya project_id sendiri — tautannya lewat tabel project_pages.
+    # Page tidak punya project_id sendiri, tautannya lewat tabel project_pages.
     return qs.filter(project_pages__project_id=project_id)
 
 
@@ -71,12 +71,12 @@ TRASH_MODELS = {
 def _peta_penghapus(tipe, pks):
     """Siapa yang membuang barang ini, dibaca dari jejak audit.
 
-    `deleted_at` hanya menyimpan KAPAN, bukan SIAPA — tidak ada kolomnya di
+    `deleted_at` hanya menyimpan KAPAN, bukan SIAPA, tidak ada kolomnya di
     model. Pelakunya ada di jejak audit, jadi diambil dari sana dengan SATU
     query untuk seluruh halaman, bukan satu query per baris.
 
     Hanya tersedia untuk model yang memang dipantau auditlog (issue & page).
-    Selain itu hasilnya kosong, dan itu ditampilkan apa adanya — bukan ditebak.
+    Selain itu hasilnya kosong, dan itu ditampilkan apa adanya, bukan ditebak.
     """
     if not pks:
         return {}
@@ -142,7 +142,7 @@ def kumpulkan(project_id=None, tipe=None, limit=200):
 def ambil(tipe, pk, project_id=None):
     """Ambil satu barang dari tong sampah, atau None kalau bukan haknya.
 
-    `project_id` mempersempit ke satu project — dipakai Trashbin supaya admin
+    `project_id` mempersempit ke satu project, dipakai Trashbin supaya admin
     project A tidak bisa memulihkan barang milik project B hanya dengan menebak
     id-nya.
     """

@@ -19,7 +19,7 @@ class TestWorkspaceUserPreferencePatch:
 
     Regression coverage for #9260: ``patch`` filtered ``WorkspaceUserPreference``
     by ``key``/``workspace__slug`` only, so in a workspace with multiple members
-    ``.first()`` (ordered by ``-created_at``) could return — and mutate — another
+    ``.first()`` (ordered by ``-created_at``) could return, and mutate, another
     member's preference row instead of the requesting user's.
     """
 

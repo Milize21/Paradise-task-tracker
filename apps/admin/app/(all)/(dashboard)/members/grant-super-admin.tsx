@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — konfirmasi beri Super Admin (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: konfirmasi beri Super Admin (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -24,7 +24,7 @@ type Props = {
 
 /* Memberi Super Admin bukan aksi satu klik: statusnya memberi akses ke SELURUH
    project sekaligus, termasuk project yang belum dibuat. Frasanya diperiksa di
-   server terhadap `SUPER_ADMIN_GRANT_PASSPHRASE` — tidak ada salinannya di sisi
+   server terhadap `SUPER_ADMIN_GRANT_PASSPHRASE`, tidak ada salinannya di sisi
    klien, jadi tidak ada yang bisa dibaca dari bundle browser. */
 export function GrantSuperAdmin({ member, onSelesai, onTutup }: Props) {
   const [frasa, setFrasa] = useState("");
@@ -58,7 +58,7 @@ export function GrantSuperAdmin({ member, onSelesai, onTutup }: Props) {
         <div className="space-y-1">
           <p className="text-body-sm-regular font-medium text-primary">Jadikan {member.display_name} Super Admin?</p>
           <p className="text-11 text-secondary">
-            Dia akan mengakses <strong>seluruh project</strong> — termasuk yang dibuat setelah ini — tanpa muncul di
+            Dia akan mengakses <strong>seluruh project</strong>, termasuk yang dibuat setelah ini, tanpa muncul di
             daftar anggota mana pun. Masukkan frasa konfirmasi untuk melanjutkan.
           </p>
         </div>

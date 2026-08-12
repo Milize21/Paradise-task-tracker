@@ -238,7 +238,7 @@ class EstimatePointEndpoint(BaseViewSet):
                     epoch=int(timezone.now().timestamp()),
                 )
 
-        # delete the estimate point — scope to this estimate/project/workspace to prevent cross-tenant key manipulation
+        # delete the estimate point, scope to this estimate/project/workspace to prevent cross-tenant key manipulation
         old_estimate_point = EstimatePoint.objects.filter(
             pk=estimate_point_id,
             estimate_id=estimate_id,

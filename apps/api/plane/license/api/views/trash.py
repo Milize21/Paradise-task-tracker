@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — TPA (Tempat Pembuangan Akhir) di God Mode (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: TPA (Tempat Pembuangan Akhir) di God Mode (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
@@ -16,11 +16,11 @@ from plane.utils.trash import ambil, buang_permanen, kumpulkan, pulihkan
 
 
 class InstanceTrashEndpoint(BaseAPIView):
-    """TPA — tong sampah seluruh instance, lintas project.
+    """TPA, tong sampah seluruh instance, lintas project.
 
     Membaca data yang SAMA dengan Trashbin per project; yang berbeda hanya
     cakupan dan siapa yang boleh menyentuhnya. Karena itu logikanya dipakai
-    bersama lewat `plane.utils.trash`, bukan disalin — kalau disalin, cepat
+    bersama lewat `plane.utils.trash`, bukan disalin, kalau disalin, cepat
     atau lambat keduanya akan berbeda pendapat soal isi tong sampah.
 
     Izin datang dari `BaseAPIView` God Mode (`InstanceAdminPermission`), jadi

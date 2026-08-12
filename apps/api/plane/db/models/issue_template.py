@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — Templates & Recurring Work Items (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: Templates & Recurring Work Items (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
@@ -69,7 +69,7 @@ class RecurringIssue(ProjectBaseModel):
             self.Interval.WEEKLY: timedelta(weeks=1),
             self.Interval.MONTHLY: timedelta(days=30),
         }[self.Interval(self.interval)]
-        # Lompati jadwal yang terlewat (mis. laptop mati berhari-hari) — buat 1 saja, bukan rapel
+        # Lompati jadwal yang terlewat (mis. laptop mati berhari-hari), buat 1 saja, bukan rapel
         while base <= now:
             base += step
         self.next_run_at = base

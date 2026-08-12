@@ -204,7 +204,7 @@ class ProjectJoinEndpoint(BaseAPIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # Require an authenticated session — the accepting user must be the
+        # Require an authenticated session, the accepting user must be the
         # person who was invited.  Without this check an attacker who knows the
         # invitee email and obtains the token can hijack the project membership
         # (GHSA-g36h-p63v-g9c7).
@@ -231,7 +231,7 @@ class ProjectJoinEndpoint(BaseAPIView):
             project_invite.save()
 
             if project_invite.accepted:
-                # Use the authenticated user directly — they've already been
+                # Use the authenticated user directly, they've already been
                 # validated as the invite recipient above.
                 user = request.user
 

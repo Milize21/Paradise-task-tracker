@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — Granular Access Control Wiki (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: Granular Access Control Wiki (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
@@ -15,7 +15,7 @@ class WikiGovernedProject(BaseModel):
 
     Di project bertanda ini, hak EDIT halaman ditentukan oleh kepemilikan
     folder per-divisi (lihat WikiFolderAccess), bukan oleh peran project biasa.
-    Project TANPA baris ini memakai izin halaman Plane normal — tak tersentuh.
+    Project TANPA baris ini memakai izin halaman Plane normal, tak tersentuh.
     """
 
     workspace = models.ForeignKey(
@@ -24,7 +24,7 @@ class WikiGovernedProject(BaseModel):
     # ForeignKey + unique_together yang MENYERTAKAN deleted_at, bukan OneToOneField.
     # OneToOneField meng-unique-kan project_id saja dan mengabaikan soft-delete, jadi
     # sekali governance dimatikan (soft-delete) project itu tak akan pernah bisa
-    # dinyalakan lagi — create() selalu IntegrityError. Pola ini menyamai
+    # dinyalakan lagi, create() selalu IntegrityError. Pola ini menyamai
     # WikiFolderAccess di bawah.
     project = models.ForeignKey(
         "db.Project", related_name="wiki_governance", on_delete=models.CASCADE

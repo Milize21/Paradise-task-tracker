@@ -48,7 +48,7 @@ export const OnboardingHeader = observer(function OnboardingHeader(props: Onboar
   // can go back
   const canGoBack = ![EOnboardingSteps.PROFILE_SETUP, EOnboardingSteps.INVITE_MEMBERS].includes(currentStep);
 
-  // step order for progress tracking — include INVITE_MEMBERS if user is currently on it
+  // step order for progress tracking, include INVITE_MEMBERS if user is currently on it
   const showInviteStep = !hasInvitations || currentStep === EOnboardingSteps.INVITE_MEMBERS;
   const stepOrder: TOnboardingStep[] = [
     EOnboardingSteps.PROFILE_SETUP,

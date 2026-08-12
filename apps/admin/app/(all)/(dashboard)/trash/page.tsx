@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — TPA (Tempat Pembuangan Akhir) (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: TPA (Tempat Pembuangan Akhir) (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -74,9 +74,9 @@ const TrashPage = function TrashPage(_props: Route.ComponentProps) {
 
   const handleBuang = async (item: TTrashItem) => {
     // Satu-satunya aksi tak terbalikkan di halaman ini, dan tombolnya
-    // bersebelahan dengan "Pulihkan" — konfirmasi wajib.
+    // bersebelahan dengan "Pulihkan", konfirmasi wajib.
     const yakin = window.confirm(
-      `Buang "${item.name}" secara permanen?\n\nTidak bisa dibatalkan — barang ini tidak akan bisa dipulihkan lagi, bahkan oleh Super Admin.`
+      `Buang "${item.name}" secara permanen?\n\nTidak bisa dibatalkan, barang ini tidak akan bisa dipulihkan lagi, bahkan oleh Super Admin.`
     );
     if (!yakin) return;
     setSibuk(item.id);
@@ -95,7 +95,7 @@ const TrashPage = function TrashPage(_props: Route.ComponentProps) {
     <PageWrapper
       size="lg"
       header={{
-        title: "TPA — Tempat Pembuangan Akhir",
+        title: "TPA, Tempat Pembuangan Akhir",
         description: `Semua barang terhapus dari seluruh project${
           data?.retention_days ? `, disimpan ${data.retention_days} hari` : ""
         }. Bisa dipulihkan atau dibuang permanen.`,

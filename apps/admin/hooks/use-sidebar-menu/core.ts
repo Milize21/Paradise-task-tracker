@@ -55,13 +55,13 @@ export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem>
   },
   image: {
     Icon: Image,
-    // Sisa merek upstream di God Mode — apps/web & apps/space sudah dibersihkan
+    // Sisa merek upstream di God Mode, apps/web & apps/space sudah dibersihkan
     // di `a407ce0`/`07a6fe2`, apps/admin belum ikut disapu.
     name: "Pustaka gambar",
     description: "Izinkan pustaka gambar pihak ketiga.",
     href: `/image/`,
   },
-  // Kustomisasi Paradise (Yorukaze Production) — jejak audit sengaja HANYA di God Mode.
+  // Kustomisasi Paradise (Yorukaze Production), jejak audit sengaja HANYA di God Mode.
   logs: {
     Icon: ScrollText,
     name: "Jejak audit",

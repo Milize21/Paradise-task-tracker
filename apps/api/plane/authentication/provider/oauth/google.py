@@ -102,7 +102,7 @@ class GoogleOAuthProvider(OauthAdapter):
 
     def set_user_data(self):
         user_info_response = self.get_user_response()
-        # Reject unverified emails — an attacker-controlled provider could otherwise assert
+        # Reject unverified emails, an attacker-controlled provider could otherwise assert
         # any email to match an existing account (GHSA-7j95-vh8g-f365). Fail closed: treat
         # an absent verified_email claim the same as verified_email=false.
         if user_info_response.get("verified_email") is not True:

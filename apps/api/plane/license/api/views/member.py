@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — kelola member di God Mode (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: kelola member di God Mode (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
@@ -58,7 +58,7 @@ def _tolak_frasa(request):
 
     Punya God Mode saja tidak cukup: status Super Admin membuka akses ke SELURUH
     project sekaligus, jadi aksi itu minta konfirmasi sekali lagi. Frasanya dari
-    environment (`apps/api/.env`, gitignored) — TIDAK pernah dari source, karena
+    environment (`apps/api/.env`, gitignored), TIDAK pernah dari source, karena
     repo ini publik dan frasa yang ditulis di kode akan terbit ke GitHub.
     """
     frasa_benar = settings.SUPER_ADMIN_GRANT_PASSPHRASE
@@ -69,7 +69,7 @@ def _tolak_frasa(request):
             {
                 "error": "Frasa konfirmasi Super Admin belum diatur di server. "
                 "Set SUPER_ADMIN_GRANT_PASSPHRASE di apps/api/.env lalu "
-                "`docker compose up -d` — `restart` TIDAK membaca ulang env_file."
+                "`docker compose up -d`, `restart` TIDAK membaca ulang env_file."
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -92,7 +92,7 @@ def _akhiri_sesi(user_id):
     yang sudah terbuka, dan itu membuat reset password kehilangan gunanya.
 
     `Session.user_id` di repo ini `CharField` ber-index (SESSION_ENGINE kustom,
-    bukan `django_session` — jebakan D2), jadi cocokkan sebagai string.
+    bukan `django_session`, jebakan D2), jadi cocokkan sebagai string.
     """
     return Session.objects.filter(user_id=str(user_id)).delete()[0]
 
@@ -100,7 +100,7 @@ def _akhiri_sesi(user_id):
 def _serialize(u, super_admin_ids, ws_role, sesi_hidup=None, batas_aktif=None):
     """`sesi_hidup` = himpunan user_id (string) yang punya sesi belum kedaluwarsa.
 
-    Dihitung SEKALI untuk seluruh halaman oleh pemanggil, bukan per baris —
+    Dihitung SEKALI untuk seluruh halaman oleh pemanggil, bukan per baris,
     50 baris x 1 query akan jadi 50 query untuk informasi yang satu query bisa
     jawab sekaligus.
     """
@@ -136,7 +136,7 @@ def _serialize(u, super_admin_ids, ws_role, sesi_hidup=None, batas_aktif=None):
 
 
 class InstanceMemberEndpoint(BaseAPIView):
-    """Kelola member dari God Mode — daftar, buat, ubah, nonaktifkan.
+    """Kelola member dari God Mode, daftar, buat, ubah, nonaktifkan.
 
     Hanya instance admin (izin dari `BaseAPIView` God Mode).
 
@@ -147,8 +147,8 @@ class InstanceMemberEndpoint(BaseAPIView):
 
     Menonaktifkan, bukan menghapus baris: menghapus User akan memutus rujukan
     di jejak audit, worklog, dan riwayat mana pun yang menyentuhnya. Nonaktif
-    sudah menghasilkan yang dimaksud — tidak bisa masuk, tidak muncul sebagai
-    anggota — dan bisa dibalik.
+    sudah menghasilkan yang dimaksud, tidak bisa masuk, tidak muncul sebagai
+    anggota, dan bisa dibalik.
     """
 
     def get(self, request):
@@ -213,7 +213,7 @@ class InstanceMemberEndpoint(BaseAPIView):
             return Response({"error": "Email tidak sah."}, status=status.HTTP_400_BAD_REQUEST)
         if not nama:
             return Response({"error": "Nama wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
-        # Tanpa batas minimum, akun baru bisa lahir dengan password satu huruf —
+        # Tanpa batas minimum, akun baru bisa lahir dengan password satu huruf,
         # dan orangnya tidak akan pernah tahu itu lemah.
         if len(password) < _PANJANG_PASSWORD_MIN:
             return Response(
@@ -245,7 +245,7 @@ class InstanceMemberEndpoint(BaseAPIView):
     def patch(self, request, pk):
         """Ubah profil, identitas, password, hak akses, status aktif, Super Admin.
 
-        Semua kolom opsional — hanya yang dikirim yang disentuh, jadi satu form
+        Semua kolom opsional, hanya yang dikirim yang disentuh, jadi satu form
         di God Mode bisa mengirim sebagian saja tanpa menimpa sisanya dengan
         nilai kosong.
         """
@@ -256,7 +256,7 @@ class InstanceMemberEndpoint(BaseAPIView):
         # Gerbang frasa diperiksa DI DEPAN, sebelum satu kolom pun disentuh.
         # Kalau di belakang, permintaan gabungan (ubah password + beri Super
         # Admin) dengan frasa salah akan menyimpan passwordnya lalu membalas
-        # 403 — balasan yang bagi pemanggilnya berarti "tidak terjadi apa-apa".
+        # 403, balasan yang bagi pemanggilnya berarti "tidak terjadi apa-apa".
         if request.data.get("is_super_admin"):
             ditolak = _tolak_frasa(request)
             if ditolak is not None:
@@ -307,7 +307,7 @@ class InstanceMemberEndpoint(BaseAPIView):
             u.set_password(password)
             # `is_password_autoset=True` berarti "password belum pernah dipilih
             # sendiri" dan memicu alur ganti-password paksa. Admin yang mengeset
-            # password bukan itu — nilainya harus False.
+            # password bukan itu, nilainya harus False.
             u.is_password_autoset = False
             kolom += ["password", "is_password_autoset"]
             sesi_diakhiri += _akhiri_sesi(u.id)
@@ -337,7 +337,7 @@ class InstanceMemberEndpoint(BaseAPIView):
         if "is_active" in request.data:
             aktif = bool(request.data["is_active"])
             # Menonaktifkan diri sendiri akan mengunci orang itu keluar dari
-            # halaman yang sedang ia pakai — tolak, jangan biarkan.
+            # halaman yang sedang ia pakai, tolak, jangan biarkan.
             if not aktif and u.id == request.user.id:
                 return Response(
                     {"error": "Tidak bisa menonaktifkan akun sendiri."},
@@ -378,6 +378,6 @@ class InstanceMemberEndpoint(BaseAPIView):
         ws_role = dict(WorkspaceMember.objects.filter(member=u).values_list("member_id", "role"))
         hasil = _serialize(u, super_admin_user_ids(), ws_role)
         # Supaya UI bisa memberi tahu terus terang bahwa orangnya baru saja
-        # dikeluarkan dan harus masuk ulang — bukan dibiarkan menebak.
+        # dikeluarkan dan harus masuk ulang, bukan dibiarkan menebak.
         hasil["sessions_ended"] = sesi_diakhiri
         return Response(hasil, status=status.HTTP_200_OK)

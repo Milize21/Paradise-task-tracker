@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — pemantauan sesi & aktivitas (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: pemantauan sesi & aktivitas (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -65,10 +65,10 @@ export type TActivitySummary = {
     user_yang_login: number;
     rata_login_per_user: number;
   };
-  /** Sudah terurut naik menurut tanggal dari server — jangan diurutkan ulang. */
+  /** Sudah terurut naik menurut tanggal dari server, jangan diurutkan ulang. */
   harian: { tgl: string; orang: number; login: number }[];
   /** 10 terbanyak. Rata-rata menyembunyikan satu orang yang login 40x sehari
-   *  karena sesinya terus putus — itu justru yang perlu terlihat. */
+   *  karena sesinya terus putus, itu justru yang perlu terlihat. */
   teraktif: { user_id: string; email: string; login: number }[];
   retensi: TRetensi;
 };
@@ -116,7 +116,7 @@ export class InstanceActivityService extends APIService {
   }
 
   async history(filter: TLoginHistoryFilter = {}): Promise<TLoginHistoryResponse> {
-    // Buang nilai kosong — mengirim `?jenis=` membuat backend menyaring dengan
+    // Buang nilai kosong, mengirim `?jenis=` membuat backend menyaring dengan
     // string kosong dan hasilnya selalu nol.
     const params = Object.fromEntries(
       Object.entries(filter).filter(([, v]) => v !== undefined && v !== null && v !== "")
@@ -138,7 +138,7 @@ export class InstanceActivityService extends APIService {
 
   /** Putuskan semua sesi. `nonaktifkan` sekalian mengunci akunnya. */
   async kick(userId: string, nonaktifkan = false): Promise<TKickResponse> {
-    // APIService.delete(url, data, config) — argumen KEDUA itu body, bukan
+    // APIService.delete(url, data, config), argumen KEDUA itu body, bukan
     // config. Menaruh `params` di sana membuat query string tak pernah terkirim
     // dan `nonaktifkan` diam-diam tidak berefek.
     return this.delete(

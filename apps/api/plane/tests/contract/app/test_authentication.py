@@ -27,18 +27,18 @@ def _reset_throttle_cache():
     `AuthenticationThrottle` itu `AnonRateThrottle` berbudget 10/menit yang
     dikunci per-IP. Di dalam test semua permintaan datang dari IP yang sama
     (`testserver`), jadi budget itu dipakai BERSAMA oleh seluruh test autentikasi
-    dalam satu run — bukan per test. Begitu gabungannya lewat 10, test yang
+    dalam satu run, bukan per test. Begitu gabungannya lewat 10, test yang
     kebetulan berjalan belakangan menerima 429 `RATE_LIMIT_EXCEEDED` dan gagal
     karena ulah tetangganya, bukan karena ada yang rusak.
 
     Sebelumnya tiap class memasang sendiri pembersih ini, dan empat class
-    terlewat — `TestMagicLinkGenerate`, `TestSignInEndpoint`, `TestMagicSignIn`,
+    terlewat, `TestMagicLinkGenerate`, `TestSignInEndpoint`, `TestMagicSignIn`,
     `TestMagicSignUp`. Dua yang terakhir menyumbang 8 kegagalan palsu di suite
     penuh, padahal lolos kalau dijalankan sendirian. Menaruhnya di level modul
     menutup celah itu sekaligus untuk class yang ditambahkan nanti.
 
     TIDAK mematikan throttle-nya: `TestAuthenticationThrottle` memang menguji
-    throttle itu bekerja, dan ia menumpuk permintaan DI DALAM satu test — yang
+    throttle itu bekerja, dan ia menumpuk permintaan DI DALAM satu test, yang
     tetap utuh karena pembersihan hanya terjadi di batas antar-test.
     """
     cache.clear()
@@ -569,7 +569,7 @@ class TestMagicSignInVerifyAttempts:
             django_client.post(url, {"email": self.EMAIL, "code": "000000"}, follow=False)
         assert int(ri.get(counter_key)) == MagicCodeProvider.MAX_VERIFY_ATTEMPTS - 2
 
-        # Regenerate the magic-link — the counter should be cleared.
+        # Regenerate the magic-link, the counter should be cleared.
         _generate_magic_token(api_client, self.EMAIL)
         assert not ri.exists(counter_key)
 
@@ -727,7 +727,7 @@ class TestBotUserLoginBlocked:
 
     @pytest.mark.django_db
     def test_human_password_sign_in_allowed(self, django_client, human_user, setup_instance):
-        """Control: a normal user with the identical setup still signs in — the
+        """Control: a normal user with the identical setup still signs in, the
         guard is scoped strictly to is_bot and does not regress human logins."""
         url = reverse("sign-in")
         response = django_client.post(

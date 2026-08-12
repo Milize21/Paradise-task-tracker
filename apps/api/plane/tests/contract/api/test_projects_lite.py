@@ -72,7 +72,7 @@ class TestProjectsLite:
         response = api_key_client.get(_url(workspace.slug))
         assert response.status_code == status.HTTP_200_OK
         item = response.data["results"][0]
-        # Trimmed shape — archived_at present, heavy computed fields absent.
+        # Trimmed shape, archived_at present, heavy computed fields absent.
         for key in ("id", "identifier", "name", "cover_image_url", "archived_at"):
             assert key in item
         assert "total_members" not in item

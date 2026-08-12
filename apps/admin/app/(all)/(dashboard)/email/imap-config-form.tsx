@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — setelan email MASUK (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: setelan email MASUK (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -30,7 +30,7 @@ const KEAMANAN = { "1": "SSL/TLS (biasanya port 993)", "0": "Tanpa enkripsi (por
  * Setelan server email masuk.
  *
  * Nilainya **tersimpan tapi belum dibaca apa pun**. Plane CE tidak punya
- * pemroses email masuk — tidak ada IMAP, POP3, maupun jalur inbound di seluruh
+ * pemroses email masuk, tidak ada IMAP, POP3, maupun jalur inbound di seluruh
  * basis kode. Formulir ini ada supaya setelan mail kantor tercatat di satu
  * tempat bersama setelan kirim, dan siap dipakai kalau ingestion dibangun nanti.
  *

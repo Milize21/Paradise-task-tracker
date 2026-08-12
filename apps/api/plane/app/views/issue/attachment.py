@@ -223,7 +223,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 origin=base_host(request=request, is_app=True),
             )
 
-            # Update the attachment — do NOT overwrite created_by; it is set at
+            # Update the attachment, do NOT overwrite created_by; it is set at
             # creation time and must not be reassigned (GHSA-5mxw-g5mw-3v3w).
             issue_attachment.is_uploaded = True
 

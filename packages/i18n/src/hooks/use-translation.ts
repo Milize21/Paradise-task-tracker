@@ -37,7 +37,7 @@ function coerceToString(key: string, value: unknown): string {
 }
 
 export function useTranslation(): TTranslationStore {
-  // No namespace arg — fallbackNS in the i18next config ensures all namespaces
+  // No namespace arg, fallbackNS in the i18next config ensures all namespaces
   // are searched for any key. Passing NAMESPACES here would trigger concurrent
   // async loads per component, causing a re-render cascade.
   const { t, i18n } = useI18nextTranslation();

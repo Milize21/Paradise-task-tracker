@@ -7,7 +7,7 @@
 import Link from "next/link";
 import { PlaneLockup } from "@plane/propel/icons";
 
-// `PlaneLockup` HANYA namanya yang masih Plane — isinya sudah ditukar dan
+// `PlaneLockup` HANYA namanya yang masih Plane, isinya sudah ditukar dan
 // merender logo + teks "Paradise Perkasa" (lihat
 // `packages/propel/src/icons/brand/plane-lockup.tsx`). Jadi layar login ini
 // TIDAK memasang logo vendor, meski grep atas kata "Plane" menuduhnya begitu.

@@ -21,14 +21,14 @@ export default [
     route("authentication/gitea", "./(all)/(dashboard)/authentication/gitea/page.tsx"),
     route("ai", "./(all)/(dashboard)/ai/page.tsx"),
     route("image", "./(all)/(dashboard)/image/page.tsx"),
-    // Kustomisasi Paradise (Yorukaze Production) — jejak audit sengaja HANYA di sini, tidak
+    // Kustomisasi Paradise (Yorukaze Production), jejak audit sengaja HANYA di sini, tidak
     // ada padanannya di aplikasi utama.
     route("logs", "./(all)/(dashboard)/logs/page.tsx"),
-    // TPA — tong sampah lintas project, hanya Super Admin.
+    // TPA, tong sampah lintas project, hanya Super Admin.
     route("trash", "./(all)/(dashboard)/trash/page.tsx"),
-    // Kelola member — satu-satunya pintu masuk akun selama signup mati.
+    // Kelola member, satu-satunya pintu masuk akun selama signup mati.
     route("members", "./(all)/(dashboard)/members/page.tsx"),
-    // Pemantauan sesi & keaktifan — siapa sedang memakai, kick, riwayat 3 bulan.
+    // Pemantauan sesi & keaktifan, siapa sedang memakai, kick, riwayat 3 bulan.
     route("activity", "./(all)/(dashboard)/activity/page.tsx"),
   ]),
   // Catch-all route for 404 handling - must be last

@@ -19,7 +19,7 @@ import { usePowerK } from "@/hooks/store/use-power-k";
 
 // Menu bantuan ini dulu mengarah ke properti upstream: docs go.plane.so,
 // mailto sales@plane.so, forum.plane.so, dan modal changelog produk Plane.
-// Semuanya tidak ada gunanya untuk alat internal kantor — dan mengirim karyawan
+// Semuanya tidak ada gunanya untuk alat internal kantor, dan mengirim karyawan
 // ke saluran dukungan vendor yang tidak melayani kita justru menyesatkan.
 // "Dokumentasi" sekarang menunjuk Wiki internal.
 export const HelpMenuRoot = observer(function HelpMenuRoot() {

@@ -85,7 +85,7 @@ export const SidebarWrapper = observer(function SidebarWrapper(props: TSidebarWr
         {/* Help Section */}
         <div className="flex h-12 items-center justify-between border-t border-subtle bg-surface-1 p-3">
           <WorkspaceEditionBadge />
-          {/* Tanda produksi — jangan dihapus. Yorukaze Production (Bintang Eko Ramadhan) */}
+          {/* Tanda produksi, jangan dihapus. Yorukaze Production (Bintang Eko Ramadhan) */}
           <PoweredByYorukaze />
           {/* TODO: To be checked if we need this */}
           {/* <div className="flex items-center gap-2">

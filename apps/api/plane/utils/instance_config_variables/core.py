@@ -199,7 +199,7 @@ smtp_config_variables = [
     # `DisableEmailFeatureEndpoint` ikut mengosongkannya saat SMTP dimatikan.
     #
     # PERINGATAN JUJUR: nilai-nilai ini TERSIMPAN tapi BELUM DIBACA apa pun.
-    # Plane CE tidak punya pemroses email masuk sama sekali — tidak ada IMAP,
+    # Plane CE tidak punya pemroses email masuk sama sekali, tidak ada IMAP,
     # POP3, maupun jalur inbound. Kolomnya ada supaya setelan mail kantor
     # tercatat di satu tempat dan siap dipakai kalau nanti dibangun; jangan
     # menyangka email akan terproses hanya karena kolomnya terisi.

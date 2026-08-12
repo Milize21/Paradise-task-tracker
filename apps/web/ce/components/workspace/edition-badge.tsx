@@ -11,11 +11,11 @@ import { Tooltip } from "@plane/propel/tooltip";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import packageJson from "package.json";
 
-// Dulu tombol "Community" yang membuka PaidPlanUpgradeModal — ajakan berlangganan
+// Dulu tombol "Community" yang membuka PaidPlanUpgradeModal, ajakan berlangganan
 // tier berbayar upstream. Tidak relevan untuk alat internal kantor, jadi modalnya
 // dibuang. Nomor versinya DIPERTAHANKAN: berguna waktu ada yang melapor masalah
 // dan kita perlu tahu dia memakai rilis yang mana. Sekarang sekadar label, bukan
-// tombol — tidak ada lagi yang bisa diklik.
+// tombol, tidak ada lagi yang bisa diklik.
 export const WorkspaceEditionBadge = observer(function WorkspaceEditionBadge() {
   // platform
   const { isMobile } = usePlatformOS();

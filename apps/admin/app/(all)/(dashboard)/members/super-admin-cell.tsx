@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — sel Super Admin di God Mode (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: sel Super Admin di God Mode (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -18,7 +18,7 @@ type Props = {
 };
 
 /* Sengaja mencolok. Di antara 90 akun, status ini yang paling berbahaya kalau
-   salah — ikon abu-abu 16px membuatnya sama tak terlihatnya dengan kolom
+   salah, ikon abu-abu 16px membuatnya sama tak terlihatnya dengan kolom
    "terakhir keluar". Warna `warning` dipilih, bukan `accent`: ini bukan status
    netral, ini hak akses ke SELURUH project. */
 export function SuperAdminCell({ member, sibuk, onMintaAngkat, onCabut }: Props) {
@@ -42,7 +42,7 @@ export function SuperAdminCell({ member, sibuk, onMintaAngkat, onCabut }: Props)
       type="button"
       disabled={sibuk}
       onClick={onMintaAngkat}
-      title="Jadikan Super Admin — perlu frasa konfirmasi"
+      title="Jadikan Super Admin, perlu frasa konfirmasi"
       className="hover:border-warning-primary mx-auto flex items-center gap-1.5 rounded-full border border-subtle px-2.5 py-1 text-11 text-placeholder transition-colors hover:text-warning-primary disabled:opacity-50"
     >
       <Shield className="size-3.5 shrink-0" />

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Deploy manual di server: tarik image hasil CI dari GHCR lalu restart.
-# Server tidak pernah build sendiri — image dibangun oleh workflow paradise-build.
+# Server tidak pernah build sendiri, image dibangun oleh workflow paradise-build.
 #
 #   ./paradise/bin/deploy.sh                       # rilis terbaru (tag latest)
 #   APP_RELEASE=<git-sha> ./paradise/bin/deploy.sh # pin / rollback ke commit tertentu

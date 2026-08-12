@@ -15,7 +15,7 @@ import { usePowerK } from "@/hooks/store/use-power-k";
  *
  * Tiga perintah upstream dibuang: docs.plane.so, forum.plane.so, dan pelaporan
  * bug ke issue tracker makeplane/plane. Semuanya saluran dukungan vendor yang
- * tidak melayani PT Paradise Perkasa — mengarahkan karyawan ke sana bukan cuma
+ * tidak melayani PT Paradise Perkasa, mengarahkan karyawan ke sana bukan cuma
  * tak berguna, tapi menyesatkan. "Dokumentasi" kini menunjuk Wiki internal.
  */
 export const usePowerKHelpCommands = (): TPowerKCommandConfig[] => {

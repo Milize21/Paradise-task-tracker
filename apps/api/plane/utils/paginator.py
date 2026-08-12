@@ -684,7 +684,7 @@ class BasePaginator:
             if group_by_field_name:
                 # Validate against the allowlist before the field name reaches
                 # F()/.values()/.order_by()/Window partition_by in the grouped
-                # paginators below — prevents unauthenticated ORM field-name
+                # paginators below, prevents unauthenticated ORM field-name
                 # injection via user-supplied group_by/sub_group_by query params
                 # (GHSA-wwgj-929g-42cm).
                 if group_by_field_name not in ISSUE_GROUP_BY_ALLOWLIST:

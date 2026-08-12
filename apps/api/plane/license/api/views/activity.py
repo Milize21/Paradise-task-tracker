@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — sesi, kick, dan dashboard aktivitas (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: sesi, kick, dan dashboard aktivitas (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 """Pemantauan sesi & aktivitas untuk God Mode.
@@ -7,11 +7,11 @@
 Tiga hal yang sering dikira sama padahal berbeda, dan seluruh berkas ini
 bersandar pada pembedaan itu:
 
-- **Masih login**  — ada baris di tabel `sessions` yang belum kedaluwarsa.
+- **Masih login** , ada baris di tabel `sessions` yang belum kedaluwarsa.
   Bisa bertahan berhari-hari sesudah orangnya menutup laptop.
-- **Sedang memakai** — `User.last_active` dalam AMBANG_AKTIF_MENIT terakhir.
+- **Sedang memakai**, `User.last_active` dalam AMBANG_AKTIF_MENIT terakhir.
   Distempel `LastActiveMiddleware` dari request yang memang sudah terjadi.
-- **Pernah login**  — ada di `login_activities`. Riwayat, bukan keadaan.
+- **Pernah login** , ada di `login_activities`. Riwayat, bukan keadaan.
 
 Kolom "online" di God Mode memakai yang **kedua**. Memakai yang pertama akan
 menampilkan setengah kantor sebagai online pada jam 11 malam.
@@ -39,7 +39,7 @@ from plane.db.models import (
 )
 from plane.license.models import InstanceAdmin
 
-# Batas rentang yang boleh diminta. Sama dengan retensi — meminta lebih jauh
+# Batas rentang yang boleh diminta. Sama dengan retensi, meminta lebih jauh
 # hanya menghasilkan grafik yang sebagian besar kosong lalu dikira "sepi".
 RENTANG_MAKS_HARI = RETENSI_HARI
 
@@ -62,7 +62,7 @@ def _sesi_hidup_per_user():
     """{user_id(str): jumlah sesi belum kedaluwarsa}.
 
     `Session.user_id` di repo ini `CharField`, bukan ForeignKey (SESSION_ENGINE
-    kustom, tabel `sessions`) — jadi kuncinya string, dan menyamakannya dengan
+    kustom, tabel `sessions`), jadi kuncinya string, dan menyamakannya dengan
     UUID akan diam-diam tidak pernah cocok.
     """
     baris = (
@@ -93,7 +93,7 @@ def _sesi_user(user_id):
 
 
 class InstanceMemberSessionEndpoint(BaseAPIView):
-    """`/api/instances/members/<pk>/sessions/` — lihat & putuskan sesi.
+    """`/api/instances/members/<pk>/sessions/`, lihat & putuskan sesi.
 
     GET    daftar sesi hidup + keadaan aktivitas orang itu.
     DELETE putuskan semua sesinya (kick). `?nonaktifkan=1` sekalian mengunci
@@ -113,7 +113,7 @@ class InstanceMemberSessionEndpoint(BaseAPIView):
                 "email": u.email,
                 "display_name": u.display_name,
                 "is_active": u.is_active,
-                # Sesi hidup DAN keaktifan baru — lihat alasannya di
+                # Sesi hidup DAN keaktifan baru, lihat alasannya di
                 # InstanceActivityEndpoint.
                 "sedang_memakai": bool(sesi) and bool(u.last_active and u.last_active >= _batas_aktif()),
                 "masih_login": bool(sesi),
@@ -145,7 +145,7 @@ class InstanceMemberSessionEndpoint(BaseAPIView):
         # Tidak ada penjaga "instance admin terakhir" di sini, dan itu disengaja.
         # Penolakan menendang diri sendiri di atas sudah menjaminnya: si pemanggil
         # WAJIB instance admin aktif dan tidak boleh menyasar dirinya sendiri,
-        # jadi sesudah operasi apa pun selalu tersisa minimal satu admin aktif —
+        # jadi sesudah operasi apa pun selalu tersisa minimal satu admin aktif,
         # dia sendiri. Penjaga tambahan hanya akan jadi cabang yang tak pernah
         # dieksekusi. `InstanceMemberEndpoint.patch` memakai alasan yang sama.
         jumlah = Session.objects.filter(user_id=str(u.id)).delete()[0]
@@ -155,7 +155,7 @@ class InstanceMemberSessionEndpoint(BaseAPIView):
         u.last_logout_time = timezone.now()
         u.save(update_fields=["is_active", "last_logout_time"] if nonaktifkan else ["last_logout_time"])
 
-        # Dicatat sebagai LOGOUT supaya sesi ini tertutup rapi di riwayat —
+        # Dicatat sebagai LOGOUT supaya sesi ini tertutup rapi di riwayat,
         # tanpa ini, login-nya menggantung selamanya dan durasi tak terhitung.
         LoginActivity.catat(
             user=u,
@@ -175,7 +175,7 @@ class InstanceMemberSessionEndpoint(BaseAPIView):
 
 
 class InstanceActivityEndpoint(BaseAPIView):
-    """`/api/instances/activity/` — angka untuk dashboard aktivitas.
+    """`/api/instances/activity/`, angka untuk dashboard aktivitas.
 
     `?hari=N` (1..90, default 30).
     """
@@ -191,7 +191,7 @@ class InstanceActivityEndpoint(BaseAPIView):
         total_user = pengguna.count()
 
         # "Sedang memakai" mensyaratkan DUA hal: ada sesi hidup, DAN last_active
-        # masih baru. `last_active` sendiri tidak cukup — field itu ber-`default=
+        # masih baru. `last_active` sendiri tidak cukup, field itu ber-`default=
         # timezone.now`, jadi akun yang baru dibuat lewat God Mode akan terbaca
         # sedang memakai selama 5 menit padahal belum pernah login sekali pun.
         punya_sesi = set(_sesi_hidup_per_user())
@@ -201,7 +201,7 @@ class InstanceActivityEndpoint(BaseAPIView):
         ).count()
 
         # Keluar-masuk: berapa kali tiap orang login dalam rentang ini. Inilah
-        # yang tidak mungkin dijawab sebelum tabel login_activities ada —
+        # yang tidak mungkin dijawab sebelum tabel login_activities ada,
         # `last_login_time` cuma satu nilai yang ditimpa tiap login.
         per_user = list(login_qs.values("user_id").annotate(n=Count("id")))
         jumlah_login = [p["n"] for p in per_user]
@@ -226,7 +226,7 @@ class InstanceActivityEndpoint(BaseAPIView):
         ]
 
         # Aktif harian: berapa orang berbeda yang login tiap hari.
-        # Daftar, bukan objek — urutan waktu adalah bagian dari maknanya, dan
+        # Daftar, bukan objek, urutan waktu adalah bagian dari maknanya, dan
         # objek JSON menyerahkan urutan itu ke cara klien mem-parsing kuncinya.
         harian = [
             {
@@ -276,7 +276,7 @@ class InstanceActivityEndpoint(BaseAPIView):
 
 
 class InstanceLoginHistoryEndpoint(BaseAPIView):
-    """`/api/instances/login-history/` — riwayat mentah, bisa disaring.
+    """`/api/instances/login-history/`, riwayat mentah, bisa disaring.
 
     `?user_id=` `?jenis=LOGIN|LOGOUT` `?hari=N` `?page=` `?per_page=`
     """

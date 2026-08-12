@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — halaman jejak audit (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: halaman jejak audit (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -47,7 +47,7 @@ const AKSI_WARNA: Record<string, string> = {
   Delete: "bg-red-500/10 text-red-600",
 };
 
-/** Kunci tetap untuk baris skeleton — index sebagai key ditolak lint. */
+/** Kunci tetap untuk baris skeleton, index sebagai key ditolak lint. */
 const SKELETON_ROWS = ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"];
 
 const selectClass =
@@ -100,7 +100,7 @@ const LogsPage = function LogsPage(_props: Route.ComponentProps) {
       header={{
         title: "Jejak audit",
         description:
-          "Siapa mengubah apa di seluruh instance. Hanya bisa dibaca dari sini — tidak tersedia di aplikasi utama.",
+          "Siapa mengubah apa di seluruh instance. Hanya bisa dibaca dari sini, tidak tersedia di aplikasi utama.",
       }}
     >
       <div className="mx-4 flex flex-wrap items-center gap-2">
@@ -194,7 +194,7 @@ const LogsPage = function LogsPage(_props: Route.ComponentProps) {
                           {e.actor ? (
                             <span className="text-primary">{e.actor.display_name || e.actor.email}</span>
                           ) : (
-                            // Entri tanpa aktor datang dari skrip shell — di situ
+                            // Entri tanpa aktor datang dari skrip shell, di situ
                             // memang tidak ada request, jadi bukan celah audit.
                             <span className="text-placeholder italic">skrip / sistem</span>
                           )}

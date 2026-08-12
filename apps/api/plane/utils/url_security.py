@@ -13,7 +13,7 @@ attacker who controls DNS can return a public IP to the validator and an
 internal IP to the connection.
 
 ``pinned_fetch`` closes that window by resolving + validating once and then
-connecting to the *validated IP literal* — urllib3 performs no second DNS
+connecting to the *validated IP literal*, urllib3 performs no second DNS
 lookup, so the address that was checked is exactly the address that is reached.
 The original hostname is still used for the ``Host`` header, TLS SNI and
 certificate verification, so virtual-hosting and HTTPS continue to work.
@@ -38,7 +38,7 @@ from plane.utils.ip_address import resolve_and_validate
 # 3xx status codes that carry a Location we may follow.
 _REDIRECT_STATUSES = {301, 302, 303, 307, 308}
 
-# Never route through an ambient proxy — a CONNECT to a proxy would tunnel to
+# Never route through an ambient proxy, a CONNECT to a proxy would tunnel to
 # the original hostname and bypass the IP pinning entirely.
 _NO_PROXIES = {"http": None, "https": None}
 
@@ -55,7 +55,7 @@ class PinnedIPAdapter(HTTPAdapter):
     stays ``True``) makes the standard library verify the presented certificate
     against the real hostname rather than the IP.
 
-    Instances hold no global state — one is mounted on a throwaway
+    Instances hold no global state, one is mounted on a throwaway
     :class:`requests.Session` per request, so this is safe under any Celery pool
     (prefork / threads / gevent).
     """
@@ -175,7 +175,7 @@ def _fetch_validated_hop(method, url, *, allowed_ips, allowed_hosts, headers, ti
     }
 
     # Resolve once (and validate unless the host is operator-trusted), then pin
-    # the connection to a resolved IP literal — urllib3 performs no second DNS
+    # the connection to a resolved IP literal, urllib3 performs no second DNS
     # lookup, so the address validated here is exactly the one reached.
     ips = resolve_and_validate(hostname, allowed_ips=allowed_ips, require_safe=not trusted)
 

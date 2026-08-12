@@ -40,7 +40,7 @@ class ProjectPagePermission(BasePermission):
             return False
 
         # ACL Wiki (fork Yorukaze Production): di project ber-governance, hak edit ditentukan
-        # kepemilikan folder per-divisi — bukan peran atau kepemilikan halaman.
+        # kepemilikan folder per-divisi, bukan peran atau kepemilikan halaman.
         if is_wiki_governed(project_id):
             return self._has_wiki_governed_access(request, slug, project_id, page_id, role)
 

@@ -164,7 +164,7 @@ function main() {
 
   for (const comp of comparisons) {
     const status = comp.missingKeys.length === 0 ? "✓" : "✗";
-    const missingStr = comp.missingKeys.length > 0 ? ` — ${fmt(comp.missingKeys.length)} missing` : "";
+    const missingStr = comp.missingKeys.length > 0 ? `, ${fmt(comp.missingKeys.length)} missing` : "";
     const staleStr = comp.staleKeys.length > 0 ? `, ${fmt(comp.staleKeys.length)} stale` : "";
     console.log(
       `  ${status} ${comp.locale.padEnd(10)} ${fmt(comp.totalKeys)} keys (${comp.coverage.toFixed(1)}%)${missingStr}${staleStr}`

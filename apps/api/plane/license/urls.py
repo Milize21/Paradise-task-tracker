@@ -80,14 +80,14 @@ urlpatterns = [
     # Kustomisasi Paradise (Yorukaze Production). Menggantikan endpoint workspace-level lama
     # di app/urls/paradise.py: jejak audit sengaja hanya terbaca dari God Mode.
     path("audit-logs/", InstanceAuditLogEndpoint.as_view(), name="instance-audit-logs"),
-    # TPA — tong sampah lintas project, hanya Super Admin.
+    # TPA, tong sampah lintas project, hanya Super Admin.
     path("trash/", InstanceTrashEndpoint.as_view(), name="instance-trash"),
     path(
         "trash/<str:trash_type>/<uuid:pk>/",
         InstanceTrashEndpoint.as_view(),
         name="instance-trash-item",
     ),
-    # Kelola member — satu-satunya pintu masuk akun selama signup mati.
+    # Kelola member, satu-satunya pintu masuk akun selama signup mati.
     path("members/", InstanceMemberEndpoint.as_view(), name="instance-members"),
     path("members/<uuid:pk>/", InstanceMemberEndpoint.as_view(), name="instance-member"),
     # Paradise (Yorukaze Production): pemantauan sesi & aktivitas

@@ -108,7 +108,7 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
             </div>
             <div className="grow">
               <div className="text-13 leading-5 font-medium text-primary">Kirim data pemakaian anonim ke vendor</div>
-              {/* Tautan ke kebijakan telemetri vendor DIBUANG — tapi tombolnya
+              {/* Tautan ke kebijakan telemetri vendor DIBUANG, tapi tombolnya
                   TIDAK, dan teksnya sengaja diperjelas siapa penerimanya.
                   Saklar ini benar-benar mengirim data keluar ke Plane; menyamarkan
                   itu demi debranding akan menyesatkan orang yang menyalakannya. */}

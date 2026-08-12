@@ -1,4 +1,4 @@
-# Bagian B1 — angkat tim IT jadi Super Admin & sinkronkan aksesnya (Yorukaze Production)
+# Bagian B1, angkat tim IT jadi Super Admin & sinkronkan aksesnya (Yorukaze Production)
 #
 # Jalankan:
 #   docker exec -i pradise_plane-api-1 python manage.py shell < paradise/bin/org-migrate-b1-superadmin.py
@@ -8,7 +8,7 @@
 #
 # Super Admin = instance admin (God Mode) + anggota SEMUA project, tapi
 # disembunyikan dari setiap daftar anggota (plane/db/superadmin.py).
-# Project baru otomatis ikut lewat signal — skrip ini hanya untuk menyusulkan
+# Project baru otomatis ikut lewat signal, skrip ini hanya untuk menyusulkan
 # project yang SUDAH ada saat Super Admin diangkat.
 
 import os
@@ -28,7 +28,7 @@ MANAJEMEN = [
 ]
 
 # K9: seluruh tim IT. Sengaja bertentangan dengan Org Directory, yang hanya
-# menandai Suarno & Fran sebagai Admin — poin 9 diberikan belakangan dan
+# menandai Suarno & Fran sebagai Admin, poin 9 diberikan belakangan dan
 # menang. Dicatat di sini supaya tidak dikira kekeliruan.
 TIM_IT = [
     "suarno.radin@paradiseperkasa.com",
@@ -46,10 +46,10 @@ TIM_IT = [
 
 instance = Instance.objects.first()
 if not instance:
-    raise SystemExit("ERROR: instance belum terdaftar — jalankan setup God Mode dulu.")
+    raise SystemExit("ERROR: instance belum terdaftar, jalankan setup God Mode dulu.")
 
 print("=" * 68)
-print("B1 — Super Admin   " + ("[TERAPKAN]" if APPLY else "[UJI KERING]"))
+print("B1, Super Admin   " + ("[TERAPKAN]" if APPLY else "[UJI KERING]"))
 print("=" * 68)
 
 sebelum = super_admin_user_ids()
@@ -60,7 +60,7 @@ tambah = 0
 for email in MANAJEMEN + TIM_IT:
     u = User.objects.filter(email=email, is_active=True).first()
     if not u:
-        print(f"   ! {email:<40} akun tidak ada / nonaktif — DILEWATI")
+        print(f"   ! {email:<40} akun tidak ada / nonaktif, DILEWATI")
         continue
     if InstanceAdmin.objects.filter(instance=instance, user=u).exists():
         print(f"   ada  {email:<40} {u.display_name}")
@@ -75,9 +75,9 @@ if APPLY:
     dibuat = sinkronkan_super_admin()
     print(f"   keanggotaan dibuat: {dibuat}")
 else:
-    print("   (dilewati saat uji kering — butuh instance admin sudah tercatat)")
+    print("   (dilewati saat uji kering, butuh instance admin sudah tercatat)")
 
 print("\n" + "-" * 68)
 print(f"  diangkat: {tambah} · total Super Admin: {len(super_admin_user_ids())}")
 if not APPLY:
-    print("  UJI KERING — tidak ada yang ditulis. ORG_APPLY=1 untuk menerapkan.")
+    print("  UJI KERING, tidak ada yang ditulis. ORG_APPLY=1 untuk menerapkan.")

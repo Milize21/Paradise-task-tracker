@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — jejak audit God Mode (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: jejak audit God Mode (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -10,7 +10,7 @@ import { API_BASE_URL } from "@plane/constants";
 // api service
 import { APIService } from "../api.service";
 
-/** Model yang dipantau auditlog — sama dengan daftar di plane/db/audit.py. */
+/** Model yang dipantau auditlog, sama dengan daftar di plane/db/audit.py. */
 export type TAuditLogModel = "project" | "projectmember" | "workspacemember" | "issue" | "page";
 
 export type TAuditLogAction = "create" | "update" | "delete";
@@ -32,7 +32,7 @@ export type TAuditLogEntry = {
   /** Peta {field: [nilai_lama, nilai_baru]}. Bentuknya ditentukan django-auditlog. */
   changes: Record<string, [string, string]> | null;
   remote_addr: string | null;
-  /** null untuk perubahan dari skrip shell — di situ memang tidak ada request. */
+  /** null untuk perubahan dari skrip shell, di situ memang tidak ada request. */
   actor: TAuditLogActor | null;
 };
 
@@ -57,7 +57,7 @@ export type TAuditLogFilter = {
 };
 
 /**
- * Jejak audit tingkat instance. HANYA bisa dibaca instance admin (God Mode) —
+ * Jejak audit tingkat instance. HANYA bisa dibaca instance admin (God Mode),
  * versi workspace-level yang lama sudah dibuang, jadi ini satu-satunya jalan.
  */
 export class InstanceAuditLogService extends APIService {

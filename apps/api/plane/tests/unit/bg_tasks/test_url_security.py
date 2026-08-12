@@ -5,9 +5,9 @@
 """
 SSRF-protection tests for the webhook + link-unfurling clusters (advisories A/B/C):
 
-  A — incomplete private-IP validation  -> is_blocked_ip hardening
-  B — DNS-rebinding TOCTOU              -> connection pinned to the validated IP
-  C — SSRF via HTTP redirect following  -> redirects re-resolved/re-validated/re-pinned
+  A, incomplete private-IP validation  -> is_blocked_ip hardening
+  B, DNS-rebinding TOCTOU              -> connection pinned to the validated IP
+  C, SSRF via HTTP redirect following  -> redirects re-resolved/re-validated/re-pinned
 """
 
 import ipaddress
@@ -39,7 +39,7 @@ def _resp(status_code=200, headers=None, content=b"OK"):
 
 
 # ---------------------------------------------------------------------------
-# Cluster A — robust IP classification (verified on Python 3.12 semantics)
+# Cluster A, robust IP classification (verified on Python 3.12 semantics)
 # ---------------------------------------------------------------------------
 @pytest.mark.unit
 class TestIsBlockedIp:
@@ -89,7 +89,7 @@ class TestIsBlockedIp:
 
 
 # ---------------------------------------------------------------------------
-# resolve_and_validate — resolution + validation, returns IPs to pin
+# resolve_and_validate, resolution + validation, returns IPs to pin
 # ---------------------------------------------------------------------------
 @pytest.mark.unit
 class TestResolveAndValidate:
@@ -106,7 +106,7 @@ class TestResolveAndValidate:
 
     def test_raises_if_any_resolved_ip_is_private(self):
         # A hostname that resolves to BOTH a public and a private IP must fail
-        # closed — an attacker could otherwise steer the connection to the
+        # closed, an attacker could otherwise steer the connection to the
         # private one.
         with patch("plane.utils.ip_address.socket.getaddrinfo") as dns:
             dns.return_value = [_addr("93.184.216.34"), _addr("127.0.0.1")]
@@ -129,7 +129,7 @@ class TestResolveAndValidate:
 
 
 # ---------------------------------------------------------------------------
-# Cluster B — connection pinned to the validated IP (DNS-rebinding TOCTOU)
+# Cluster B, connection pinned to the validated IP (DNS-rebinding TOCTOU)
 # ---------------------------------------------------------------------------
 @pytest.mark.unit
 class TestPinnedFetch:
@@ -142,7 +142,7 @@ class TestPinnedFetch:
 
         pinned_fetch("POST", "https://example.com/hook", json={"a": 1})
 
-        # The socket target is the validated IP literal — there is no second
+        # The socket target is the validated IP literal, there is no second
         # DNS lookup, so a rebind between validation and connection is
         # impossible.
         method, url = session.request.call_args.args
@@ -233,7 +233,7 @@ class TestPinnedFetch:
 
 
 # ---------------------------------------------------------------------------
-# Cluster C — redirects re-resolved / re-validated / re-pinned each hop
+# Cluster C, redirects re-resolved / re-validated / re-pinned each hop
 # ---------------------------------------------------------------------------
 @pytest.mark.unit
 class TestPinnedFetchRedirects:
@@ -296,7 +296,7 @@ class TestPinnedFetchRedirects:
 
 
 # ---------------------------------------------------------------------------
-# PinnedIPAdapter — TLS server_hostname injection (cert verified vs hostname)
+# PinnedIPAdapter, TLS server_hostname injection (cert verified vs hostname)
 # ---------------------------------------------------------------------------
 @pytest.mark.unit
 class TestPinnedIPAdapter:
@@ -315,7 +315,7 @@ class TestPinnedIPAdapter:
 
 
 # ---------------------------------------------------------------------------
-# validate_url — create/update-time defense in depth still rejects bypasses
+# validate_url, create/update-time defense in depth still rejects bypasses
 # ---------------------------------------------------------------------------
 @pytest.mark.unit
 class TestValidateUrlHardening:

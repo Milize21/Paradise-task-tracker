@@ -42,7 +42,7 @@ class EntityAssetEndpoint(BaseAPIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # get the asset id — scope to project to prevent cross-project IDOR
+        # get the asset id, scope to project to prevent cross-project IDOR
         asset = FileAsset.objects.get(
             workspace_id=deploy_board.workspace_id,
             project_id=deploy_board.project_id,
@@ -150,7 +150,7 @@ class EntityAssetEndpoint(BaseAPIView):
         if not deploy_board:
             return Response({"error": "Project is not published"}, status=status.HTTP_404_NOT_FOUND)
 
-        # get the asset id — scope to project to prevent cross-project IDOR
+        # get the asset id, scope to project to prevent cross-project IDOR
         asset = FileAsset.objects.get(id=pk, workspace=deploy_board.workspace, project_id=deploy_board.project_id)
         # get the storage metadata
         asset.is_uploaded = True
@@ -190,7 +190,7 @@ class AssetRestoreEndpoint(BaseAPIView):
         if not deploy_board:
             return Response({"error": "Project is not published"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Get the asset — scope to project to prevent cross-project IDOR
+        # Get the asset, scope to project to prevent cross-project IDOR
         asset = FileAsset.all_objects.get(id=pk, workspace=deploy_board.workspace, project_id=deploy_board.project_id)
         asset.is_deleted = False
         asset.deleted_at = None

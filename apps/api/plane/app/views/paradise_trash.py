@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — Trashbin per project (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: Trashbin per project (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
@@ -17,13 +17,13 @@ from plane.utils.trash import ambil, buang_permanen, kumpulkan, pulihkan
 
 
 class ProjectTrashEndpoint(BaseAPIView):
-    """Tong sampah satu project — isi, pulihkan, buang permanen.
+    """Tong sampah satu project, isi, pulihkan, buang permanen.
 
     Admin project saja. Cakupannya dikunci ke `project_id` di URL, jadi admin
     project A tidak bisa menyentuh barang project B walau menebak id-nya:
     `ambil()` menyaring ulang berdasarkan project, bukan hanya percaya id.
 
-    Menghapus di aplikasi ini memang sudah soft-delete sejak awal — barangnya
+    Menghapus di aplikasi ini memang sudah soft-delete sejak awal, barangnya
     tidak pernah benar-benar hilang sampai task harian membuangnya setelah
     HARD_DELETE_AFTER_DAYS. Endpoint ini cuma membuat yang tersembunyi itu
     terlihat dan bisa ditindak.

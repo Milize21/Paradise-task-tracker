@@ -43,7 +43,7 @@ export const useYjsSetup = ({ docId, serverUrl, authToken, onStateChange }: UseY
 
   // Whether the server granted write access for this document. The server is
   // the only authority here (it refuses writes regardless), so the editor must
-  // follow it — otherwise the user types into a document that silently never
+  // follow it, otherwise the user types into a document that silently never
   // saves. Starts false and opens up once the server says read-write.
   const [isServerReadOnly, setIsServerReadOnly] = useState(false);
 

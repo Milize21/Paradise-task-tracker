@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — dashboard aktivitas (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: dashboard aktivitas (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -55,7 +55,7 @@ function PeringatanRetensi({ retensi }: { retensi: TRetensi }) {
         <div className="mt-0.5 text-secondary">
           Riwayat disimpan {retensi.retensi_hari} hari. Tertua {retensi.tertua ? waktu(retensi.tertua) : "—"}
           {retensi.sudah_lewat > 0 ? `, ${retensi.sudah_lewat} sudah lewat batas` : ""}. Ekspor dulu kalau masih
-          diperlukan — sesudah dihapus tidak bisa dikembalikan. Email peringatan juga dikirim ke semua Super Admin.
+          diperlukan, sesudah dihapus tidak bisa dikembalikan. Email peringatan juga dikirim ke semua Super Admin.
         </div>
       </div>
     </div>
@@ -68,7 +68,7 @@ const ActivityPage = function ActivityPage(_props: Route.ComponentProps) {
 
   const { data, isLoading, error } = useSWR(["INSTANCE_ACTIVITY", hari], () => activityService.summary(hari), {
     revalidateOnFocus: false,
-    // Siapa yang sedang memakai berubah tiap menit — angka yang beku di layar
+    // Siapa yang sedang memakai berubah tiap menit, angka yang beku di layar
     // lebih menyesatkan daripada tidak ada angkanya sama sekali.
     refreshInterval: 60_000,
   });
@@ -82,7 +82,7 @@ const ActivityPage = function ActivityPage(_props: Route.ComponentProps) {
   const ubahRentang = useMemo(
     () => (n: number) => {
       setHari(n);
-      // Rentang riwayat ikut — kalau tidak, tabel di bawah bercerita tentang
+      // Rentang riwayat ikut, kalau tidak, tabel di bawah bercerita tentang
       // periode yang berbeda dari kartu di atasnya.
       setFilter((f) => ({ ...f, hari: n, page: 1 }));
     },

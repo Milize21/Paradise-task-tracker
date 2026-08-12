@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — retensi riwayat login (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: retensi riwayat login (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 """Buang riwayat login yang lewat 3 bulan, dan beri tahu sebelum dibuang.
@@ -40,7 +40,7 @@ UKURAN_BATCH = 5000
 
 
 def hitung_peringatan():
-    """Keadaan retensi. Dipakai task DAN endpoint God Mode — satu sumber.
+    """Keadaan retensi. Dipakai task DAN endpoint God Mode, satu sumber.
 
     Dipisah dari task supaya angka yang dilihat di layar tidak mungkin berbeda
     dari angka yang dipakai saat menghapus.
@@ -137,7 +137,7 @@ def bersihkan_login_activity():
         try:
             terkirim = _kirim_email_peringatan(keadaan)
         except Exception:
-            # SMTP patah tidak boleh menghentikan pembersihan — kalau tidak,
+            # SMTP patah tidak boleh menghentikan pembersihan, kalau tidak,
             # tabel tumbuh selamanya karena email tidak bisa dikirim.
             logger.exception("Retensi: gagal mengirim email peringatan, pembersihan tetap lanjut")
 

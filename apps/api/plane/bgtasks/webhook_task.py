@@ -367,7 +367,7 @@ def webhook_send_task(
 
     except ValueError as e:
         # SSRF validation failure (blocked/internal target or unresolvable host).
-        # Not retryable — record it so the failure is visible to the admin, but
+        # Not retryable, record it so the failure is visible to the admin, but
         # do not raise (no Celery retry) and do not auto-deactivate (the cause
         # may be transient DNS).
         save_webhook_log(

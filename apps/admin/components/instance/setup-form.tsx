@@ -66,11 +66,11 @@ export function InstanceSetupForm() {
   const emailParam = searchParams?.get("email") || undefined;
   // ⚠️ Nilainya SELALU `true`. Aslinya
   // `(searchParams?.get("is_telemetry_enabled") === "True" ? true : false) || true`
-  // — `|| true` membuat sisi kirinya tidak pernah berarti, jadi parameter URL
+  //, `|| true` membuat sisi kirinya tidak pernah berarti, jadi parameter URL
   // `is_telemetry_enabled=False` pun diabaikan. Ditulis apa adanya di sini supaya
   // linter tidak lagi menudingnya sebagai ternary sia-sia, TANPA mengubah
   // perilaku: memperbaikinya berarti mengubah default telemetri, dan itu
-  // keputusan tersendiri — bukan bawaan sapuan debranding. → BUG-09
+  // keputusan tersendiri, bukan bawaan sapuan debranding. → BUG-09
   const isTelemetryEnabledParam = true;
   const errorCode = searchParams?.get("error_code") || undefined;
   const errorMessage = searchParams?.get("error_message") || undefined;

@@ -1,6 +1,6 @@
 # Agent Development Guide
 
-## Read this first — the project brain
+## Read this first, the project brain
 
 This repository is a fork of `makeplane/plane`. The reasoning behind every
 custom change lives outside the code, in an Obsidian vault:
@@ -9,7 +9,7 @@ custom change lives outside the code, in an Obsidian vault:
 D:\4. SOURCE CODE (DGM)\Brain\Projects\Paradise Task Tracker\
 ```
 
-Plain Markdown — readable without Obsidian. Before planning any change, read:
+Plain Markdown, readable without Obsidian. Before planning any change, read:
 
 | File                                             | Why                                                                  |
 | ------------------------------------------------ | -------------------------------------------------------------------- |
@@ -53,7 +53,7 @@ Two rules:
 
 The Django/pytest suite for `apps/api` runs in an isolated stack defined by `docker-compose-test.yml` at the repo root.
 
-Prereq (once): `./setup.sh` — generates `apps/api/.env` from `.env.example`.
+Prereq (once): `./setup.sh`, generates `apps/api/.env` from `.env.example`.
 
 - Full suite: `docker compose -f docker-compose-test.yml up --build --abort-on-container-exit --exit-code-from api-tests`
 - Subset: `docker compose -f docker-compose-test.yml run --rm api-tests pytest -m unit`

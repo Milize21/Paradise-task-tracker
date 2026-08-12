@@ -13,7 +13,7 @@ from plane.utils.paginator import BasePaginator, Cursor, CursorResult
 class _StubGroupedPaginator:
     """Stand-in for GroupedOffsetPaginator/SubGroupedOffsetPaginator that
     records its constructor kwargs without touching the DB/ORM. The security
-    property under test lives entirely in BasePaginator.paginate() — by the
+    property under test lives entirely in BasePaginator.paginate(), by the
     time a real paginator class would run a query, the field name has
     already been validated (or rejected)."""
 
@@ -63,7 +63,7 @@ class TestPaginateGroupByValidation:
 
     def test_invalid_sub_group_by_raises_parse_error(self):
         # A valid group_by paired with an invalid sub_group_by must still be
-        # rejected — the PoC in the advisory used exactly this combination
+        # rejected, the PoC in the advisory used exactly this combination
         # (group_by=state_id&sub_group_by=created_by__password).
         request = _make_request(group_by="priority", sub_group_by="workspace__secret_key")
         with pytest.raises(ParseError):

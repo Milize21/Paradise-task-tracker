@@ -9,7 +9,7 @@ PRIORITY_ORDER = ["urgent", "high", "medium", "low", "none"]
 STATE_ORDER = ["backlog", "unstarted", "started", "completed", "cancelled"]
 
 # ---------------------------------------------------------------------------
-# order_by allowlists — one per model/endpoint family
+# order_by allowlists, one per model/endpoint family
 # All contain bare field names (no leading '-'); the sanitizer strips the
 # prefix before looking up, so descending variants are implicitly covered.
 # Prevents ORM order_by injection via user-supplied query params
@@ -33,7 +33,7 @@ ISSUE_ORDER_BY_ALLOWLIST = frozenset({
     "issue_module__module__name",
 })
 
-# IntakeIssue queryset — fields are prefixed with `issue__` for the join.
+# IntakeIssue queryset, fields are prefixed with `issue__` for the join.
 INTAKE_ISSUE_ORDER_BY_ALLOWLIST = frozenset({
     "issue__created_at",
     "issue__updated_at",
@@ -77,7 +77,7 @@ NOTIFICATION_ORDER_BY_ALLOWLIST = frozenset({
 })
 
 # ---------------------------------------------------------------------------
-# group_by / sub_group_by allowlist for Issue querysets — used by
+# group_by / sub_group_by allowlist for Issue querysets, used by
 # GroupedOffsetPaginator / SubGroupedOffsetPaginator (plane/utils/paginator.py),
 # which pass the field name straight into F(), .values(), .order_by(), and
 # Window partition_by. Prevents unauthenticated ORM field-name injection via

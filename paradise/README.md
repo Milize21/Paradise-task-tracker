@@ -8,10 +8,10 @@ Alat manajemen proyek/issue untuk tim (~100 anggota lintas divisi).
 
 ## Dua fase
 
-| Fase | Tujuan | Cara |
-|------|--------|------|
-| **1 — Dev (sekarang)** | Ngoprek & sesuaikan source ke kebutuhan kantor | Build dari source via `docker-compose-local.yml` |
-| **2 — Prod (nanti)** | Layani ~100 user, update via CI/CD | Build image sendiri → registry → deploy compose di server |
+| Fase                  | Tujuan                                         | Cara                                                      |
+| --------------------- | ---------------------------------------------- | --------------------------------------------------------- |
+| **1, Dev (sekarang)** | Ngoprek & sesuaikan source ke kebutuhan kantor | Build dari source via `docker-compose-local.yml`          |
+| **2, Prod (nanti)**   | Layani ~100 user, update via CI/CD             | Build image sendiri → registry → deploy compose di server |
 
 ## Mulai cepat (Dev)
 
@@ -25,11 +25,11 @@ Web default: http://localhost (proxy Caddy). God-mode admin: `/god-mode`.
 
 ## Peta dokumen
 
-- [`.env.example`](.env.example) — semua variabel wajib + catatan.
-- [`DEPLOYMENT.md`](DEPLOYMENT.md) — deploy produksi di server kantor.
-- [`SECURITY-CHECKLIST.md`](SECURITY-CHECKLIST.md) — **wajib** sebelum prod.
-- [`UPGRADE.md`](UPGRADE.md) — cara ambil update dari upstream Plane.
-- [`../CODEBASE_INVENTORY.md`](../CODEBASE_INVENTORY.md) — audit arsitektur.
+- [`.env.example`](.env.example), semua variabel wajib + catatan.
+- [`DEPLOYMENT.md`](DEPLOYMENT.md), deploy produksi di server kantor.
+- [`SECURITY-CHECKLIST.md`](SECURITY-CHECKLIST.md), **wajib** sebelum prod.
+- [`UPGRADE.md`](UPGRADE.md), cara ambil update dari upstream Plane.
+- [`../CODEBASE_INVENTORY.md`](../CODEBASE_INVENTORY.md), audit arsitektur.
 
 ## Layanan (compose)
 

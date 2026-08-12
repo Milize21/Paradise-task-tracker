@@ -99,7 +99,7 @@ export const insertTableCommand = (editor: Editor, range?: Range) => {
     const selection = window.getSelection();
     if (selection) {
       if (selection.rangeCount !== 0) {
-        // dinamai domRange supaya tidak membayangi parameter `range` di atas —
+        // dinamai domRange supaya tidak membayangi parameter `range` di atas,
         // yang itu Range milik ProseMirror, ini Range milik DOM
         const domRange = selection.getRangeAt(0);
         if (findTableAncestor(domRange.startContainer)) {

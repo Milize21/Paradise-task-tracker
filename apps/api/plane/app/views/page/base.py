@@ -293,7 +293,7 @@ class PageViewSet(BaseViewSet):
         # list they expect; the page tree opts in with ?sub_pages=true. The
         # filter deliberately does not live in get_queryset(): retrieve() and
         # the write actions share that queryset, and keeping it there made a
-        # sub-page unreachable entirely — created and stored, but 404 on open.
+        # sub-page unreachable entirely, created and stored, but 404 on open.
         # Mirrors the show_sub_issues switch in views/issue/archive.py.
         if request.query_params.get("sub_pages", "false").lower() != "true":
             queryset = queryset.filter(parent__isnull=True)

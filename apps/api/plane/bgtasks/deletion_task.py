@@ -111,14 +111,14 @@ def soft_delete_related_objects(app_label, model_name, instance_pk, using=None):
 def restore_related_objects(app_label, model_name, instance_pk, cutoff, using=None):
     """Kembalikan objek beserta anak-anak yang ikut terhapus bersamanya.
 
-    Kustomisasi Paradise (Yorukaze Production) — kebalikan dari `soft_delete_related_objects`,
+    Kustomisasi Paradise (Yorukaze Production), kebalikan dari `soft_delete_related_objects`,
     dipakai Trashbin (per project) dan TPA (God Mode).
 
     `cutoff` adalah `deleted_at` milik objek induk. HANYA anak dengan
     `deleted_at >= cutoff` yang dipulihkan, dan itu bukan detail sepele:
     penghapusan berjenjang menyetel `deleted_at = now()` pada tiap anak, jadi
     semuanya bernilai sama-atau-sesudah induknya. Anak yang dihapus LEBIH DULU
-    berarti dihapus orang secara terpisah dan sengaja — memulihkannya sekalian
+    berarti dihapus orang secara terpisah dan sengaja, memulihkannya sekalian
     akan menghidupkan kembali sesuatu yang tidak pernah diminta kembali.
 
     Dijalankan sinkron, bukan lewat Celery: pengguna menekan "Pulihkan" lalu
@@ -161,7 +161,7 @@ def restore_related_objects(app_label, model_name, instance_pk, cutoff, using=No
                         related_obj._meta.app_label, related_obj._meta.model_name, related_obj.pk, cutoff, using
                     )
             else:
-                # `all_objects`, bukan manager bawaan — manager bawaan menyaring
+                # `all_objects`, bukan manager bawaan, manager bawaan menyaring
                 # habis yang ter-soft-delete, jadi justru yang mau dipulihkan
                 # tidak akan pernah terlihat.
                 anak = getattr(instance, related_name)(manager="all_objects").filter(deleted_at__gte=cutoff)

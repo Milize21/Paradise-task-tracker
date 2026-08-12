@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — Trashbin per project (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: Trashbin per project (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -107,7 +107,7 @@ function TrashSettingsPage() {
     // Konfirmasi wajib: ini satu-satunya aksi di halaman ini yang tidak bisa
     // dibatalkan, dan tombolnya bersebelahan dengan "Pulihkan".
     const yakin = window.confirm(
-      `Buang "${item.name}" secara permanen?\n\nTidak bisa dibatalkan — barang ini tidak akan bisa dipulihkan lagi.`
+      `Buang "${item.name}" secara permanen?\n\nTidak bisa dibatalkan, barang ini tidak akan bisa dipulihkan lagi.`
     );
     if (!yakin) return;
     setSibuk(item.id);

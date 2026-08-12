@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — jejak audit khusus God Mode (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: jejak audit khusus God Mode (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
@@ -15,14 +15,14 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
 
-# Auditlog (MIT, jazzband) — lihat NOTICE.md
+# Auditlog (MIT, jazzband), lihat NOTICE.md
 from auditlog.models import LogEntry
 
 # Module imports
 from plane.license.api.views.base import BaseAPIView
 
 # Model yang dipantau (lihat plane/db/audit.py). Dibatasi ke daftar ini supaya
-# registrasi lain — kalau kelak ditambah — tidak ikut bocor ke endpoint ini.
+# registrasi lain, kalau kelak ditambah, tidak ikut bocor ke endpoint ini.
 _TRACKED_MODELS = ["project", "projectmember", "workspacemember", "issue", "page"]
 
 _ACTION_MAP = {
@@ -39,7 +39,7 @@ def _parse_tanggal(nilai, akhir_hari=False):
     """Terima 'YYYY-MM-DD'. Kembalikan None kalau tidak terbaca.
 
     Batas atas dinaikkan ke akhir hari, kalau tidak `date_to=2026-07-31` akan
-    memotong tepat di 00:00 dan membuang seluruh isi hari itu — kesalahan yang
+    memotong tepat di 00:00 dan membuang seluruh isi hari itu, kesalahan yang
     diam dan bikin orang mengira lognya hilang.
     """
     if not nilai:
@@ -76,11 +76,11 @@ def _serialize(entry):
 
 
 class InstanceAuditLogEndpoint(BaseAPIView):
-    """Jejak audit seluruh instance — siapa mengubah apa.
+    """Jejak audit seluruh instance, siapa mengubah apa.
 
     HANYA instance admin (God Mode). `BaseAPIView` God Mode sudah memasang
     `InstanceAdminPermission` sebagai default, jadi tidak ada dekorator izin
-    tambahan di sini — dan itu memang disengaja: satu tempat yang menentukan.
+    tambahan di sini, dan itu memang disengaja: satu tempat yang menentukan.
 
     Endpoint ini MENGGANTIKAN versi workspace-level yang lama. Jejak audit
     sengaja tidak bisa dibaca dari aplikasi utama: admin divisi tidak boleh

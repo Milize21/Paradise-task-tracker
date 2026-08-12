@@ -1,12 +1,12 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — kelola member di God Mode (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: kelola member di God Mode (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
 
 /* Konstanta sengaja dipisah dari berkas komponen: satu berkas yang mengekspor
-   komponen DAN nilai biasa mematikan Fast Refresh untuk berkas itu — setiap
+   komponen DAN nilai biasa mematikan Fast Refresh untuk berkas itu, setiap
    sunting jadi reload halaman penuh, bukan hot swap. */
 
 export const inputClass =

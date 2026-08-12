@@ -1,11 +1,11 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — pemantauan sesi & aktivitas (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: pemantauan sesi & aktivitas (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 """Riwayat login, jejak keaktifan, kick, dan retensi 3 bulan.
 
 Yang dijaga di sini adalah hal-hal yang kalau patah **tidak menimbulkan error
-apa pun** — jenis kegagalan yang paling mahal karena baru ketahuan berbulan-bulan
+apa pun**, jenis kegagalan yang paling mahal karena baru ketahuan berbulan-bulan
 kemudian saat angkanya dibutuhkan:
 
 - login/logout tidak tercatat  → dashboard menunjukkan kantor yang sepi
@@ -78,7 +78,7 @@ def _req_sesi():
 
 
 def test_login_tercatat_beserta_session_key(anggota):
-    """session_key harus yang FINAL — Django membuat ulang kunci saat login."""
+    """session_key harus yang FINAL, Django membuat ulang kunci saat login."""
     req = _req_sesi()
     user_login(request=req, user=anggota, is_app=True)
 

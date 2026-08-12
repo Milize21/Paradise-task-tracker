@@ -1,4 +1,4 @@
-# Seed Workspace Wiki — Paradise Task Tracker (Yorukaze Production)
+# Seed Workspace Wiki, Paradise Task Tracker (Yorukaze Production)
 # Jalankan: docker exec -i pradise_plane-api-1 python manage.py shell < paradise/bin/seed-wiki.py
 # Idempotent: aman dijalankan ulang (get_or_create semua).
 #
@@ -44,7 +44,7 @@ wiki, created = Project.objects.get_or_create(
     identifier="WIKI",
     defaults={
         "name": "Wiki",
-        "description": "Basis pengetahuan perusahaan — SOP, panduan, dokumentasi divisi.",
+        "description": "Basis pengetahuan perusahaan, SOP, panduan, dokumentasi divisi.",
         "network": 2,
         "created_by": owner,
         "page_view": True,
@@ -99,4 +99,4 @@ for title in ROOT_PAGES:
     if was_new:
         made += 1
 print(f"halaman root dibuat: {made} / {len(ROOT_PAGES)}")
-print("SELESAI — Wiki siap di project 'Wiki' (identifier WIKI).")
+print("SELESAI, Wiki siap di project 'Wiki' (identifier WIKI).")

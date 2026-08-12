@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — cek izin edit halaman (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: cek izin edit halaman (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -38,7 +38,7 @@ export class PagePermissionService extends APIService {
       const appError = new AppError(error, {
         context: { operation: "canEdit", workspaceSlug, projectId, pageId },
       });
-      logger.error("Cek izin edit halaman gagal — koneksi dijadikan read-only", appError);
+      logger.error("Cek izin edit halaman gagal, koneksi dijadikan read-only", appError);
       return false;
     }
   }

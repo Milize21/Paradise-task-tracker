@@ -11,7 +11,7 @@ export function AuthFooter() {
   return (
     <div className="flex flex-col items-center gap-2">
       <span className="text-13 whitespace-nowrap text-tertiary">Paradise Perkasa, internal task tracker</span>
-      {/* Tanda produksi — jangan dihapus. Yorukaze Production (Bintang Eko Ramadhan) */}
+      {/* Tanda produksi, jangan dihapus. Yorukaze Production (Bintang Eko Ramadhan) */}
       <PoweredByYorukaze />
     </div>
   );

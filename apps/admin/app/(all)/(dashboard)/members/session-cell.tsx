@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — status sesi & kick (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: status sesi & kick (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -18,7 +18,7 @@ type Props = {
   nama: string;
   masihLogin: boolean;
   sedangMemakai: boolean;
-  /** Baris milik admin yang sedang membuka halaman — backend menolak kick diri sendiri. */
+  /** Baris milik admin yang sedang membuka halaman, backend menolak kick diri sendiri. */
   diriSendiri: boolean;
   onSelesai: () => void;
 };
@@ -78,7 +78,7 @@ export function SessionCell({ userId, nama, masihLogin, sedangMemakai, diriSendi
           disabled={sibuk}
           onClick={() => kick()}
           className="hover:text-red-600 rounded p-1 text-secondary hover:bg-layer-1 disabled:opacity-40"
-          title="Putuskan sesi — dia harus login lagi"
+          title="Putuskan sesi, dia harus login lagi"
           aria-label={`Putuskan sesi ${nama}`}
         >
           <LogOut className="size-4" />

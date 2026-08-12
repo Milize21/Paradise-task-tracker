@@ -21,7 +21,7 @@ class SignOutAuthEndpoint(View):
             user.last_logout_ip = user_ip(request=request)
             user.last_logout_time = timezone.now()
             user.save()
-            # Jejak logout (Yorukaze Production) — dicatat SEBELUM logout(), setelah itu
+            # Jejak logout (Yorukaze Production), dicatat SEBELUM logout(), setelah itu
             # session_key sudah hilang dan pasangannya dengan login tak bisa
             # ditemukan lagi untuk menghitung durasi.
             LoginActivity.catat(

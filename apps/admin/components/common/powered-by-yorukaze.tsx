@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — tanda produksi Yorukaze (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: tanda produksi Yorukaze (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -10,14 +10,14 @@ import logoDark from "@/app/assets/yorukaze-dark.png?url";
 import logoLight from "@/app/assets/yorukaze-light.png?url";
 
 type TPoweredByYorukaze = {
-  /** Kelas tambahan untuk pembungkus — dipakai penempatan, bukan gaya. */
+  /** Kelas tambahan untuk pembungkus, dipakai penempatan, bukan gaya. */
   className?: string;
 };
 
 /**
  * Tanda "Powered by Yorukaze Production" untuk God Mode.
  *
- * Logo terang/gelap dipilih lewat CSS (`dark:`), bukan `useTheme()` — bercabang
+ * Logo terang/gelap dipilih lewat CSS (`dark:`), bukan `useTheme()`, bercabang
  * di JS atas `resolvedTheme` melahirkan mismatch hidrasi (BUG-05).
  *
  * ponytail: kembaran dari apps/web & apps/space. Lihat catatan di berkas web.

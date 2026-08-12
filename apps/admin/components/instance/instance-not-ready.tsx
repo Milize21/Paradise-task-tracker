@@ -16,7 +16,7 @@ export function InstanceNotReady() {
         <div className="relative flex flex-col items-center justify-center space-y-4">
           <h1 className="pb-3 text-24 font-bold">Selamat datang di Paradise Task Tracker!</h1>
           {/* `alt` dikosongkan, bukan diterjemahkan: gambar ini hiasan sambutan,
-              bukan informasi. Pembaca layar melewatinya — lebih baik daripada
+              bukan informasi. Pembaca layar melewatinya, lebih baik daripada
               mengumumkan nama berkas atau merek yang tidak menambah apa pun. */}
           <img src={PlaneTakeOffImage} alt="" />
           <p className="text-14 font-medium text-placeholder">Get started by setting up your instance and workspace</p>

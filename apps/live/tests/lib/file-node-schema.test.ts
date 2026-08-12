@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — node berkas non-gambar (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: node berkas non-gambar (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -13,7 +13,7 @@ import { convertHTMLDocumentToAllFormats } from "@plane/editor";
  * Node editor hanya bertahan di server kalau ia terdaftar di
  * CoreEditorExtensionsWithoutProps (packages/editor/.../core-without-props.ts).
  * Kalau tidak, ProseMirror MEMBUANGNYA diam-diam saat Y.Doc dikonversi ke
- * JSON/HTML — tanpa error, tanpa log. Berkas yang diunggah user lenyap dan
+ * JSON/HTML, tanpa error, tanpa log. Berkas yang diunggah user lenyap dan
  * tidak ada yang tahu sampai ada yang mengeluh.
  *
  * Uji ini menjalankan konversi yang sama dengan yang dipakai server Live.

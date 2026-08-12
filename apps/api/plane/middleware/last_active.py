@@ -1,12 +1,12 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — jejak "sedang memakai" (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: jejak "sedang memakai" (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 """Memperbarui `User.last_active` dari lalu lintas yang memang sudah terjadi.
 
 Sebelum ini `last_active` hanya diisi sekali saat login
 (`authentication/adapter/base.py`), jadi namanya menjanjikan sesuatu yang tidak
-pernah ia lakukan — praktis salinan `last_login_time`. Akibatnya tidak ada apa
+pernah ia lakukan, praktis salinan `last_login_time`. Akibatnya tidak ada apa
 pun di sistem yang tahu bedanya orang yang sedang bekerja dari orang yang
 sesinya masih hidup tapi sudah pulang tiga jam lalu.
 
@@ -64,7 +64,7 @@ class LastActiveMiddleware:
         # Impor lokal: middleware dimuat sebelum app registry siap.
         from plane.db.models import User
 
-        # `.update()` bukan `.save()` — save() memicu sinyal dan auditlog, dan
+        # `.update()` bukan `.save()`, save() memicu sinyal dan auditlog, dan
         # stempel keaktifan tiap menit akan membanjiri jejak audit dengan
         # perubahan yang tidak menarik bagi siapa pun.
         User.objects.filter(pk=user.pk).update(last_active=sekarang)

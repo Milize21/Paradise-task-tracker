@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — kelola member di God Mode (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: kelola member di God Mode (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -62,7 +62,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
   const [sibuk, setSibuk] = useState<string | null>(null);
   const [sedangDiubah, setSedangDiubah] = useState<string | null>(null);
   const [sedangDiangkat, setSedangDiangkat] = useState<string | null>(null);
-  // Dipakai menyembunyikan tombol kick di baris sendiri — backend menolaknya,
+  // Dipakai menyembunyikan tombol kick di baris sendiri, backend menolaknya,
   // dan tombol yang selalu gagal lebih buruk daripada tombol yang tidak ada.
   const { currentUser } = useUser();
 
@@ -70,7 +70,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
     revalidateOnFocus: false,
   });
 
-  // Mengubah saringan wajib kembali ke halaman 1 — menyaring dari halaman 2
+  // Mengubah saringan wajib kembali ke halaman 1, menyaring dari halaman 2
   // bisa mendarat di hasil kosong padahal datanya ada.
   const ubah = (patch: Partial<TMemberFilter>) => setFilter((f) => ({ ...f, ...patch, page: 1 }));
 
@@ -84,7 +84,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "Akun dibuat",
-        message: "Sampaikan password awalnya langsung ke orangnya — email undangan belum bisa dikirim.",
+        message: "Sampaikan password awalnya langsung ke orangnya, email undangan belum bisa dikirim.",
       });
     } catch (err) {
       toastError(err, "Tidak bisa membuat akun.");
@@ -115,7 +115,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
       header={{
         title: "Member",
         description:
-          "Buat, nonaktifkan, dan atur hak akses akun. Pendaftaran mandiri dimatikan — akun hanya lahir dari sini.",
+          "Buat, nonaktifkan, dan atur hak akses akun. Pendaftaran mandiri dimatikan, akun hanya lahir dari sini.",
         actions: (
           <Button variant="primary" size="sm" onClick={() => setBuatTerbuka((v) => !v)}>
             <UserPlus className="size-4" /> Akun baru
@@ -147,7 +147,7 @@ const MembersPage = function MembersPage(_props: Route.ComponentProps) {
             />
           </div>
           <p className="text-11 text-secondary">
-            Password awal harus kamu sampaikan langsung — SMTP belum jalan, jadi tidak ada email yang terkirim.
+            Password awal harus kamu sampaikan langsung, SMTP belum jalan, jadi tidak ada email yang terkirim.
           </p>
           <div className="flex gap-2">
             <Button variant="primary" size="sm" disabled={sibuk === "buat"} onClick={handleBuat}>

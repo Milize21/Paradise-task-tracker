@@ -56,7 +56,7 @@ def process_cleanup_task(
             return
         total_batches += 1
         try:
-            # `all_objects` is a plain manager, so this is a hard delete — rows
+            # `all_objects` is a plain manager, so this is a hard delete, rows
             # are removed from PostgreSQL immediately rather than soft-deleted.
             delete_result = model.all_objects.filter(id__in=ids).delete()
             deleted = delete_result[0] if isinstance(delete_result, tuple) else 0
@@ -81,7 +81,7 @@ def process_cleanup_task(
     )
 
 
-# Queryset functions for each cleanup task — each yields primary keys to delete
+# Queryset functions for each cleanup task, each yields primary keys to delete
 def get_api_logs_queryset():
     """Get API activity logs older than the API retention window."""
     cutoff_time = timezone.now() - timedelta(days=settings.API_ACTIVITY_LOG_RETENTION_DAYS)

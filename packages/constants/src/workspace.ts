@@ -227,7 +227,7 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
-  // Wiki perusahaan (Paradise/Yorukaze Production). href SENGAJA statis `/wiki/` — halaman itu
+  // Wiki perusahaan (Paradise/Yorukaze Production). href SENGAJA statis `/wiki/`, halaman itu
   // meresolusi project ber-identifier WIKI lalu redirect. Jangan menaruh UUID
   // project di sini: UUID-nya berbeda di tiap instance, jadi akan salah di server
   // produksi.
@@ -235,7 +235,7 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     key: "wiki",
     // "wiki_nav", BUKAN "wiki": namespace `wiki.*` sudah dipakai wiki.json
     // (wiki.nested_pages_*), jadi key daun bernama "wiki" bentrok dan ditolak
-    // sync:check — "wiki is a leaf but wiki.nested_pages_... extends it".
+    // sync:check, "wiki is a leaf but wiki.nested_pages_... extends it".
     labelTranslationKey: "wiki_nav",
     href: `/wiki/`,
     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],

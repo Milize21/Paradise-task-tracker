@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — ubah member di God Mode (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: ubah member di God Mode (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -29,7 +29,7 @@ export function EditMember({ member, onSelesai, onTutup }: Props) {
   const [sibuk, setSibuk] = useState(false);
 
   // Kirim HANYA yang berubah. Mengirim semua kolom berarti setiap simpan
-  // menulis ulang email & peran walau yang diubah cuma namanya — dan setiap
+  // menulis ulang email & peran walau yang diubah cuma namanya, dan setiap
   // tulis-ulang email mengakhiri sesi orangnya tanpa alasan.
   const perubahan = (): TMemberUpdate => {
     const patch: TMemberUpdate = {};
@@ -57,7 +57,7 @@ export function EditMember({ member, onSelesai, onTutup }: Props) {
         type: TOAST_TYPE.SUCCESS,
         title: "Tersimpan",
         message: hasil.sessions_ended
-          ? `${hasil.display_name} — ${hasil.sessions_ended} sesi diakhiri, dia harus masuk lagi.`
+          ? `${hasil.display_name}, ${hasil.sessions_ended} sesi diakhiri, dia harus masuk lagi.`
           : hasil.display_name,
       });
     } catch (err) {
@@ -114,7 +114,7 @@ export function EditMember({ member, onSelesai, onTutup }: Props) {
       {passwordTerlaluPendek && <p className="text-danger text-11">Password minimal 8 karakter.</p>}
 
       <p className="text-11 text-secondary">
-        Mengubah <strong>password</strong> atau <strong>email</strong> mengakhiri semua sesi orang itu — dia harus masuk
+        Mengubah <strong>password</strong> atau <strong>email</strong> mengakhiri semua sesi orang itu, dia harus masuk
         lagi. Password barunya sampaikan langsung; SMTP belum jalan, tidak ada email yang terkirim.
       </p>
 

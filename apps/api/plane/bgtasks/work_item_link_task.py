@@ -47,7 +47,7 @@ def validate_url_ip(url: str) -> None:
     if not hostname:
         raise ValueError("Invalid URL: No hostname found")
 
-    # Resolve hostname to IP addresses — this catches domain names that
+    # Resolve hostname to IP addresses, this catches domain names that
     # point to internal IPs (e.g. attacker.com -> 169.254.169.254)
 
     try:

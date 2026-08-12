@@ -42,7 +42,7 @@ export const getSidebarNavigationItemIcon = (key: string, className: string = ""
     case "stickies":
       return <MultipleStickyIcon className={cn("size-4 flex-shrink-0", className)} />;
     // Item kustom Paradise/Yorukaze Production. Tanpa case di sini switch mengembalikan
-    // undefined dan itemnya tampil TANPA ikon — itu yang terjadi pada
+    // undefined dan itemnya tampil TANPA ikon, itu yang terjadi pada
     // dashboard_divisi & initiatives sejak dibuat.
     case "wiki":
       return <BookText className={cn("size-4 flex-shrink-0", className)} />;

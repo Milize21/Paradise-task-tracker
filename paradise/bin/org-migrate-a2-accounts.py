@@ -1,4 +1,4 @@
-# Bagian A2 — akun: serah-terima email, ganti alamat, buat akun baru, buang akun uji
+# Bagian A2, akun: serah-terima email, ganti alamat, buat akun baru, buang akun uji
 #
 # Jalankan:
 #   docker exec -i pradise_plane-api-1 python manage.py shell < paradise/bin/org-migrate-a2-accounts.py
@@ -7,7 +7,7 @@
 # Terapkan:              ORG_APPLY=1
 #
 # Idempotent: tiap langkah memeriksa keadaan dulu, aman dijalankan ulang.
-# TIDAK menyentuh keanggotaan project maupun peran — itu A3.
+# TIDAK menyentuh keanggotaan project maupun peran, itu A3.
 
 import os
 
@@ -70,7 +70,7 @@ AKUN_BARU = [
 AKUN_UJI = "tester@paradiseperkasa.com"
 
 print("=" * 70)
-print("A2 — akun   " + ("[TERAPKAN]" if APPLY else "[UJI KERING]"))
+print("A2, akun   " + ("[TERAPKAN]" if APPLY else "[UJI KERING]"))
 print("=" * 70)
 
 with transaction.atomic():
@@ -78,7 +78,7 @@ with transaction.atomic():
     for email, lama, baru in SERAH_TERIMA:
         u = User.objects.filter(email=email).first()
         if not u:
-            print(f"   ! {email} tidak ada — dilewati")
+            print(f"   ! {email} tidak ada, dilewati")
             continue
         if u.display_name == baru:
             print(f"   ada  {email:<34} sudah {baru}")
@@ -96,10 +96,10 @@ with transaction.atomic():
             if User.objects.filter(email=baru).exists():
                 print(f"   ada  {baru:<34} sudah dipakai {nama}")
             else:
-                print(f"   ! {lama} tidak ada dan {baru} juga tidak — dilewati")
+                print(f"   ! {lama} tidak ada dan {baru} juga tidak, dilewati")
             continue
         if User.objects.filter(email=baru).exclude(pk=u.pk).exists():
-            print(f"   !! BENTROK {baru} sudah dipakai akun lain — DILEWATI, perlu ditinjau")
+            print(f"   !! BENTROK {baru} sudah dipakai akun lain, DILEWATI, perlu ditinjau")
             continue
         print(f"   UBAH {lama:<34} -> {baru}  ({nama})")
         if APPLY:
@@ -140,7 +140,7 @@ with transaction.atomic():
     else:
         # Dinonaktifkan, bukan dihapus permanen: menghapus baris User akan
         # memutus rujukan di audit log dan riwayat mana pun yang menyentuhnya.
-        # Nonaktif sudah cukup — tidak bisa login, tidak muncul sebagai anggota.
+        # Nonaktif sudah cukup, tidak bisa login, tidak muncul sebagai anggota.
         print(f"   NONAKTIFKAN {AKUN_UJI}  ({t.display_name})")
         if APPLY:
             t.is_active = False
@@ -148,7 +148,7 @@ with transaction.atomic():
             WorkspaceMember.objects.filter(workspace=ws, member=t).delete()
 
     if not APPLY:
-        print("\n  UJI KERING — membatalkan transaksi, tidak ada yang ditulis.")
+        print("\n  UJI KERING, membatalkan transaksi, tidak ada yang ditulis.")
         transaction.set_rollback(True)
 
 print("-" * 70)

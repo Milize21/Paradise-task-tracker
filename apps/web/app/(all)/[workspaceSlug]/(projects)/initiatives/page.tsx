@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — Initiatives (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: Initiatives (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -132,7 +132,7 @@ function InitiativesPage() {
             <h2 className="text-lg font-semibold text-primary">Initiatives</h2>
           </div>
           <p className="text-sm text-tertiary">
-            Misi & objektif besar perusahaan — payungi beberapa divisi dan pantau progres gabungannya.
+            Misi & objektif besar perusahaan, payungi beberapa divisi dan pantau progres gabungannya.
           </p>
         </div>
 

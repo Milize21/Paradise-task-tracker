@@ -28,7 +28,7 @@ import { LogoSpinner } from "@/components/common/logo-spinner";
 // local
 import { CustomErrorComponent } from "./error";
 import { AppProvider } from "./provider";
-// fonts (side-effect imports — memuat font global)
+// fonts (side-effect imports, memuat font global)
 // oxlint-disable no-unassigned-import
 import "@fontsource-variable/inter";
 import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
@@ -66,7 +66,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#fff" />
-        {/* Paradise Task Tracker — dibangun & dikustomisasi oleh Yorukaze Production (Bintang Eko Ramadhan) */}
+        {/* Paradise Task Tracker: dibangun & dikustomisasi oleh Yorukaze Production (Bintang Eko Ramadhan) */}
         <meta name="author" content="Yorukaze Production" />
         <meta name="generator" content="Yorukaze Production" />
         {/* Meta info for PWA */}
@@ -118,7 +118,7 @@ export const meta: Route.MetaFunction = () => [
   },
   // `twitter:site` DIBUANG: isinya akun vendor `@planepowers`, dan kantor ini
   // tidak punya akun penggantinya. Mengarang handle lebih buruk daripada tidak
-  // ada — tag ini memang opsional.
+  // ada, tag ini memang opsional.
   { name: "twitter:card", content: "summary_large_image" },
   { name: "twitter:image", content: ogImage },
   { name: "twitter:image:width", content: "1200" },

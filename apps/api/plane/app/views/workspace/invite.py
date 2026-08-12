@@ -173,7 +173,7 @@ class WorkspaceJoinEndpoint(BaseAPIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # Require an authenticated session — the accepting user must be the
+        # Require an authenticated session, the accepting user must be the
         # person who was invited.  Without this check an attacker who registers
         # with the invited address (email-squat) and obtains the token via the
         # GET endpoint can steal the workspace membership (GHSA-4vj8-p63v-8p24).

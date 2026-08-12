@@ -39,7 +39,7 @@ class WebhookSerializer(DynamicBaseSerializer):
         hostname = (urlparse(url).hostname or "").rstrip(".").lower()
 
         # Hosts explicitly trusted via WEBHOOK_ALLOWED_HOSTS bypass the
-        # disallowed-domain check — they're already trusted for SSRF, so
+        # disallowed-domain check, they're already trusted for SSRF, so
         # the loop-back guard would only get in the way of legitimate
         # sibling services that share a parent domain with Plane.
         if hostname in settings.WEBHOOK_ALLOWED_HOSTS:

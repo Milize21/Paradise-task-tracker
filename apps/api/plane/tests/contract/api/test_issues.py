@@ -85,7 +85,7 @@ class TestIssueListOrderByInjection:
 
     @pytest.mark.django_db
     def test_legitimate_order_by_still_works(self, api_key_client, workspace, project, issue):
-        """A valid, allowlisted ordering value continues to return 200 —
+        """A valid, allowlisted ordering value continues to return 200,
         the sanitizer must not break legitimate ordering."""
         url = self.get_url(workspace.slug, project.id)
 

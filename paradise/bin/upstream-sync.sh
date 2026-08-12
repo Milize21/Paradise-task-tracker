@@ -3,7 +3,7 @@
 #
 # Repo ini di-VENDOR, bukan di-fork: berkasnya disalin, jadi tidak ada leluhur
 # bersama dengan upstream. `git merge` menolak bekerja. Jalan satu-satunya
-# adalah patch tiga arah per commit — yang juga memberi granularitas: satu
+# adalah patch tiga arah per commit, yang juga memberi granularitas: satu
 # commit bermasalah tidak menggagalkan 24 lainnya.
 #
 #   ./paradise/bin/upstream-sync.sh check              apa yang baru sejak baseline
@@ -17,7 +17,7 @@ cd "$(dirname "$0")/../.."
 
 STATE=paradise/upstream-sync.json
 # tr -d '\r' wajib: python di Windows menulis CRLF, dan `read` menyimpan \r itu
-# di ujung nilainya — path jadi "apps/web/ce\r" dan setiap tes keberadaan berkas
+# di ujung nilainya, path jadi "apps/web/ce\r" dan setiap tes keberadaan berkas
 # meleset, melaporkan kustomisasi HILANG padahal ada. Ditambal di sini, satu
 # tempat, supaya semua pemanggil aman.
 j() { python -c "import json,sys;d=json.load(open('$STATE',encoding='utf-8'));print($1)" | tr -d '\r'; }
@@ -39,7 +39,7 @@ cmd_check() {
   echo
 
   local n
-  n=$(git rev-list --count "$BASELINE..$target" 2>/dev/null) || { echo "baseline tidak dikenal — sudah fetch --tags?"; exit 1; }
+  n=$(git rev-list --count "$BASELINE..$target" 2>/dev/null) || { echo "baseline tidak dikenal, sudah fetch --tags?"; exit 1; }
   if [ "$n" = 0 ]; then echo "sudah paling baru."; return; fi
 
   echo "$n commit baru:"
@@ -56,7 +56,7 @@ cmd_check() {
 # ── apply ────────────────────────────────────────────────────────────────────
 cmd_apply() {
   local target="${1:-$(git tag -l 'v*' --sort=-v:refname | head -1)}"
-  [ -n "$(git status --porcelain)" ] && { echo "working tree kotor — commit atau stash dulu."; exit 1; }
+  [ -n "$(git status --porcelain)" ] && { echo "working tree kotor, commit atau stash dulu."; exit 1; }
 
   local skip
   skip=$(j "' '.join(x['commit'] for x in d['lewati'])")
@@ -92,8 +92,8 @@ cmd_apply() {
     echo "  git diff                          lihat konflik yang tertinggal"
     echo
     echo "Aturan saat memutuskan: kalau baris yang bentrok itu KUSTOMISASI kita"
-    echo "(debranding, gate Wiki, Super Admin tersembunyi) — pertahankan punya kita."
-    echo "Kalau itu perbaikan keamanan mereka — ambil punya mereka, lalu pasang"
+    echo "(debranding, gate Wiki, Super Admin tersembunyi), pertahankan punya kita."
+    echo "Kalau itu perbaikan keamanan mereka, ambil punya mereka, lalu pasang"
     echo "ulang kustomisasi kita di atasnya. Jangan pilih salah satu buta-buta."
   fi
   echo
@@ -122,12 +122,12 @@ cmd_verify() {
   while read -r dir; do
     [ -z "$dir" ] && continue
     # Jebakan aslinya: refactor konsolidasi upstream MENGHAPUS 162 berkas di
-    # apps/web/ce/. Yang berbahaya penghapusan, bukan perubahan isi — berkas
+    # apps/web/ce/. Yang berbahaya penghapusan, bukan perubahan isi, berkas
     # yang lenyap membuat fitur hilang diam-diam, tanpa error.
     #
     # Dibandingkan dengan BASE (default main), bukan HEAD: sekali hasil sync
     # di-commit, `git diff HEAD` selalu kosong dan pemeriksaan ini lolos palsu
-    # justru saat paling dibutuhkan — sesaat sebelum merge.
+    # justru saat paling dibutuhkan, sesaat sebelum merge.
     local hapus
     hapus=$(git diff --diff-filter=D --name-only "$BASE" -- "$dir" | wc -l)
     if [ "$hapus" = 0 ]; then printf '  utuh    %s (%s berkas)\n' "$dir" "$(find "$dir" -type f | wc -l)"
@@ -142,7 +142,7 @@ cmd_verify() {
   done
 
   echo
-  [ "$rusak" = 0 ] && echo "SEMUA AMAN." || echo "ADA YANG RUSAK — jangan merge ke main sebelum beres."
+  [ "$rusak" = 0 ] && echo "SEMUA AMAN." || echo "ADA YANG RUSAK, jangan merge ke main sebelum beres."
   return "$rusak"
 }
 

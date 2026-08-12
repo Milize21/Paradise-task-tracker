@@ -3,7 +3,7 @@
 # See the LICENSE file for details.
 
 # Jejak audit: mencatat SIAPA mengubah APA pada entitas sensitif (akses & konten
-# inti). Ditenagai django-auditlog (MIT, jazzband) — lihat NOTICE. Aktor + IP
+# inti). Ditenagai django-auditlog (MIT, jazzband), lihat NOTICE. Aktor + IP
 # ditangkap oleh auditlog.middleware.AuditlogMiddleware (lihat settings.MIDDLEWARE).
 #
 # Field body besar (biner/HTML) sengaja dikecualikan: diff-nya raksasa dan riwayat
@@ -43,6 +43,6 @@ def register_audit_models():
     auditlog.register(ProjectMember)
     auditlog.register(WorkspaceMember)
 
-    # Konten inti — metadata saja, bukan isi editor
+    # Konten inti, metadata saja, bukan isi editor
     auditlog.register(Issue, exclude_fields=_ISSUE_BODY)
     auditlog.register(Page, exclude_fields=_PAGE_BODY)

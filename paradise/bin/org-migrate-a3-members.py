@@ -1,4 +1,4 @@
-# Bagian A3 — keanggotaan & peran project (Yorukaze Production)
+# Bagian A3, keanggotaan & peran project (Yorukaze Production)
 #
 # Jalankan:
 #   docker exec -i pradise_plane-api-1 python manage.py shell < paradise/bin/org-migrate-a3-members.py
@@ -6,16 +6,16 @@
 # Uji kering (default): tanpa ORG_APPLY   |   Terapkan: ORG_APPLY=1
 #
 # Rencana ini DIBEKUKAN dari Org Directory xlsx pada 2026-07-31, bukan dihitung
-# ulang saat jalan — supaya yang dieksekusi persis yang sudah ditinjau.
+# ulang saat jalan, supaya yang dieksekusi persis yang sudah ditinjau.
 #
 # Aturan yang sudah dipatuhi saat menyusunnya:
-#   P2  SALES / HRGA / INVQC tetap PAYUNG — anggotanya tidak dikeluarkan
+#   P2  SALES / HRGA / INVQC tetap PAYUNG, anggotanya tidak dikeluarkan
 #   K4  Orang yang tidak ada di file TIDAK dikeluarkan dari mana pun
 #   K5  7 orang tanpa email dilewati (Ignatius Warsito, Security 1&2, Safitri,
 #       Dani, Eko Santoso, Slamet Supriyadi)
 #   K6  Akun email-bersama tetap ditempatkan, pemisahan orangnya ditunda
 #   K10 HANYA peran project yang disentuh. Peran WORKSPACE sengaja TIDAK diubah
-#       sampai B1 (Super Admin tersembunyi) jadi — menurunkan workspace Admin
+#       sampai B1 (Super Admin tersembunyi) jadi, menurunkan workspace Admin
 #       sekarang akan membuat tidak ada seorang pun bisa mengelola workspace.
 
 import os
@@ -98,7 +98,7 @@ KELUAR = [
 ]
 
 print("=" * 70)
-print("A3 — keanggotaan & peran   " + ("[TERAPKAN]" if APPLY else "[UJI KERING]"))
+print("A3, keanggotaan & peran   " + ("[TERAPKAN]" if APPLY else "[UJI KERING]"))
 print("=" * 70)
 
 proj = {p.identifier: p for p in Project.objects.filter(workspace=ws, deleted_at__isnull=True)}
@@ -150,11 +150,11 @@ with transaction.atomic():
         n_keluar += 1
         print(f"   -      {ident:<7} {email}")
         if APPLY:
-            # Soft delete (konvensi Plane) — bisa dipulihkan kalau salah.
+            # Soft delete (konvensi Plane), bisa dipulihkan kalau salah.
             pm.delete()
 
     if not APPLY:
-        print("\n  UJI KERING — transaksi dibatalkan, tidak ada yang ditulis.")
+        print("\n  UJI KERING, transaksi dibatalkan, tidak ada yang ditulis.")
         transaction.set_rollback(True)
 
 print("-" * 70)

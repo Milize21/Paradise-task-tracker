@@ -1,4 +1,4 @@
-# Rencana Wiki — Paradise Task Tracker
+# Rencana Wiki, Paradise Task Tracker
 
 Status: **RENCANA** (belum dieksekusi). Disusun 2026-07-24.
 
@@ -49,11 +49,11 @@ divisi), dan **semua tipe file termasuk video, batas 100 MB**.
   tampil tanpa kerja frontend.
 - **Ada hook untuk override izin.** `page.py` menyediakan
   `_check_access_and_get_role` & `_has_private_page_action_access` ("Override for
-  feature flag logic") — titik ekstensi resmi (dipakai edisi EE).
+  feature flag logic"), titik ekstensi resmi (dipakai edisi EE).
 
 ---
 
-## Fase A — Upload file (semua tipe, 100 MB)
+## Fase A, Upload file (semua tipe, 100 MB)
 
 Dibutuhkan apa pun struktur wiki-nya. Berdiri sendiri.
 
@@ -67,7 +67,7 @@ A3 = komponen upload, kartu file (ikon+nama+download), pemutar inline mp4/mp3,
 sinkron Yjs. Editor dipakai bersama Issue/Page/Comment → jangan rusak yang lain.
 **Versi malas:** kartu file + download saja dulu; preview/inline player menyusul.
 
-## Fase B — Izin per-folder (SENSITIF KEAMANAN)
+## Fase B, Izin per-folder (SENSITIF KEAMANAN)
 
 | #   | Kerja                 | Cara                                                                                                                                                 | Risiko     |
 | --- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
@@ -79,7 +79,7 @@ Uji wajib: non-pemilik tak bisa edit/hapus folder lain; sub-halaman mewarisi
 pemilik induk; pindah halaman antar-folder hitung ulang pemilik; buat halaman di
 bawah folder X cek pemilik folder X (bukan sekadar peran project).
 
-## Fase C — Pohon folder di UI
+## Fase C, Pohon folder di UI
 
 | #   | Kerja                               | Cara                                                                      | Risiko |
 | --- | ----------------------------------- | ------------------------------------------------------------------------- | ------ |
@@ -103,5 +103,5 @@ bawah folder X cek pemilik folder X (bukan sekadar peran project).
 ## Penghematan yang layak ditimbang
 
 Sebelum bangun node editor (A3) & ACL (B) dari nol, cek dulu apakah Plane edisi
-berbayar (EE) sudah punya keduanya untuk di-port — lebih murah & lebih teruji.
+berbayar (EE) sudah punya keduanya untuk di-port, lebih murah & lebih teruji.
 Repo `upstream` yang ada cuma community; perlu lihat referensi EE.

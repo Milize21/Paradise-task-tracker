@@ -1,4 +1,4 @@
-# Panduan Kerja — Paradise Task Tracker
+# Panduan Kerja, Paradise Task Tracker
 
 Repositori internal PT Paradise Perkasa. Panduan ini untuk siapa pun yang
 mengerjakan kodenya.
@@ -51,10 +51,10 @@ kodenya sudah benar.
 `packages/i18n/locales` adalah junction ke `packages/i18n/src/locales`. Proses
 `git stash` milik pre-commit hook bisa memecahnya menjadi direktori asli berisi
 ratusan duplikat. Kalau `git status` tiba-tiba menampilkan ratusan perubahan,
-junction-nya pecah — jangan di-commit, pulihkan dulu.
+junction-nya pecah, jangan di-commit, pulihkan dulu.
 
 Selain itu: jangan menaruh berkas sementara di `packages/*` atau `apps/live`
-saat `pnpm dev` jalan — watcher akan me-rebuild dan me-restart server Live di
+saat `pnpm dev` jalan, watcher akan me-rebuild dan me-restart server Live di
 tengah pengujian.
 
 ---
@@ -80,7 +80,7 @@ pnpm --filter @plane/i18n run generate:types
 Catatan:
 
 - `oxlint <path>` **tanpa** `--deny-warnings` memberi hijau palsu.
-- Jangan salurkan hasilnya ke `tail` lalu membaca `$?` — yang terbaca exit code
+- Jangan salurkan hasilnya ke `tail` lalu membaca `$?`, yang terbaca exit code
   `tail`. Tulis ke berkas dulu, atau pakai `${PIPESTATUS[0]}`.
 - Peringatan pre-existing di berkas yang kamu sentuh: **perbaiki**, jangan
   dibungkam.
@@ -90,7 +90,7 @@ Catatan:
 ## Menambah key i18n
 
 - Nama berkas di `packages/i18n/src/locales/en/` adalah **nama namespace**.
-  Key daun tidak boleh memakai nama yang sama — `"wiki"` ditolak karena
+  Key daun tidak boleh memakai nama yang sama, `"wiki"` ditolak karena
   `wiki.json` sudah membentuk namespace `wiki.*`. Bentrok ini tidak terdeteksi
   tsc maupun oxlint, hanya `sync:check`.
 - Key di `common.json` bisa dipanggil tanpa awalan (`defaultNS: "common"`).
@@ -122,14 +122,14 @@ docker exec pradise_plane-worker-1 celery -A plane inspect registered
 ## Menambah fitur
 
 Cek **`apps/web/ce/`** lebih dulu. Alias `@/plane-web/*` menunjuk ke sana, dan
-banyak slot UI sudah ter-wire ke stub kosong — mengisinya jauh lebih murah
+banyak slot UI sudah ter-wire ke stub kosong, mengisinya jauh lebih murah
 daripada membangun jalur baru.
 
 Item navigasi baru harus didaftarkan di **dua** tempat, kalau tidak ia tidak
 akan pernah terlihat:
 
 1. daftar item nav (`packages/constants/src/workspace.ts`)
-2. `getSidebarNavigationItemIcon` di `apps/web/ce/.../sidebar/helper.tsx` —
+2. `getSidebarNavigationItemIcon` di `apps/web/ce/.../sidebar/helper.tsx`,
    `switch` ini tidak punya `default`, jadi key tak terdaftar tampil tanpa ikon
    tanpa error apa pun
 
@@ -151,7 +151,7 @@ alasannya.
 Tipe: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `ci`, `build`.
 
 Tulis apa yang sudah diverifikasi dan bagaimana. "Sudah diuji" tanpa menyebut
-caranya tidak berguna buat orang berikutnya — termasuk buat dirimu sendiri
+caranya tidak berguna buat orang berikutnya, termasuk buat dirimu sendiri
 tiga minggu lagi.
 
 ---
@@ -162,7 +162,7 @@ Panduan deploy, backup, keamanan pra-produksi, dan sinkronisasi upstream ada di
 `paradise/`. Skrip operasionalnya di `paradise/bin/`.
 
 Sinkronisasi upstream harus di-diff terhadap **tag `v0.24.0`**, bukan
-`upstream/main` — repo ini di-vendor dari v0.24.0, jadi diff ke `main` akan
+`upstream/main`, repo ini di-vendor dari v0.24.0, jadi diff ke `main` akan
 melaporkan ribuan baris jarak versi sebagai "perubahan kita".
 
 ---
@@ -171,6 +171,6 @@ melaporkan ribuan baris jarak versi sebagai "perubahan kita".
 
 Kontribusi ke repositori ini tunduk pada **GNU AGPL-3.0**
 ([LICENSE.txt](LICENSE.txt)). Jangan menghapus header hak cipta di berkas
-sumber, `LICENSE.txt`, atau [NOTICE.md](NOTICE.md) — lihat NOTICE untuk
+sumber, `LICENSE.txt`, atau [NOTICE.md](NOTICE.md), lihat NOTICE untuk
 penjelasan mengapa penghapusan merek produk berbeda dari penghapusan atribusi
 hukum.

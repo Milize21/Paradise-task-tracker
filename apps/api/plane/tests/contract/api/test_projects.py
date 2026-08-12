@@ -149,9 +149,9 @@ class TestProjectListCreateAPIEndpoint:
         State) and the deferred model_activity.delay() task must not fire,
         because it is registered with transaction.on_commit().
 
-        Force the failure inside State.objects.bulk_create — past the point
+        Force the failure inside State.objects.bulk_create, past the point
         where the original ghost-create bug would have committed a partial
-        Project — and verify the response is 500 with no side effects.
+        Project, and verify the response is 500 with no side effects.
         """
         url = self.get_url(workspace.slug)
         payload = {
@@ -179,7 +179,7 @@ class TestProjectListCreateAPIEndpoint:
         assert Project.objects.count() == 0
         assert ProjectMember.objects.count() == 0
         assert State.objects.count() == 0
-        # And the deferred Celery task must not have been dispatched —
+        # And the deferred Celery task must not have been dispatched,
         # transaction.on_commit() callbacks only fire on a successful commit.
         mocked_activity.delay.assert_not_called()
 
@@ -232,7 +232,7 @@ class TestProjectListCreateAPIEndpoint:
     def test_response_still_201_when_broker_dispatch_fails(self, api_key_client, workspace, create_user):
         """If model_activity.delay raises *after* the atomic block has
         committed (e.g., the Celery broker is down), the project, member
-        rows and states are already persisted — the response must remain
+        rows and states are already persisted, the response must remain
         201 and the failure must be absorbed by Django's robust=True
         on_commit handling, not surface as a 500.
 

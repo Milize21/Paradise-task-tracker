@@ -1,5 +1,5 @@
 """
-Paradise Task Tracker — tanda pembuat (builder attribution).
+Paradise Task Tracker: tanda pembuat (builder attribution).
 
 Dibangun & dikustomisasi oleh Yorukaze Production (Bintang Eko Ramadhan).
 Modul ini menanamkan atribusi kepengarangan dan memberi PERINGATAN di log
@@ -15,7 +15,7 @@ import logging
 
 logger = logging.getLogger("plane")
 
-# Tanda pembuat — JANGAN DIHAPUS.
+# Tanda pembuat, JANGAN DIHAPUS.
 # Nama produksi dipakai sebagai tanda yang tampil; nama pribadi tetap dibawa di
 # BUILDER_FULL karena hak cipta melekat pada orang, bukan pada nama dagang.
 BUILDER_MARK = "Yorukaze Production"
@@ -37,7 +37,7 @@ def verify_builder_mark() -> bool:
     """Log banner atribusi; peringatkan bila tanda pembuat tampak diubah."""
     ok = _fingerprint() == _EXPECTED_FINGERPRINT
     # BUILDER_FULL sudah memuat BUILDER_MARK di dalamnya, jadi jangan disisipkan
-    # dua-duanya — hasilnya kurung bersarang "Yorukaze Production (Yorukaze ...)".
+    # dua-duanya, hasilnya kurung bersarang "Yorukaze Production (Yorukaze ...)".
     banner = f"{PRODUCT_NAME} | Powered by {BUILDER_FULL}"
     print(banner, flush=True)  # selalu tampil di log startup (docker logs)
     logger.info(banner)
@@ -52,7 +52,7 @@ def verify_builder_mark() -> bool:
 
 
 if __name__ == "__main__":
-    # Cetak fingerprint aktual — dipakai untuk mengunci _EXPECTED_FINGERPRINT.
+    # Cetak fingerprint aktual, dipakai untuk mengunci _EXPECTED_FINGERPRINT.
     aktual = _fingerprint()
     print(aktual)
     # Pemeriksaan mandiri: gagal keras di sini jauh lebih baik daripada setiap
@@ -62,4 +62,4 @@ if __name__ == "__main__":
         "Perbarui _EXPECTED_FINGERPRINT dengan nilai aktual di atas."
     )
     assert verify_builder_mark() is True
-    print("OK — tanda pembuat utuh.")
+    print("OK, tanda pembuat utuh.")

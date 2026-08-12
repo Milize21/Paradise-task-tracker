@@ -18,7 +18,7 @@ import type { Route } from "./+types/root";
 // local imports
 import ErrorPage from "./error";
 import { AppProviders } from "./providers";
-// fonts (side-effect imports — memuat font global)
+// fonts (side-effect imports, memuat font global)
 // oxlint-disable no-unassigned-import
 import "@fontsource-variable/inter";
 import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
@@ -27,7 +27,7 @@ import "@fontsource/ibm-plex-mono";
 // oxlint-enable no-unassigned-import
 
 const APP_TITLE = "Paradise Publish | Halaman publik PT Paradise Perkasa";
-const APP_DESCRIPTION = "Halaman publik Paradise Task Tracker — PT Paradise Perkasa";
+const APP_DESCRIPTION = "Halaman publik Paradise Task Tracker: PT Paradise Perkasa";
 
 export const links: Route.LinksFunction = () => [
   { rel: "apple-touch-icon", sizes: "180x180", href: appleTouchIcon },
@@ -80,7 +80,7 @@ export const meta: Route.MetaFunction = () => [
     name: "keywords",
     content: "manajemen proyek, halaman publik, internal, PT Paradise Perkasa",
   },
-  // `twitter:site` DIBUANG — lihat alasan yang sama di apps/web/app/root.tsx.
+  // `twitter:site` DIBUANG, lihat alasan yang sama di apps/web/app/root.tsx.
 ];
 
 export default function Root() {

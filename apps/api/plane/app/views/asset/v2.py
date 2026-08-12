@@ -29,7 +29,7 @@ from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from plane.throttles.asset import AssetRateThrottle
 
 
-# Avatar, cover, dan logo tetap gambar saja — di situ kita render <img> langsung.
+# Avatar, cover, dan logo tetap gambar saja, di situ kita render <img> langsung.
 IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg", "image/gif"]
 
 
@@ -40,7 +40,7 @@ def allowed_mime_types(entity_type):
     lampiran (pdf/docx/xlsx/mp4/zip dst, lihat settings.ATTACHMENT_MIME_TYPES),
     bukan cuma gambar. Entity lain tidak berubah.
 
-    Satu fungsi dipakai ketiga endpoint unggah supaya daftarnya tidak bercabang —
+    Satu fungsi dipakai ketiga endpoint unggah supaya daftarnya tidak bercabang,
     dulu blok yang sama disalin tiga kali dan gampang tertinggal saat diubah.
     """
     if entity_type == FileAsset.EntityTypeContext.PAGE_DESCRIPTION:
@@ -600,7 +600,7 @@ class ProjectAssetEndpoint(BaseAPIView):
             )
 
         # ACL Wiki (fork Yorukaze Production): unggah ke halaman di Wiki ber-governance hanya
-        # boleh oleh admin project atau anggota divisi pemilik folder — biar gate
+        # boleh oleh admin project atau anggota divisi pemilik folder, biar gate
         # ini tidak jadi celah samping dari izin halaman.
         if (
             entity_type == FileAsset.EntityTypeContext.PAGE_DESCRIPTION
@@ -740,7 +740,7 @@ class ProjectBulkAssetEndpoint(BaseAPIView):
         # Scope to the requester's own uploads in this workspace, limited to assets that are
         # either unassociated or already in this project. This endpoint *associates*
         # freshly-uploaded assets, which are not yet project-scoped (e.g. a cover uploaded
-        # during project creation has project_id=NULL until this call sets it) — so the
+        # during project creation has project_id=NULL until this call sets it), so the
         # earlier project_id=project_id filter 404'd that flow. created_by + the
         # unassociated-or-same-project bound prevent cross-project/user IDOR (a caller can
         # only touch their own uploads, cannot move an asset in from another project, and

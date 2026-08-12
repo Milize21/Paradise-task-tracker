@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — kelola ACL folder Wiki (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: kelola ACL folder Wiki (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
@@ -24,8 +24,8 @@ def _divisions_of(folder_ids, project_id):
     out = {}
     for folder_id, division_id, identifier, name in rows:
         # Baris aktif ganda mungkin ada (Postgres menganggap NULL berbeda, jadi
-        # unique_together dgn deleted_at tidak mencegahnya). Tidak berbahaya —
-        # izin dievaluasi dengan __in — tapi jangan tampilkan dobel di UI.
+        # unique_together dgn deleted_at tidak mencegahnya). Tidak berbahaya,
+        # izin dievaluasi dengan __in, tapi jangan tampilkan dobel di UI.
         bucket = out.setdefault(folder_id, {})
         bucket[division_id] = {"id": str(division_id), "identifier": identifier, "name": name}
     return {fid: list(d.values()) for fid, d in out.items()}
@@ -114,7 +114,7 @@ class WikiFolderAccessEndpoint(BaseAPIView):
             )
         if folder.parent_id is not None:
             # Resolver izin selalu naik ke folder teratas, jadi memberi pemilik
-            # ke sub-halaman tidak akan pernah berpengaruh — tolak, jangan diam.
+            # ke sub-halaman tidak akan pernah berpengaruh, tolak, jangan diam.
             return Response(
                 {"error": "Hanya folder top-level yang bisa diberi pemilik."},
                 status=status.HTTP_400_BAD_REQUEST,

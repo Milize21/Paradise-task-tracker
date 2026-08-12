@@ -16,8 +16,8 @@ import { cn } from "@plane/utils";
 // hooks
 import { useInstance, useTheme } from "@/hooks/store";
 
-// Daftar `helpOptions` DIBUANG. Isinya tiga tautan vendor — `docs.plane.so`,
-// `forum.plane.so`, dan issue tracker `makeplane/plane` — dan tidak satu pun
+// Daftar `helpOptions` DIBUANG. Isinya tiga tautan vendor, `docs.plane.so`,
+// `forum.plane.so`, dan issue tracker `makeplane/plane`, dan tidak satu pun
 // melayani kantor ini: dokumentasinya untuk produk berbayar mereka, forumnya
 // tidak tahu instance kita ada, dan bug fork ini bukan bug mereka.
 //
@@ -27,7 +27,7 @@ import { useInstance, useTheme } from "@/hooks/store";
 // Kalau IT nanti punya halaman panduan internal, tambahkan di sini.
 //
 // Popovernya tetap ada karena isi satunya lagi masih berguna: nomor versi
-// instance — justru itu yang dicari admin waktu menekan tombol ini.
+// instance, justru itu yang dicari admin waktu menekan tombol ini.
 
 export const AdminSidebarHelpSection = observer(function AdminSidebarHelpSection() {
   // states

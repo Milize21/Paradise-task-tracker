@@ -27,7 +27,7 @@ from .workspace import (
     InstanceWorkSpaceEndpoint,
 )
 
-# Kustomisasi Paradise (Yorukaze Production) — jejak audit hanya boleh dibaca dari God Mode.
+# Kustomisasi Paradise (Yorukaze Production), jejak audit hanya boleh dibaca dari God Mode.
 from .audit_log import InstanceAuditLogEndpoint
 from .trash import InstanceTrashEndpoint
 from .member import InstanceMemberEndpoint

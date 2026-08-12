@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-// Tautan mailto:support@plane.so dibuang — dukungan vendor tidak melayani
+// Tautan mailto:support@plane.so dibuang, dukungan vendor tidak melayani
 // instalasi ini. Pesannya juga diarahkan ke orang yang benar-benar bisa
 // menolong: tim IT internal yang memegang servernya.
 export function MaintenanceMessage() {

@@ -1,4 +1,4 @@
-# Kustomisasi Paradise Task Tracker — pengecualian penyembunyian Super Admin
+# Kustomisasi Paradise Task Tracker: pengecualian penyembunyian Super Admin
 # (Yorukaze Production)
 
 from django.conf import settings

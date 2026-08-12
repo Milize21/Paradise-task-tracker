@@ -1,5 +1,5 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — riwayat login/logout (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: riwayat login/logout (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
@@ -14,7 +14,7 @@ from .base import BaseModel
 RETENSI_HARI = 90
 
 # Ambang "sedang aktif". Sesi boleh hidup berhari-hari, jadi keberadaan baris di
-# tabel `sessions` hanya berarti MASIH LOGIN — bukan sedang memakai. Yang
+# tabel `sessions` hanya berarti MASIH LOGIN, bukan sedang memakai. Yang
 # menentukan "sedang memakai" adalah User.last_active, diperbarui middleware.
 AMBANG_AKTIF_MENIT = 5
 
@@ -24,13 +24,13 @@ class LoginActivity(BaseModel):
 
     Kenapa tabel sendiri dan bukan mengandalkan `User.last_login_time`: kolom itu
     **satu nilai yang ditimpa** tiap login. Dari sana mustahil menjawab "berapa
-    sering orang ini keluar-masuk" atau "berapa lama biasanya dia memakai" —
+    sering orang ini keluar-masuk" atau "berapa lama biasanya dia memakai",
     riwayatnya tidak pernah ada, bukan sekadar tidak ditampilkan.
 
     `BaseModel` membawa soft-delete, tapi retensi WAJIB menghapus keras
     (`.delete(soft=False)` atau `queryset.delete()` lewat `all_objects`). Baris
     ini murni jejak dan tidak dirujuk apa pun; kalau dihapus lunak, tabel tumbuh
-    selamanya padahal seluruh gunanya adalah dibuang setelah 3 bulan — dan
+    selamanya padahal seluruh gunanya adalah dibuang setelah 3 bulan, dan
     `soft_delete_related_objects.delay()` akan mengantre satu task Celery per
     baris, yang untuk pembersihan puluhan ribu baris berarti membanjiri worker.
     """
@@ -80,7 +80,7 @@ class LoginActivity(BaseModel):
         """Catat satu peristiwa. TIDAK PERNAH melempar exception.
 
         Dipanggil dari jalur login dan logout. Kegagalan mencatat jejak tidak
-        boleh membuat orang gagal masuk atau gagal keluar — jejak yang hilang
+        boleh membuat orang gagal masuk atau gagal keluar, jejak yang hilang
         itu merepotkan, pintu yang macet itu menghentikan pekerjaan.
         """
         try:

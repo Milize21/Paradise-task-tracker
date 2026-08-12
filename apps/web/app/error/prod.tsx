@@ -14,7 +14,7 @@ import maintenanceModeLightModeImage from "@/app/assets/instance/maintenance-mod
 import DefaultLayout from "@/layouts/default-layout";
 
 // Saluran dukungan upstream (support@plane.so, status.plane.so, @planepowers)
-// dibuang — tak satu pun melayani PT Paradise Perkasa. Sengaja TIDAK diganti
+// dibuang, tak satu pun melayani PT Paradise Perkasa. Sengaja TIDAK diganti
 // alamat email karangan: kalau salah, karyawan mengirim aduan ke alamat yang
 // tidak ada dan mengira sudah dilaporkan. Isi alamat IT sebenarnya di sini
 // kalau sudah ada.

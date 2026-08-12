@@ -84,7 +84,7 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/initiatives", "./(all)/[workspaceSlug]/(projects)/initiatives/page.tsx"),
         ]),
 
-        // Wiki (Paradise/Yorukaze Production) — pintasan yang meresolusi project WIKI lalu
+        // Wiki (Paradise/Yorukaze Production), pintasan yang meresolusi project WIKI lalu
         // redirect. Tanpa layout: halamannya cuma redirect, tidak punya chrome.
         route(":workspaceSlug/wiki", "./(all)/[workspaceSlug]/(projects)/wiki/page.tsx"),
 
@@ -374,7 +374,7 @@ export const coreRoutes: RouteConfigEntry[] = [
               ":workspaceSlug/settings/projects/:projectId/wiki-access",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/wiki-access/page.tsx"
             ),
-            // Trashbin per project (Paradise/Yorukaze Production) — pasangan TPA di God Mode
+            // Trashbin per project (Paradise/Yorukaze Production), pasangan TPA di God Mode
             route(
               ":workspaceSlug/settings/projects/:projectId/trash",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/trash/page.tsx"

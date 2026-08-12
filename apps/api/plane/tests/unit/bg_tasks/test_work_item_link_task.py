@@ -106,7 +106,7 @@ class TestValidateUrlAllowlist:
                 validate_url("http://example.com", allowed_ips=allowed)
 
     def test_allowed_hosts_bypasses_private_ip_check(self):
-        """Hostnames in WEBHOOK_ALLOWED_HOSTS skip IP-based blocking — used for
+        """Hostnames in WEBHOOK_ALLOWED_HOSTS skip IP-based blocking, used for
         trusted internal services (e.g. Silo) whose IPs are dynamic in
         containerised deployments."""
         with patch("plane.utils.ip_address.socket.getaddrinfo") as mock_dns:
@@ -122,7 +122,7 @@ class TestValidateUrlAllowlist:
             )  # Should not raise
 
     def test_allowed_hosts_skips_dns_lookup(self):
-        """When the hostname is explicitly trusted we shouldn't even resolve it —
+        """When the hostname is explicitly trusted we shouldn't even resolve it,
         protects against operators who allowlist a name that isn't resolvable
         from the API container."""
         with patch("plane.utils.ip_address.socket.getaddrinfo") as mock_dns:
@@ -130,7 +130,7 @@ class TestValidateUrlAllowlist:
             mock_dns.assert_not_called()
 
     def test_allowed_hosts_requires_exact_match(self):
-        """Subdomains of an allowed host must NOT bypass — a hostile
+        """Subdomains of an allowed host must NOT bypass, a hostile
         ``attacker.silo.internal`` should still be blocked when only
         ``silo.internal`` is allowed."""
         with patch("plane.utils.ip_address.socket.getaddrinfo") as mock_dns:

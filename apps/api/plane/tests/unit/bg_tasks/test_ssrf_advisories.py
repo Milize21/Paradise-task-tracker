@@ -99,7 +99,7 @@ class TestWebhookUrlValidation:
 
 
 # ---------------------------------------------------------------------------
-# GHSA-6485-m23r-fx8q — PATCH serializer context-key bypass
+# GHSA-6485-m23r-fx8q, PATCH serializer context-key bypass
 # The PATCH view now passes context={"request": request}; with the request in
 # context the disallowed-domain / request-host loop-back guard runs on update.
 # ---------------------------------------------------------------------------
@@ -113,7 +113,7 @@ class TestWebhookPatchContextGuard:
         return WebhookSerializer(context={"request": request})
 
     def test_request_host_is_blocked_when_context_present(self):
-        # A webhook pointed at the instance's own host must be rejected — this
+        # A webhook pointed at the instance's own host must be rejected, this
         # is the guard the PATCH endpoint silently skipped with the wrong key.
         ser = self._serializer_with_request("myplane.example.com")
         with patch("plane.utils.ip_address.socket.getaddrinfo") as dns:
@@ -186,7 +186,7 @@ class TestWebhookRedirect:
 
 
 # ---------------------------------------------------------------------------
-# Favicon redirect SSRF — GHSA-9fr2-pprw-pp9j / CVE-2026-39843
+# Favicon redirect SSRF, GHSA-9fr2-pprw-pp9j / CVE-2026-39843
 # A <link rel=icon> whose href is public but 30x-redirects to a private IP must
 # NOT exfiltrate internal content; the favicon falls back to the default icon.
 # ---------------------------------------------------------------------------
@@ -218,7 +218,7 @@ class TestFaviconRedirect:
 
 
 # ---------------------------------------------------------------------------
-# Favicon DNS rebinding — GHSA-3856-6mgg-rx84
+# Favicon DNS rebinding, GHSA-3856-6mgg-rx84
 # The favicon host passes the pre-check (public) but resolves to a private IP at
 # fetch time; the pinned client re-resolves+validates and blocks it.
 # ---------------------------------------------------------------------------
@@ -244,7 +244,7 @@ class TestFaviconRebinding:
 
 
 # ---------------------------------------------------------------------------
-# OAuth avatar SSRF — GHSA-cv9p-325g-wmv5 / GHSA-hx79-5pj5-qh42 (avatar hop)
+# OAuth avatar SSRF, GHSA-cv9p-325g-wmv5 / GHSA-hx79-5pj5-qh42 (avatar hop)
 # download_and_upload_avatar must reject avatar URLs that point at, or redirect
 # to, internal addresses, returning None (no fetch stored as an asset).
 # ---------------------------------------------------------------------------

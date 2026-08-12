@@ -141,7 +141,7 @@ class TestCycleIssueCrossTenantBOLA:
         self, session_client, workspace, attacker_project, attacker_cycle, create_user
     ):
         """A legitimate reassignment within the caller's own project must still
-        move the issue into the target cycle — the scope guard must not break
+        move the issue into the target cycle, the scope guard must not break
         the normal flow."""
         state = State.objects.create(
             name="Todo", project=attacker_project, workspace=workspace, group="backlog", default=True

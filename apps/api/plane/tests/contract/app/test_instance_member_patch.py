@@ -1,8 +1,8 @@
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
-# Kustomisasi Paradise Task Tracker — ubah member di God Mode (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: ubah member di God Mode (Yorukaze Production)
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
-"""`PATCH /api/instances/members/<pk>/` — ubah nama, email, password, hak akses.
+"""`PATCH /api/instances/members/<pk>/`, ubah nama, email, password, hak akses.
 
 Yang dijaga di sini bukan "apakah kolomnya tersimpan", tapi hal-hal yang kalau
 patah tidak menimbulkan error apa pun:
@@ -106,7 +106,7 @@ def test_reset_password_mengakhiri_sesi(admin, target):
     assert not Session.objects.filter(user_id=str(target.id)).exists()
     target.refresh_from_db()
     assert target.check_password("passwordbaru123")
-    # `True` memicu alur ganti-password paksa — admin yang mengeset password
+    # `True` memicu alur ganti-password paksa, admin yang mengeset password
     # bukan itu maksudnya.
     assert target.is_password_autoset is False
 
@@ -134,7 +134,7 @@ def test_email_yang_sudah_dipakai_akun_lain_ditolak(admin, target):
 
 
 def test_email_sama_dengan_milik_sendiri_bukan_bentrok(admin, target):
-    """Menyimpan form tanpa mengubah email tidak boleh 400 — dan tidak
+    """Menyimpan form tanpa mengubah email tidak boleh 400, dan tidak
     mengakhiri sesi, karena tidak ada yang berubah."""
     res = _patch(admin, target.pk, {"email": "budi@paradise.test", "display_name": "Budi S"})
 
@@ -157,7 +157,7 @@ def test_peran_di_luar_daftar_ditolak(admin, target):
 
 
 def test_hak_akses_untuk_akun_yang_belum_jadi_anggota(admin, workspace, db):
-    """`update_or_create`, bukan `update()` — akun tanpa WorkspaceMember harus
+    """`update_or_create`, bukan `update()`, akun tanpa WorkspaceMember harus
     ikut bisa diberi peran, kalau tidak permintaannya sukses tapi tak berefek."""
     yatim = User.objects.create(email="yatim@paradise.test", username="yatim_paradise_test")
 
@@ -188,7 +188,7 @@ def test_nama_kosong_ditolak(admin, target):
 
 # --- Gerbang frasa untuk MEMBERI Super Admin -------------------------------
 #
-# Frasanya dari environment, bukan source — repo ini publik. `override_settings`
+# Frasanya dari environment, bukan source, repo ini publik. `override_settings`
 # di sini menirukan `SUPER_ADMIN_GRANT_PASSPHRASE` di `apps/api/.env`.
 
 FRASA = "Frasa Uji Yang Panjang"
@@ -233,7 +233,7 @@ def test_frasa_salah_TIDAK_ikut_menyimpan_kolom_lain(admin, target):
     """Gerbang harus diperiksa SEBELUM kolom apa pun disentuh.
 
     Kalau diperiksa di belakang, permintaan gabungan ini akan menyimpan password
-    dan nama lalu membalas 403 — balasan yang bagi pemanggilnya berarti "tidak
+    dan nama lalu membalas 403, balasan yang bagi pemanggilnya berarti "tidak
     terjadi apa-apa". Itu kegagalan senyap, kelas bug termahal di proyek ini.
     """
     res = _patch(
@@ -258,7 +258,7 @@ def test_frasa_salah_TIDAK_ikut_menyimpan_kolom_lain(admin, target):
 def test_mencabut_TIDAK_perlu_frasa(admin, target):
     """Frasa hanya untuk MEMBERI. Mencabut sudah punya penjaganya sendiri
     (tidak bisa mencabut diri sendiri, dan Super Admin terakhir tidak bisa
-    dicabut) — meminta frasa di sini hanya menghalangi pencabutan darurat."""
+    dicabut), meminta frasa di sini hanya menghalangi pencabutan darurat."""
     _patch(admin, target.pk, {"is_super_admin": True, "grant_passphrase": FRASA})
     assert InstanceAdmin.objects.filter(user=target).exists()
 

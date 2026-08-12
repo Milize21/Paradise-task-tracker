@@ -1,4 +1,4 @@
-# Kustomisasi Paradise Task Tracker — pengingat tenggat (Yorukaze Production)
+# Kustomisasi Paradise Task Tracker: pengingat tenggat (Yorukaze Production)
 
 from django.conf import settings
 from django.db import migrations, models

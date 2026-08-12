@@ -151,7 +151,7 @@ class Adapter:
             # data, so it must not be allowed to reach internal addresses. The
             # connection is pinned to the validated IP (defeats DNS rebinding)
             # and every redirect hop is re-validated, so a public URL cannot
-            # bounce the fetch to an internal target — GHSA-cv9p-325g-wmv5 /
+            # bounce the fetch to an internal target, GHSA-cv9p-325g-wmv5 /
             # GHSA-hx79-5pj5-qh42 (avatar hop).
             # stream=True so the body is read incrementally and the size cap
             # below actually bounds memory (without it, requests buffers the
@@ -334,8 +334,8 @@ class Adapter:
         # e.g. the WORKSPACE_SEED bot) are internal identities that act only through
         # API tokens; they must never be assumable via the interactive login/signup
         # flow (email/password, magic code, or any OAuth provider). A brand-new
-        # signup can never be a bot — bots are provisioned internally, never through
-        # this path — so guarding on an existing `user` record is sufficient.
+        # signup can never be a bot, bots are provisioned internally, never through
+        # this path, so guarding on an existing `user` record is sufficient.
         if user and user.is_bot:
             raise AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["BOT_USER_LOGIN_FORBIDDEN"],

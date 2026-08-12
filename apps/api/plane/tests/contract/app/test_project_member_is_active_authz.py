@@ -9,7 +9,7 @@ A project GUEST (or MEMBER) must not be able to (de)activate other project
 members by PATCHing ``{"is_active": false}`` while omitting the ``role`` field.
 Before the fix, every authorization guard in ``ProjectMemberViewSet.partial_update``
 lived inside ``if "role" in request.data:`` and ``is_active`` was writable through
-``ProjectMemberSerializer(fields="__all__")`` — so a guest could deactivate any
+``ProjectMemberSerializer(fields="__all__")``, so a guest could deactivate any
 member, including admins, and take over the project.
 """
 
@@ -56,7 +56,7 @@ def project(db, workspace, create_user):
         created_by=create_user,
     )
     # create_user is the workspace owner (role=20 via the workspace fixture);
-    # make them a project ADMIN too — this is the takeover victim.
+    # make them a project ADMIN too, this is the takeover victim.
     ProjectMember.objects.create(
         workspace=workspace, project=project, member=create_user, role=20, is_active=True
     )
@@ -127,7 +127,7 @@ class TestProjectMemberIsActiveAuthz:
         """Positive control: a project ADMIN (non-workspace-admin) may deactivate a MEMBER."""
         admin = _make_user("project-admin@plane.so")
         target = _make_user("plain-member@plane.so")
-        # admin is a workspace MEMBER (15) but project ADMIN (20) — exercises the
+        # admin is a workspace MEMBER (15) but project ADMIN (20), exercises the
         # role-comparison guard rather than the workspace-admin bypass.
         _add_member(workspace, project, admin, ws_role=15, project_role=20)
         target_member = _add_member(workspace, project, target, ws_role=15, project_role=15)
@@ -148,8 +148,8 @@ class TestProjectMemberIsActiveAuthz:
         """
         Positive control: the intended workspace-admin bypass is preserved.
 
-        A workspace ADMIN (role 20) may deactivate any project member — even a
-        project ADMIN — despite holding only a project GUEST role, because
+        A workspace ADMIN (role 20) may deactivate any project member, even a
+        project ADMIN, despite holding only a project GUEST role, because
         is_workspace_admin short-circuits the role-comparison guard. Locks in the
         bypass so future changes don't silently remove it.
         """

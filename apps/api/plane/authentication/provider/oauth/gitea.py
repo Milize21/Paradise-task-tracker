@@ -131,7 +131,7 @@ class GiteaOAuthProvider(OauthAdapter):
                     error_message="GITEA_OAUTH_PROVIDER_ERROR: No emails found",
                 )
             # Prefer primary+verified, then any verified. Never fall back to an unverified
-            # email — an attacker with a self-hosted Gitea instance could assert any address
+            # email, an attacker with a self-hosted Gitea instance could assert any address
             # to take over an existing account (GHSA-7j95-vh8g-f365).
             email = next((e.get("email") for e in emails_response if e.get("primary") and e.get("verified")), None)
             if not email:

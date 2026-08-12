@@ -121,7 +121,7 @@ export const PROJECT_SETTINGS: Record<TProjectSettingsTabs, TProjectSettingsItem
     access: [EUserProjectRoles.ADMIN],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/wiki-access/`,
   },
-  // Kustomisasi Paradise (Yorukaze Production) — Trashbin per project. Khusus admin project:
+  // Kustomisasi Paradise (Yorukaze Production), Trashbin per project. Khusus admin project:
   // memulihkan & membuang permanen bukan wewenang anggota biasa.
   trash: {
     key: "trash",

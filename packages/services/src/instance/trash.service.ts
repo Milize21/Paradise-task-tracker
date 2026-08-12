@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — Trashbin & TPA (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: Trashbin & TPA (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -31,7 +31,7 @@ export type TTrashResponse = {
 };
 
 /**
- * Trashbin per project — dipakai admin project.
+ * Trashbin per project, dipakai admin project.
  *
  * Cakupannya dikunci server-side ke project di URL, jadi id dari project lain
  * ditolak walau ditebak.
@@ -69,7 +69,7 @@ export class ProjectTrashService extends APIService {
 }
 
 /**
- * TPA — tong sampah lintas project di God Mode. Hanya Super Admin.
+ * TPA, tong sampah lintas project di God Mode. Hanya Super Admin.
  *
  * Membaca data yang sama dengan `ProjectTrashService`; yang berbeda cakupannya.
  */

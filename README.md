@@ -11,13 +11,13 @@ Kantor butuh satu tempat buat ngelacak kerjaan, catat jam kerja, dan naruh
 dokumentasi perusahaan. Yang komersial mahal kalau dikali 79 orang, dan datanya
 ada di server orang lain.
 
-Jadi saya ambil basis open-source yang bagus (Plane CE, AGPL — lihat bagian
+Jadi saya ambil basis open-source yang bagus (Plane CE, AGPL, lihat bagian
 paling bawah), lalu bangun sendiri bagian-bagian yang kantor butuh tapi memang
 nggak ada di dalamnya.
 
 ## Yang saya bangun sendiri
 
-Delapan ini nggak ada di basis aslinya. Semuanya dari nol — model database,
+Delapan ini nggak ada di basis aslinya. Semuanya dari nol, model database,
 migrasi, endpoint, aturan izin, sampai tampilannya.
 
 **Time tracking.** Orang catat jam kerja langsung di work item-nya. Tiap orang
@@ -25,7 +25,7 @@ cuma bisa hapus catatan miliknya sendiri, admin project bisa lihat semua.
 
 **Work item types + custom properties.** Tiap project bisa punya tipe work item
 sendiri, dan properti custom dengan 6 jenis field (teks, angka, boolean,
-tanggal, pilihan, anggota). Validasinya di server — opsi harus beneran milik
+tanggal, pilihan, anggota). Validasinya di server, opsi harus beneran milik
 propertinya, dan kalau field-nya "anggota" ya orangnya harus beneran anggota
 project itu.
 
@@ -36,7 +36,7 @@ tumpukan tugas palsu.
 
 **Wiki perusahaan.** Ini yang paling panjang, dikerjain tiga tahap:
 
-Tahap A, halaman bisa nerima semua tipe file — pdf, docx, mp4, zip — sampai
+Tahap A, halaman bisa nerima semua tipe file, pdf, docx, mp4, zip, sampai
 100 MB, plus node "File" di editor yang bisa nampilin PDF langsung di dalam
 halaman.
 
@@ -45,7 +45,7 @@ tertentu; cuma anggotanya yang boleh nyunting, sisanya baca doang. Ini yang
 paling makan waktu, karena harus ditegakkan di **dua tempat**: REST API dan
 server kolaborasi real-time. Kalau cuma di REST, orang di luar divisi bakal
 lihat halamannya bisa diedit, ngetik panjang-panjang, terus tulisannya hilang
-pas reload. Endpoint `can-edit/` sengaja nggak nyalin aturan izinnya — dia
+pas reload. Endpoint `can-edit/` sengaja nggak nyalin aturan izinnya, dia
 manggil kelas permission yang sama persis, jadi REST sama editor mustahil beda
 pendapat.
 
@@ -60,7 +60,7 @@ juga, langsung bisa dibuka Excel. Staf cuma lihat project yang dia ikuti.
 divisi, progresnya dihitung dari semua work item di project yang ketaut.
 
 **Audit logs.** Nyatet siapa ngubah apa di model-model penting. Aktornya
-kerekam baik lewat request HTTP biasa maupun lewat editor kolaboratif — yang
+kerekam baik lewat request HTTP biasa maupun lewat editor kolaboratif, yang
 kedua ini sempat saya ragukan, ternyata jalan.
 
 **ACL per folder Wiki.** Pemetaan folder ke divisi, sub-halaman mewarisi dari
@@ -73,11 +73,11 @@ kenyataan.
 Ini juga saya urus sendiri, dan jujur bagian ini yang paling sering ngasih
 pelajaran:
 
-- **CI/CD** — tiap push ke `main` bikin 6 image ke GHCR. Tag-nya pakai commit
+- **CI/CD**, tiap push ke `main` bikin 6 image ke GHCR. Tag-nya pakai commit
   SHA, terus `latest` digeser pakai `imagetools create` (nyalin manifest, bukan
   build ulang). Deploy di server manual lewat `paradise/bin/deploy.sh`, rollback
   tinggal `APP_RELEASE=<sha>`.
-- **Backup** — `pg_dump` terkompresi, ada retensi, hasilnya dicek nggak kosong.
+- **Backup**, `pg_dump` terkompresi, ada retensi, hasilnya dicek nggak kosong.
   Dan dia **nunggu** Postgres beneran siap, bukan langsung nyerah pas Docker
   belum naik. Ini hasil dua pagi berturut-turut backup gagal.
 - **Healthcheck** buat semua layanan, plus skrip pendaftaran scheduled task yang
@@ -102,12 +102,12 @@ Web-nya di **port 4000** (bukan 3000, ini sering bikin salah). Admin/God Mode
 Dua hal yang bakal bikin kamu bingung kalau nggak tahu:
 
 - Ubah kode backend? **`docker compose restart api`.** Autoreload-nya nggak
-  jalan di sini — bind-mount Windows ke container nggak nerusin event perubahan
+  jalan di sini, bind-mount Windows ke container nggak nerusin event perubahan
   file. Gejalanya endpoint balas 404 padahal kodenya udah bener.
 - Ubah `.env`? **`docker compose up -d`, bukan `restart`.** `restart` nggak baca
   ulang `env_file`.
 
-Sisanya — deploy produksi, checklist keamanan, cara sync dari upstream — ada di
+Sisanya, deploy produksi, checklist keamanan, cara sync dari upstream, ada di
 folder `paradise/`.
 
 ## Dibangun pakai
@@ -125,7 +125,7 @@ Biar jujur aja:
   nggak bakal nyampe. Nunggu IP mail server dari IT.
 - **Belum ada server produksi.** Masih jalan lokal semua.
 - **Isi Wiki-nya masih kerangka.** Mesinnya udah kelar, dokumennya belum ditulis
-  — dan itu kerjaan manusia, bukan kerjaan kode.
+  , dan itu kerjaan manusia, bukan kerjaan kode.
 - **Belum pernah sync dari upstream.** Berisiko konflik, nanti dikerjain di
   branch sendiri.
 
@@ -135,13 +135,13 @@ Ini dibangun di atas **Plane Community Edition v0.24.0**, lisensinya
 **GNU AGPL-3.0**. Detail atribusi sama kewajiban lisensinya ada di
 [NOTICE.md](NOTICE.md) dan [LICENSE.txt](LICENSE.txt).
 
-Merek produk aslinya udah saya hapus dari tampilan — sistem ini bukan produk
+Merek produk aslinya udah saya hapus dari tampilan, sistem ini bukan produk
 vendor dan nggak dijual, jadi nampilin merek orang lain di dalamnya cuma bikin
 bingung. Tapi **atribusi hukumnya tetap**: header copyright di file sumber, teks
 lisensi, dan file NOTICE. Dua hal itu beda, dan yang kedua bukan hak saya buat
 hapus.
 
-Kalau kamu pakai ini lewat jaringan, AGPL pasal 13 tetap berlaku — mau dijual
+Kalau kamu pakai ini lewat jaringan, AGPL pasal 13 tetap berlaku, mau dijual
 atau enggak.
 
 ## Lisensi

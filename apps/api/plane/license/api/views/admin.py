@@ -97,7 +97,7 @@ class InstanceAdminSignUpEndpoint(View):
 
     @invalidate_cache(path="/api/instances/", user=False)
     def post(self, request):
-        # Check instance first (outside the transaction — no need to lock yet)
+        # Check instance first (outside the transaction, no need to lock yet)
         instance = Instance.objects.first()
         if instance is None:
             exc = AuthenticationException(
@@ -111,7 +111,7 @@ class InstanceAdminSignUpEndpoint(View):
             return HttpResponseRedirect(url)
 
         # Fast pre-check outside the lock (avoids contention when setup is
-        # already done — the common path after first boot).
+        # already done, the common path after first boot).
         # Use a global exists() check (not scoped to this instance row) so that
         # a stray second Instance row cannot bypass the guard (coderabbit).
         if instance.is_setup_done or InstanceAdmin.objects.exists():
@@ -224,7 +224,7 @@ class InstanceAdminSignUpEndpoint(View):
                 # Re-acquire instance under a row-level lock.
                 instance = Instance.objects.select_for_update().get(pk=instance.pk)
 
-                # Re-check inside the lock — the pre-check above is racy; this
+                # Re-check inside the lock, the pre-check above is racy; this
                 # is the authoritative guard. Global exists() (not scoped to
                 # this instance row) matches the pre-check (coderabbit).
                 if instance.is_setup_done or InstanceAdmin.objects.exists():
@@ -264,7 +264,7 @@ class InstanceAdminSignUpEndpoint(View):
                 instance.is_telemetry_enabled = is_telemetry_enabled
                 instance.save()
 
-            # get tokens for user (outside the transaction — session writes must
+            # get tokens for user (outside the transaction, session writes must
             # not be held under the DB lock)
             user_login(request=request, user=user, is_admin=True)
             url = urljoin(base_host(request=request, is_admin=True), "general/")
@@ -440,7 +440,7 @@ class InstanceAdminSignOutEndpoint(View):
             user.last_logout_ip = user_ip(request=request)
             user.last_logout_time = timezone.now()
             user.save()
-            # Jejak logout (Yorukaze Production) — SEBELUM logout(); sesudahnya session_key
+            # Jejak logout (Yorukaze Production), SEBELUM logout(); sesudahnya session_key
             # hilang dan pasangannya dengan login tak bisa dicari lagi.
             LoginActivity.catat(
                 user=user,

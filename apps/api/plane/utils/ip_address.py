@@ -38,7 +38,7 @@ def _embedded_ipv4(ip):
     address that the network transparently translates to an internal IPv4
     target (e.g. ``::ffff:169.254.169.254``, ``64:ff9b::7f00:1`` → 127.0.0.1,
     6to4, Teredo). The embedded IPv4 is what the packet ultimately reaches, so
-    it must be validated too — we cannot trust the interpreter to classify the
+    it must be validated too, we cannot trust the interpreter to classify the
     outer IPv6 address consistently across versions.
     """
     if ip.version != 6:
@@ -58,7 +58,7 @@ def _embedded_ipv4(ip):
 
     # NAT64 well-known prefix (64:ff9b::/96): the low 32 bits embed the IPv4.
     # The local-use prefix 64:ff9b:1::/48 uses a different (length-dependent)
-    # embedding per RFC 6052, so it is not decoded here — it is blocked wholesale
+    # embedding per RFC 6052, so it is not decoded here, it is blocked wholesale
     # via _BLOCKED_NETWORKS instead.
     if ip in ipaddress.ip_network("64:ff9b::/96"):
         yield ipaddress.ip_address(int(ip) & 0xFFFFFFFF)
@@ -120,7 +120,7 @@ def resolve_and_validate(hostname, allowed_ips=None, require_safe=True):
         require_safe: When ``True`` (default) every resolved IP is checked and a
                      blocked/internal address raises. When ``False`` the host is
                      already operator-trusted (e.g. a WEBHOOK_ALLOWED_HOSTS
-                     entry) so the block check is skipped — but resolution still
+                     entry) so the block check is skipped, but resolution still
                      happens so the connection can be pinned (pinning prevents
                      rebinding even for trusted hosts).
 
@@ -161,7 +161,7 @@ def validate_url(url, allowed_ips=None, allowed_hosts=None):
     Validate that a URL doesn't resolve to a private/internal IP address (SSRF protection).
 
     Note: this validates at a point in time. To defeat DNS-rebinding (TOCTOU),
-    the actual request must be pinned to the validated IP — see
+    the actual request must be pinned to the validated IP, see
     ``plane.utils.url_security.pinned_fetch``.
 
     Args:

@@ -1,6 +1,6 @@
-# Deployment Produksi — Paradise Task Tracker
+# Deployment Produksi, Paradise Task Tracker
 
-Target: satu server kantor (Linux) melayani ~100 user. **Tidak butuh Kubernetes** —
+Target: satu server kantor (Linux) melayani ~100 user. **Tidak butuh Kubernetes**,
 Docker Compose sudah cukup. K8s hanya perlu kalau butuh HA/autoscale + tim ops.
 
 ## Prasyarat server
@@ -14,9 +14,9 @@ Docker Compose sudah cukup. K8s hanya perlu kalau butuh HA/autoscale + tim ops.
 
 1. **Clone repo ini** ke server, checkout branch `main`.
 2. **Konfigurasi env:** `cp paradise/.env.example .env` lalu isi semua `<GANTI>`.
-   Jalankan [`SECURITY-CHECKLIST.md`](SECURITY-CHECKLIST.md) — jangan skip.
+   Jalankan [`SECURITY-CHECKLIST.md`](SECURITY-CHECKLIST.md), jangan skip.
 3. **Pilih compose:**
-   - **Disarankan — image hasil CI:** `./paradise/bin/deploy.sh`. Workflow
+   - **Disarankan, image hasil CI:** `./paradise/bin/deploy.sh`. Workflow
      `paradise-build` sudah build 6 image dari kode kustom kantor tiap push ke
      `main` dan push ke GHCR; server tinggal tarik. Server tidak perlu build
      (hemat CPU/RAM dan tidak ada downtime lama). Lihat [CI/CD](#cicd) di bawah.
@@ -30,7 +30,7 @@ Docker Compose sudah cukup. K8s hanya perlu kalau butuh HA/autoscale + tim ops.
 
 ## CI/CD
 
-Alurnya sengaja **push image, tarik manual** — server LAN tidak perlu membuka SSH
+Alurnya sengaja **push image, tarik manual**, server LAN tidak perlu membuka SSH
 ke internet, dan tidak ada restart mendadak di jam kerja.
 
 | Tahap  | Di mana                           | Apa yang terjadi                                                                                    |
@@ -66,4 +66,4 @@ query berat mulai terasa.
 ## Backup & pemulihan
 
 Jadwalkan `paradise/bin/backup-db.sh` via cron harian. Simpan juga isi bucket
-MinIO. Uji restore secara berkala — backup yang tak pernah diuji = bukan backup.
+MinIO. Uji restore secara berkala, backup yang tak pernah diuji = bukan backup.

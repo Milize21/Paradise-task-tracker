@@ -313,7 +313,7 @@ class ProjectListCreateAPIEndpoint(BaseAPIView):
             # the catch-all `except Exception` below would and return the
             # same generic 500 so the client gets a uniform error shape.
             # `raise` here would not fall through to a sibling except
-            # clause — it would exit the try/except entirely and bypass
+            # clause, it would exit the try/except entirely and bypass
             # both the logging and the JSON response.
             log_exception(e)
             return Response(

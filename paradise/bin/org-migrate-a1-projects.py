@@ -1,4 +1,4 @@
-# Bagian A1 — buat project sub-divisi dari Org Directory (Yorukaze Production)
+# Bagian A1, buat project sub-divisi dari Org Directory (Yorukaze Production)
 #
 # Jalankan:
 #   docker exec -i pradise_plane-api-1 python manage.py shell < paradise/bin/org-migrate-a1-projects.py
@@ -9,6 +9,7 @@
 #
 # Sumber: Paradise_Perkasa_Org_Directory (1).xlsx, keputusan K1-K11 di
 # PP_TaskMgr/05-Task/Rencana Besar — Akses, Log & Trashbin.md
+# (tanda pisah di atas bagian dari NAMA BERKAS, jangan diganti koma)
 #
 # TIDAK menyentuh: project lama (SALES/HRGA/INVQC tetap jadi payung per P2),
 # gudang (K7), keanggotaan, maupun peran. Skrip ini HANYA membuat project.
@@ -44,14 +45,14 @@ BARU = [
     # SEC & OPR sengaja tetap dibuat walau anggotanya belum bisa didaftarkan:
     # ketiganya (Security 1, Security 2, Safitri) belum punya email (K5).
     # Strukturnya mengikuti file; anggotanya menyusul begitu email dari IT ada.
-    ("SEC", "Security", "pecahan HRGA — anggota menunggu email (K5)"),
-    ("OPR", "Operator", "pecahan HRGA — anggota menunggu email (K5)"),
-    ("APAR", "AP / AR", "pecahan FIN — sebagian tertunda (K6)"),
-    ("ACC", "Accounting", "pecahan FIN — sebagian tertunda (K6)"),
+    ("SEC", "Security", "pecahan HRGA, anggota menunggu email (K5)"),
+    ("OPR", "Operator", "pecahan HRGA, anggota menunggu email (K5)"),
+    ("APAR", "AP / AR", "pecahan FIN, sebagian tertunda (K6)"),
+    ("ACC", "Accounting", "pecahan FIN, sebagian tertunda (K6)"),
 ]
 
 print("=" * 68)
-print("A1 — buat project sub-divisi   " + ("[TERAPKAN]" if APPLY else "[UJI KERING]"))
+print("A1, buat project sub-divisi   " + ("[TERAPKAN]" if APPLY else "[UJI KERING]"))
 print("=" * 68)
 
 dibuat = dilewati = 0
@@ -104,4 +105,4 @@ print(f"  dibuat/akan dibuat : {dibuat}")
 print(f"  sudah ada          : {dilewati}")
 print(f"  total project aktif: {Project.objects.filter(workspace=ws, deleted_at__isnull=True).count()}")
 if not APPLY:
-    print("\n  UJI KERING — tidak ada yang ditulis. Jalankan dengan ORG_APPLY=1 untuk menerapkan.")
+    print("\n  UJI KERING, tidak ada yang ditulis. Jalankan dengan ORG_APPLY=1 untuk menerapkan.")

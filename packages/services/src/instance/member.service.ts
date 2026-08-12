@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker — kelola member di God Mode (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: kelola member di God Mode (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -28,7 +28,7 @@ export type TInstanceMember = {
   created_at: string;
   /** Ada sesi belum kedaluwarsa. Bisa bertahan berhari-hari sesudah orangnya pulang. */
   masih_login: boolean;
-  /** Sesi hidup DAN ada request beberapa menit terakhir — benar-benar di depan layar. */
+  /** Sesi hidup DAN ada request beberapa menit terakhir, benar-benar di depan layar. */
   sedang_memakai: boolean;
 };
 
@@ -51,7 +51,7 @@ export type TMemberUpdate = {
   is_super_admin?: boolean;
   /**
    * Frasa konfirmasi, WAJIB saat `is_super_admin: true`. Diperiksa server
-   * terhadap `SUPER_ADMIN_GRANT_PASSPHRASE` (`apps/api/.env`) — tidak ada
+   * terhadap `SUPER_ADMIN_GRANT_PASSPHRASE` (`apps/api/.env`), tidak ada
    * salinannya di sisi klien, jadi tidak ada yang bisa dibaca dari bundle.
    */
   grant_passphrase?: string;
@@ -99,7 +99,7 @@ export class InstanceMemberService extends APIService {
   }
 
   /**
-   * Semua kolom opsional — kirim hanya yang berubah. Yang tidak dikirim tidak
+   * Semua kolom opsional, kirim hanya yang berubah. Yang tidak dikirim tidak
    * disentuh, jadi form parsial tidak menimpa sisanya dengan nilai kosong.
    *
    * `password` dan `email` mengakhiri seluruh sesi orang itu (lihat

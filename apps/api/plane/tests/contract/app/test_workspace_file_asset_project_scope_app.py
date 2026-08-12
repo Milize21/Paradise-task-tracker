@@ -93,7 +93,7 @@ def project_asset(db, workspace, project, create_user):
 
 @pytest.fixture
 def workspace_logo_asset(db, workspace, create_user):
-    """A workspace-level asset (project_id is NULL) — exempt from project scope."""
+    """A workspace-level asset (project_id is NULL), exempt from project scope."""
     return FileAsset.objects.create(
         attributes={"name": "logo.png", "type": "image/png", "size": 256},
         asset=f"{workspace.id}/logo.png",
