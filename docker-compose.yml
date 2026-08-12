@@ -196,6 +196,19 @@ services:
       # hilang. Sebabnya jadi jauh dari gejalanya.
       # Pulihkan dengan `rm -rf` direktori itu lalu buat berkasnya.
       - ${ACMEDNS_CREDENTIALS_FILE:-./paradise/acmedns.json}:/etc/caddy/acmedns.json:ro
+      # Penyimpanan sertifikat Caddy. TANPA volume ini, setiap kali container
+      # proxy dibuat ulang Caddy kehilangan sertifikatnya dan meminta yang baru
+      # ke Let's Encrypt.
+      #
+      # Itu bukan sekadar boros: Let's Encrypt membatasi 5 sertifikat duplikat
+      # per minggu untuk kumpulan domain yang sama. Deploy keenam dalam sepekan
+      # akan ditolak, HTTPS mati untuk semua orang, dan pesan galatnya menunjuk
+      # ke rate limit, bukan ke volume yang hilang. Sudah terjadi dua kali dalam
+      # satu hari pada 12 Agt 2026 sebelum ketahuan lewat smoke test.
+      - caddy_data:/data
+      # Menyimpan autosave.json. Bukan soal rate limit, tapi tanpa ini Caddy
+      # membangun ulang seluruh state-nya tiap start.
+      - caddy_config:/config
     depends_on:
       - web
       - api
@@ -207,3 +220,8 @@ volumes:
   redisdata:
   uploads:
   rabbitmq_data:
+  # Sertifikat TLS dan state Caddy. Harus bertahan melewati pembuatan ulang
+  # container, kalau tidak setiap deploy membakar satu jatah sertifikat
+  # Let's Encrypt dari lima per minggu.
+  caddy_data:
+  caddy_config:
