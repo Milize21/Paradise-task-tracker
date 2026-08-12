@@ -25,6 +25,7 @@ import logging
 import os
 
 # Django imports
+from django.db.models import Q
 from django.utils import timezone
 
 # Third party imports
@@ -74,14 +75,32 @@ def _url(issue):
 def _work_item_milik(user):
     """Work item yang layak muncul di kalender seseorang.
 
-    Hanya yang DIKERJAKAN orang itu, bukan yang ia berikan ke orang lain.
-    Sengaja berbeda dari pengingat email, yang juga menyurati pemberi tugas:
-    email bisa dibaca sekilas lalu dibuang, sedangkan kalender seorang manajer
-    akan tertimbun tenggat milik seluruh timnya dan berhenti berguna sebagai
-    kalender. Kalau nanti diputuskan sebaliknya, ubah di sini saja.
+    DUA JALUR, dan keduanya disengaja:
+      1. Ditugaskan kepada orang itu
+      2. Berada di project yang ia PIMPIN (`project_lead`)
+
+    Jalur kedua permintaan user 2026-08-12, dengan kalimatnya sendiri: "selama
+    itu memang tugasnya di-assign untuk dia atau memang project itu punya dia".
+
+    ⚠️ ONGKOSNYA DISADARI: pemimpin project menerima SELURUH work item bertenggat
+    di project itu, termasuk yang sudah ditugaskan ke orang lain. Pada project
+    besar, kalendernya bisa tertimbun sampai berhenti berguna sebagai kalender.
+    Ini sudah disampaikan sebelum dikerjakan dan tetap dipilih.
+
+    Kalau suatu saat terasa terlalu ramai, versi yang lebih tenang adalah
+    membatasi jalur kedua ke work item yang BELUM ditugaskan ke siapa pun:
+    tambahkan `Q(project__project_lead=user, assignees__isnull=True)`
+    menggantikan jalur kedua di bawah. Pengawasannya tetap dapat, banjirnya
+    tidak.
+
+    `distinct()` wajib: work item yang ditugaskan ke pemimpin project-nya
+    sendiri cocok di kedua jalur, dan tanpa ini ia terhitung dua kali.
     """
     return (
-        Issue.issue_objects.filter(assignees=user, target_date__isnull=False)
+        Issue.issue_objects.filter(
+            Q(assignees=user) | Q(project__project_lead=user),
+            target_date__isnull=False,
+        )
         .exclude(state__group__in=GRUP_SELESAI)
         .exclude(project__archived_at__isnull=False)
         .select_related("project", "workspace", "state")
