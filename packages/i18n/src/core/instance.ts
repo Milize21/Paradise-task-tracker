@@ -4,7 +4,10 @@
  * See the LICENSE file for details.
  */
 
-import i18n from "i18next";
+// `createInstance` diimpor bernama, bukan lewat default `i18n`. i18next
+// mengekspor keduanya, dan memanggilnya sebagai anggota default membuat
+// bundler kehilangan jejak ekspor bernamanya.
+import { createInstance } from "i18next";
 import { initReactI18next } from "react-i18next";
 import ICU from "i18next-icu";
 import resourcesToBackend from "i18next-resources-to-backend";
@@ -13,7 +16,7 @@ import { NAMESPACES, DEFAULT_NAMESPACE } from "../constants/namespaces";
 
 import type { i18n as I18nInstance } from "i18next";
 
-export const i18nInstance: I18nInstance = i18n.createInstance();
+export const i18nInstance: I18nInstance = createInstance();
 
 i18nInstance
   .use(ICU)
@@ -39,7 +42,7 @@ export const initPromise = i18nInstance
     interpolation: { escapeValue: false },
     returnNull: false,
     returnEmptyString: false,
-    // Pinned explicitly even though it's the default — i18next-icu intercepts the
+    // Pinned explicitly even though it's the default, i18next-icu intercepts the
     // format pipeline and returns raw objects regardless of this flag, so the runtime
     // guard in useTranslation is what actually prevents React crashes. Documenting
     // intent here so this isn't accidentally flipped.

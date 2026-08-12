@@ -48,7 +48,7 @@ export function WorkspaceJoinInvitesStep(props: Props) {
 
   // submit invitations
   const submitInvitations = async () => {
-    const invitation = invitations?.find((invitation) => invitation.id === invitationsRespond[0]);
+    const invitation = invitations?.find((kandidat) => kandidat.id === invitationsRespond[0]);
 
     if (invitationsRespond.length <= 0 && !invitation?.role) return;
 
@@ -67,7 +67,7 @@ export function WorkspaceJoinInvitesStep(props: Props) {
 
   return invitations && invitations.length > 0 ? (
     <div className="flex flex-col gap-10">
-      <CommonOnboardingHeader title="Join invites or create a workspace" description="All your work — unified." />
+      <CommonOnboardingHeader title="Join invites or create a workspace" description="All your work, unified." />
       <div className="flex flex-col gap-3">
         {invitations &&
           invitations.length > 0 &&
@@ -75,10 +75,21 @@ export function WorkspaceJoinInvitesStep(props: Props) {
             const isSelected = invitationsRespond.includes(invitation.id);
             const invitedWorkspace = invitation.workspace;
             return (
-              <div
+              // <label>, bukan <div onClick> maupun <button>. Barisnya memuat
+              // <input type="checkbox"> sungguhan, jadi tombol akan menyarangkan
+              // elemen interaktif, dan role="button" buatan tangan menuntut
+              // penanganan papan ketik sendiri. Label memberi semuanya gratis:
+              // klik di mana pun pada baris meneruskan ke checkbox, papan ketik
+              // bekerja lewat checkbox itu sendiri, dan pembaca layar
+              // mengumumkannya sebagai kotak centang berlabel.
+              // `htmlFor` disebut walau label ini sudah membungkus checkboxnya:
+              // linter tidak bisa melihat menembus komponen <Checkbox> untuk tahu
+              // ada <input> di dalamnya, dan sambungan eksplisit juga lebih tahan
+              // kalau susunannya berubah nanti.
+              <label
                 key={invitation.id}
+                htmlFor={`undangan-${invitation.id}`}
                 className={`flex cursor-pointer items-center gap-2 rounded-lg border border-subtle px-3 py-2 hover:bg-surface-2`}
-                onClick={() => handleInvitation(invitation, isSelected ? "withdraw" : "accepted")}
               >
                 <div className="flex-shrink-0">
                   <WorkspaceLogo
@@ -92,9 +103,13 @@ export function WorkspaceJoinInvitesStep(props: Props) {
                   <p className="text-11 text-secondary">{ROLE[invitation.role]}</p>
                 </div>
                 <span className={`flex-shrink-0`}>
-                  <Checkbox checked={isSelected} />
+                  <Checkbox
+                    id={`undangan-${invitation.id}`}
+                    checked={isSelected}
+                    onChange={() => handleInvitation(invitation, isSelected ? "withdraw" : "accepted")}
+                  />
                 </span>
-              </div>
+              </label>
             );
           })}
       </div>
