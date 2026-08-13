@@ -39,6 +39,11 @@ class PesanLangsung(BaseModel):
     penerima = models.ForeignKey("db.User", related_name="pesan_diterima", on_delete=models.CASCADE)
     isi = models.TextField()
     dibaca_pada = models.DateTimeField(null=True, blank=True)
+    # Diisi saat pesan ini sudah pernah masuk email pemberitahuan. Ditaruh di
+    # pesan, bukan di penerima, karena inilah yang membuat email tidak pernah
+    # mengulang isi yang sama: penanda per-orang akan kehilangan jejak pesan
+    # mana yang sudah diberitahukan begitu ada pesan baru menyusul.
+    dinotifikasi_pada = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Pesan Langsung"

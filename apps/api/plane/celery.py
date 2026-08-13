@@ -77,6 +77,14 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.google_calendar_sync.sinkron_google_calendar",
         "schedule": crontab(minute="*/15"),
     },
+    # Paradise (Yorukaze Production): email untuk pesan Obrolan yang tidak
+    # dibaca-baca. Tiap 5 menit, tapi yang mengatur banjirnya bukan jadwal ini
+    # melainkan dua rem di dalam tugasnya: pesan baru diberitahukan setelah diam
+    # 10 menit, dan satu orang tidak dikirimi email lagi sebelum lewat 1 jam.
+    "email-obrolan": {
+        "task": "plane.bgtasks.chat_notification_task.kirim_pemberitahuan_pesan",
+        "schedule": crontab(minute="*/5"),
+    },
     "push-instance-metrics": {
         "task": "plane.license.bgtasks.telemetry_metrics.push_instance_metrics",
         "schedule": schedule(run_every=timedelta(minutes=METRICS_PUSH_INTERVAL_MINUTES)),
