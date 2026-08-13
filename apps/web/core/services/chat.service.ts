@@ -26,12 +26,21 @@ export type TLampiran = {
   url: string;
 };
 
+export type TReaksi = { emoji: string; orang: string[] };
+
+export type TKutipan = { id: string; pengirim: string; isi: string };
+
 export type TPesan = {
   id: string;
   pengirim: string;
   isi: string;
   created_at: string;
   lampiran: TLampiran[];
+  disunting: boolean;
+  /** Hanya berarti untuk pesan keluar. */
+  sudah_dibaca: boolean;
+  balasan_ke: TKutipan | null;
+  reaksi: TReaksi[];
   /** Belum dibaca saat percakapan ini dimuat. Dihitung server SEBELUM menandai
    * terbaca, jadi hanya benar pada muatan pertama sesudah pesan itu masuk. */
   baru: boolean;
@@ -82,6 +91,41 @@ export class ChatService extends APIService {
       });
   }
 
+  /** Pesan lebih lama dari `sebelum`. Kursor waktu, bukan nomor halaman:
+   * pesan baru terus berdatangan di ujung lain dan nomor halaman akan bergeser
+   * di bawah jari orang yang sedang menggulung. */
+  async getPesanLama(workspaceSlug: string, userId: string, sebelum: string): Promise<TPesan[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/${userId}/`, { params: { sebelum } })
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async suntingPesan(workspaceSlug: string, pesanId: string, isi: string): Promise<TPesan> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/chat/pesan/${pesanId}/`, { isi })
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async hapusPesan(workspaceSlug: string, pesanId: string): Promise<void> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/chat/pesan/${pesanId}/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async toggleReaksi(workspaceSlug: string, pesanId: string, emoji: string): Promise<{ aktif: boolean }> {
+    return this.post(`/api/workspaces/${workspaceSlug}/chat/pesan/${pesanId}/reaksi/`, { emoji })
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
   async getPengawasan(workspaceSlug: string): Promise<TPasanganObrolan[]> {
     return this.get(`/api/workspaces/${workspaceSlug}/chat/pengawasan/`)
       .then((res) => res?.data)
@@ -106,8 +150,18 @@ export class ChatService extends APIService {
       });
   }
 
-  async kirimPesan(workspaceSlug: string, userId: string, isi: string, lampiran: string[] = []): Promise<TPesan> {
-    return this.post(`/api/workspaces/${workspaceSlug}/chat/${userId}/`, { isi, lampiran })
+  async kirimPesan(
+    workspaceSlug: string,
+    userId: string,
+    isi: string,
+    lampiran: string[] = [],
+    balasanKe?: string
+  ): Promise<TPesan> {
+    return this.post(`/api/workspaces/${workspaceSlug}/chat/${userId}/`, {
+      isi,
+      lampiran,
+      balasan_ke: balasanKe ?? null,
+    })
       .then((res) => res?.data)
       .catch((e) => {
         throw e?.response?.data;

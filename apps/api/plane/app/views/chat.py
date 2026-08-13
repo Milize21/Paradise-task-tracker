@@ -23,6 +23,7 @@ import logging
 # Django imports
 from django.db.models import Count, Max, Q
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
 # Third Party imports
 from django.http import HttpResponseRedirect
@@ -33,7 +34,7 @@ from plane.settings.storage import S3Storage
 
 # Module imports
 from plane.app.permissions import WorkspaceEntityPermission
-from plane.db.models import BATAS_ISI, FileAsset, PesanLangsung, Workspace, WorkspaceMember
+from plane.db.models import BATAS_ISI, FileAsset, PesanLangsung, ReaksiPesan, Workspace, WorkspaceMember
 
 from .base import BaseAPIView
 
@@ -103,13 +104,50 @@ def _peta_lampiran(pesan_ids, slug):
     return peta
 
 
-def _bentuk(pesan, slug, saya_id=None, lampiran=None):
+def _peta_reaksi(pesan_ids):
+    """Reaksi seluruh pesan dalam satu kueri, dikelompokkan per pesan lalu per
+    emoji, berikut siapa saja yang memberikannya."""
+    peta = {}
+    for r in ReaksiPesan.objects.filter(pesan_id__in=pesan_ids).values("pesan_id", "emoji", "user_id"):
+        baris = peta.setdefault(str(r["pesan_id"]), {})
+        baris.setdefault(r["emoji"], []).append(str(r["user_id"]))
+    return {
+        pid: [{"emoji": e, "orang": orang} for e, orang in emoji.items()]
+        for pid, emoji in peta.items()
+    }
+
+
+def _peta_kutipan(pesan_list):
+    """Cuplikan pesan yang dibalas, satu kueri untuk semuanya."""
+    induk_ids = {p.balasan_ke_id for p in pesan_list if p.balasan_ke_id}
+    if not induk_ids:
+        return {}
+    induk = PesanLangsung.objects.filter(id__in=induk_ids).values("id", "isi", "pengirim_id")
+    return {
+        str(i["id"]): {
+            "id": str(i["id"]),
+            "pengirim": str(i["pengirim_id"]),
+            # Dipotong di server: yang dibutuhkan UI cuma cuplikan, dan
+            # mengirim pesan panjang dua kali membengkakkan tiap muatan.
+            "isi": (i["isi"] or "")[:120],
+        }
+        for i in induk
+    }
+
+
+def _bentuk(pesan, slug, saya_id=None, lampiran=None, reaksi=None, dikutip=None):
     return {
         "id": str(pesan.id),
         "pengirim": str(pesan.pengirim_id),
         "isi": pesan.isi,
         "created_at": pesan.created_at,
         "lampiran": lampiran or [],
+        "disunting": pesan.disunting_pada is not None,
+        # Hanya berarti untuk pesan KELUAR: pengirim ingin tahu sudah dibaca
+        # atau belum. Untuk pesan masuk nilainya tidak dipakai UI.
+        "sudah_dibaca": pesan.dibaca_pada is not None,
+        "balasan_ke": dikutip,
+        "reaksi": reaksi or [],
         # Dipakai UI untuk menarik garis "pesan belum dibaca" di posisi yang
         # tepat. WAJIB dihitung SEBELUM percakapan ditandai terbaca: sesudah
         # UPDATE jalan, semuanya sudah terbaca dan garisnya tidak akan pernah
@@ -194,6 +232,82 @@ class ChatUnreadEndpoint(BaseAPIView):
         )
 
 
+class ChatPesanEndpoint(BaseAPIView):
+    """Sunting, hapus, dan reaksi pada SATU pesan."""
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def _pesan_saya(self, request, slug, pesan_id):
+        """Pesan yang boleh DIUBAH: hanya milik pengirimnya sendiri.
+
+        Pemilik workspace sengaja TIDAK diberi jalan masuk ke sini. Mengawasi
+        adalah membaca; mengubah tulisan orang lain adalah hal yang sama sekali
+        berbeda, dan tidak pernah diminta.
+        """
+        return PesanLangsung.objects.filter(id=pesan_id, workspace__slug=slug, pengirim=request.user).first()
+
+    def patch(self, request, slug, pesan_id):
+        pesan = self._pesan_saya(request, slug, pesan_id)
+        if pesan is None:
+            return Response({"error": "Bukan pesan Anda."}, status=status.HTTP_404_NOT_FOUND)
+
+        isi = (request.data.get("isi") or "").strip()
+        if not isi:
+            return Response({"error": "Pesan kosong."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(isi) > BATAS_ISI:
+            return Response(
+                {"error": f"Pesan terlalu panjang, maksimum {BATAS_ISI} karakter."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        pesan.isi = isi
+        pesan.disunting_pada = timezone.now()
+        pesan.save(update_fields=["isi", "disunting_pada", "updated_at"])
+        peta = _peta_lampiran([pesan.id], slug)
+        return Response(
+            _bentuk(pesan, slug, request.user.id, peta.get(str(pesan.id))),
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request, slug, pesan_id):
+        pesan = self._pesan_saya(request, slug, pesan_id)
+        if pesan is None:
+            return Response({"error": "Bukan pesan Anda."}, status=status.HTTP_404_NOT_FOUND)
+        # Soft delete: barisnya tetap ada untuk audit, tapi hilang dari semua
+        # daftar karena manager bawaan menyaring deleted_at.
+        pesan.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ChatReaksiEndpoint(BaseAPIView):
+    """Tambah atau buang satu reaksi emoji pada pesan di percakapan sendiri."""
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def post(self, request, slug, pesan_id):
+        emoji = (request.data.get("emoji") or "").strip()
+        if not emoji or len(emoji) > 32:
+            return Response({"error": "Emoji tidak sah."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Boleh bereaksi hanya pada percakapan yang kita ikuti, bukan pada
+        # sembarang id pesan yang ditebak.
+        pesan = PesanLangsung.objects.filter(id=pesan_id, workspace__slug=slug).filter(
+            Q(pengirim=request.user) | Q(penerima=request.user)
+        ).first()
+        if pesan is None:
+            return Response({"error": "Pesan tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+
+        ada = ReaksiPesan.objects.filter(pesan=pesan, user=request.user, emoji=emoji).first()
+        if ada:
+            # Klik kedua pada emoji yang sama = membatalkan. Satu endpoint untuk
+            # dua arah, karena dari sisi UI ini memang satu tombol.
+            ada.delete(soft=False)
+            return Response({"aktif": False}, status=status.HTTP_200_OK)
+
+        ReaksiPesan.objects.create(pesan=pesan, user=request.user, emoji=emoji)
+        return Response({"aktif": True}, status=status.HTTP_201_CREATED)
+
+
 class ChatPengawasanEndpoint(BaseAPIView):
     """Daftar SELURUH percakapan di workspace, untuk pemilik instance.
 
@@ -274,8 +388,20 @@ class ChatPengawasanThreadEndpoint(BaseAPIView):
         # dan tidak ada pesan yang perlu ditandai baru.
         urut = list(reversed(list(pesan)))
         peta = _peta_lampiran([p.id for p in urut], slug)
+        reaksi = _peta_reaksi([p.id for p in urut])
+        kutipan = _peta_kutipan(urut)
         return Response(
-            [_bentuk(p, slug, None, peta.get(str(p.id))) for p in urut],
+            [
+                _bentuk(
+                    p,
+                    slug,
+                    None,
+                    peta.get(str(p.id)),
+                    reaksi.get(str(p.id)),
+                    kutipan.get(str(p.balasan_ke_id)) if p.balasan_ke_id else None,
+                )
+                for p in urut
+            ],
             status=status.HTTP_200_OK,
         )
 
@@ -342,18 +468,44 @@ class ChatThreadEndpoint(BaseAPIView):
     permission_classes = [WorkspaceEntityPermission]
 
     def get(self, request, slug, user_id):
-        pesan = (
-            PesanLangsung.objects.filter(workspace__slug=slug)
-            .filter(
-                Q(pengirim=request.user, penerima_id=user_id) | Q(pengirim_id=user_id, penerima=request.user)
-            )
-            .order_by("-created_at")[:JUMLAH_PESAN]
+        antara = PesanLangsung.objects.filter(workspace__slug=slug).filter(
+            Q(pengirim=request.user, penerima_id=user_id) | Q(pengirim_id=user_id, penerima=request.user)
         )
+        # `sebelum` = penggulungan ke belakang. Memakai cap waktu, bukan nomor
+        # halaman: pesan baru terus berdatangan di ujung lain, dan nomor halaman
+        # akan bergeser di bawah jari orang yang sedang menggulung.
+        sebelum = request.query_params.get("sebelum")
+        if sebelum:
+            # Diurai eksplisit. Kalau nilainya diserahkan langsung ke filter,
+            # format yang tidak dikenal keluar sebagai 400 mentah dari Django
+            # tanpa keterangan apa pun, dan yang memanggil tidak tahu apa yang
+            # salah.
+            batas = parse_datetime(sebelum)
+            if batas is None:
+                return Response(
+                    {"error": "Parameter `sebelum` harus waktu ISO 8601."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            antara = antara.filter(created_at__lt=batas)
+
+        pesan = antara.order_by("-created_at")[:JUMLAH_PESAN]
         # Diambil menurun supaya yang terpotong adalah pesan TERTUA, lalu
         # dibalik supaya peramban menerimanya urut waktu.
         urut = list(reversed(list(pesan)))
         peta = _peta_lampiran([p.id for p in urut], slug)
-        isi = [_bentuk(p, slug, request.user.id, peta.get(str(p.id))) for p in urut]
+        reaksi = _peta_reaksi([p.id for p in urut])
+        kutipan = _peta_kutipan(urut)
+        isi = [
+            _bentuk(
+                p,
+                slug,
+                request.user.id,
+                peta.get(str(p.id)),
+                reaksi.get(str(p.id)),
+                kutipan.get(str(p.balasan_ke_id)) if p.balasan_ke_id else None,
+            )
+            for p in urut
+        ]
 
         # Membuka percakapan berarti membacanya. Satu UPDATE beríndeks, dan
         # tidak melakukan apa-apa kalau memang tidak ada yang belum dibaca.
@@ -395,11 +547,24 @@ class ChatThreadEndpoint(BaseAPIView):
         if anggota is None:
             return Response({"error": "Orang itu bukan anggota aktif workspace ini."}, status=status.HTTP_404_NOT_FOUND)
 
+        # Yang boleh dikutip hanya pesan dari percakapan INI. Tanpa saringan
+        # itu, id pesan orang lain bisa dikutip dan cuplikannya ikut terbaca.
+        balasan_ke_id = request.data.get("balasan_ke")
+        if balasan_ke_id:
+            sah = PesanLangsung.objects.filter(
+                id=balasan_ke_id, workspace__slug=slug
+            ).filter(
+                Q(pengirim=request.user, penerima_id=user_id) | Q(pengirim_id=user_id, penerima=request.user)
+            ).exists()
+            if not sah:
+                balasan_ke_id = None
+
         pesan = PesanLangsung.objects.create(
             workspace_id=anggota.workspace_id,
             pengirim=request.user,
             penerima_id=user_id,
             isi=isi,
+            balasan_ke_id=balasan_ke_id,
         )
 
         if lampiran_ids:
@@ -423,7 +588,15 @@ class ChatThreadEndpoint(BaseAPIView):
                 )
 
         peta = _peta_lampiran([pesan.id], slug)
+        kutipan = _peta_kutipan([pesan])
         return Response(
-            _bentuk(pesan, slug, request.user.id, peta.get(str(pesan.id))),
+            _bentuk(
+                pesan,
+                slug,
+                request.user.id,
+                peta.get(str(pesan.id)),
+                None,
+                kutipan.get(str(pesan.balasan_ke_id)) if pesan.balasan_ke_id else None,
+            ),
             status=status.HTTP_201_CREATED,
         )

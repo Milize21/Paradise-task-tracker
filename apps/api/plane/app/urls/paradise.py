@@ -10,6 +10,8 @@ from plane.app.views import (
     ChatConversationsEndpoint,
     ChatLampiranEndpoint,
     ChatPengawasanEndpoint,
+    ChatPesanEndpoint,
+    ChatReaksiEndpoint,
     ChatPengawasanThreadEndpoint,
     ChatThreadEndpoint,
     ChatUnreadEndpoint,
@@ -96,6 +98,18 @@ urlpatterns = [
         "workspaces/<str:slug>/chat/pengawasan/<uuid:user_a>/<uuid:user_b>/",
         ChatPengawasanThreadEndpoint.as_view(),
         name="chat-pengawasan-thread",
+    ),
+    # Operasi pada satu pesan. Ditaruh sebelum pola <uuid:user_id> supaya
+    # "pesan" tidak pernah ditafsirkan sebagai id lawan bicara.
+    path(
+        "workspaces/<str:slug>/chat/pesan/<uuid:pesan_id>/",
+        ChatPesanEndpoint.as_view(),
+        name="chat-pesan",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/pesan/<uuid:pesan_id>/reaksi/",
+        ChatReaksiEndpoint.as_view(),
+        name="chat-reaksi",
     ),
     path(
         "workspaces/<str:slug>/chat/<uuid:user_id>/",

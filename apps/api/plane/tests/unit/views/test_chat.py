@@ -17,7 +17,7 @@ import pytest
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from plane.db.models import FileAsset, PesanLangsung, User, Workspace, WorkspaceMember
+from plane.db.models import FileAsset, PesanLangsung, ReaksiPesan, User, Workspace, WorkspaceMember
 
 
 def _pesan(workspace, dari, ke, isi, menit_lalu):
@@ -252,6 +252,97 @@ class TestChat:
         assert res.data["lampiran"] == []
         aset.refresh_from_db()
         assert aset.entity_identifier is None
+
+    @pytest.mark.django_db
+    def test_hanya_pengirim_yang_bisa_menyunting_dan_menghapus(self, kantor):
+        """Pemilik workspace pun tidak boleh mengubah tulisan orang.
+
+        Mengawasi itu membaca. Menyunting kalimat orang lain adalah hal yang
+        sama sekali berbeda dan tidak pernah diminta, jadi jalannya memang
+        tidak disediakan.
+        """
+        workspace, aku, budi, _ = kantor
+        pesan = _pesan(workspace, budi, aku, "aslinya begini", menit_lalu=1)
+
+        client = APIClient()
+        client.force_authenticate(user=aku)  # penerima, sekaligus pemilik workspace
+        ubah = client.patch(
+            f"/api/workspaces/{workspace.slug}/chat/pesan/{pesan.id}/", {"isi": "diubah"}, format="json"
+        )
+        hapus = client.delete(f"/api/workspaces/{workspace.slug}/chat/pesan/{pesan.id}/")
+
+        assert ubah.status_code == 404
+        assert hapus.status_code == 404
+        pesan.refresh_from_db()
+        assert pesan.isi == "aslinya begini"
+
+        # Pengirimnya sendiri boleh.
+        client.force_authenticate(user=budi)
+        ubah2 = client.patch(
+            f"/api/workspaces/{workspace.slug}/chat/pesan/{pesan.id}/", {"isi": "sudah dibetulkan"}, format="json"
+        )
+        assert ubah2.status_code == 200
+        assert ubah2.data["disunting"] is True
+        assert client.delete(f"/api/workspaces/{workspace.slug}/chat/pesan/{pesan.id}/").status_code == 204
+        assert PesanLangsung.objects.filter(id=pesan.id).count() == 0, "hilang dari daftar"
+        assert PesanLangsung.all_objects.filter(id=pesan.id).count() == 1, "barisnya tetap ada untuk audit"
+
+    @pytest.mark.django_db
+    def test_reaksi_klik_kedua_membatalkan(self, kantor):
+        workspace, aku, budi, citra = kantor
+        pesan = _pesan(workspace, budi, aku, "halo", menit_lalu=1)
+
+        client = APIClient()
+        client.force_authenticate(user=aku)
+        url = f"/api/workspaces/{workspace.slug}/chat/pesan/{pesan.id}/reaksi/"
+
+        assert client.post(url, {"emoji": "👍"}, format="json").data["aktif"] is True
+        assert ReaksiPesan.objects.count() == 1
+        assert client.post(url, {"emoji": "👍"}, format="json").data["aktif"] is False
+        assert ReaksiPesan.objects.count() == 0
+
+        # Orang di luar percakapan tidak bisa ikut bereaksi.
+        client.force_authenticate(user=citra)
+        assert client.post(url, {"emoji": "👍"}, format="json").status_code == 404
+
+    @pytest.mark.django_db
+    def test_penggulungan_riwayat_memakai_sebelum(self, kantor):
+        workspace, aku, budi, _ = kantor
+        for i in range(5):
+            _pesan(workspace, budi, aku, f"pesan {i}", menit_lalu=10 - i)
+
+        client = APIClient()
+        client.force_authenticate(user=aku)
+        semua = client.get(f"/api/workspaces/{workspace.slug}/chat/{budi.id}/")
+        assert [p["isi"] for p in semua.data] == ["pesan 0", "pesan 1", "pesan 2", "pesan 3", "pesan 4"]
+
+        batas = semua.data[2]["created_at"].isoformat()
+        lama = client.get(f"/api/workspaces/{workspace.slug}/chat/{budi.id}/", {"sebelum": batas})
+        assert [p["isi"] for p in lama.data] == ["pesan 0", "pesan 1"], "hanya yang lebih tua dari batas"
+
+        # Nilai ngawur dijawab dengan keterangan, bukan 400 mentah.
+        ngawur = client.get(f"/api/workspaces/{workspace.slug}/chat/{budi.id}/", {"sebelum": "kemarin"})
+        assert ngawur.status_code == 400
+        assert "ISO" in ngawur.data["error"]
+
+    @pytest.mark.django_db
+    def test_kutipan_hanya_dari_percakapan_yang_sama(self, kantor):
+        workspace, aku, budi, citra = kantor
+        # Pesan milik percakapan LAIN (Budi dengan Citra).
+        asing = _pesan(workspace, budi, citra, "rahasia mereka", menit_lalu=5)
+
+        client = APIClient()
+        client.force_authenticate(user=aku)
+        res = client.post(
+            f"/api/workspaces/{workspace.slug}/chat/{budi.id}/",
+            {"isi": "coba kutip", "balasan_ke": str(asing.id)},
+            format="json",
+        )
+
+        assert res.status_code == 201
+        # Terkirim, tapi kutipannya DIBUANG: cuplikan percakapan orang lain
+        # tidak boleh ikut terbawa.
+        assert res.data["balasan_ke"] is None
 
     @pytest.mark.django_db
     def test_pesan_kosong_ditolak(self, kantor):

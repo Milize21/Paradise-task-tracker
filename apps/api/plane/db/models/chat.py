@@ -44,6 +44,16 @@ class PesanLangsung(BaseModel):
     # mengulang isi yang sama: penanda per-orang akan kehilangan jejak pesan
     # mana yang sudah diberitahukan begitu ada pesan baru menyusul.
     dinotifikasi_pada = models.DateTimeField(null=True, blank=True)
+    # Diisi saat pesan disunting. Waktunya disimpan, bukan sekadar bendera:
+    # penerima berhak tahu bahwa yang dibacanya bukan lagi kalimat yang
+    # dikirim semula, dan kapan berubahnya.
+    disunting_pada = models.DateTimeField(null=True, blank=True)
+    # Pesan yang sedang dibalas. SET_NULL, bukan CASCADE: menghapus pesan yang
+    # dikutip tidak boleh ikut menghapus balasannya, karena balasan itu milik
+    # orang lain dan sering justru bagian yang penting.
+    balasan_ke = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="balasan"
+    )
 
     class Meta:
         verbose_name = "Pesan Langsung"
@@ -60,3 +70,33 @@ class PesanLangsung(BaseModel):
 
     def __str__(self):
         return f"{self.pengirim_id} -> {self.penerima_id}"
+
+
+class ReaksiPesan(BaseModel):
+    """Satu reaksi emoji dari satu orang pada satu pesan.
+
+    Tabel sendiri, bukan kolom JSON di pesan: reaksi ditambah dan dibuang oleh
+    orang yang BERBEDA dari pemilik pesan, dan dua orang bisa bereaksi pada
+    detik yang sama. Kolom JSON membuat keduanya saling menimpa, dan yang kalah
+    hilang tanpa jejak.
+    """
+
+    pesan = models.ForeignKey("db.PesanLangsung", related_name="reaksi", on_delete=models.CASCADE)
+    user = models.ForeignKey("db.User", related_name="reaksi_pesan", on_delete=models.CASCADE)
+    # Disimpan sebagai karakter emoji, bukan kode desimal: yang membacanya cuma
+    # UI, dan menyimpan kode berarti tiap pembaca harus tahu cara mengubahnya
+    # kembali.
+    emoji = models.CharField(max_length=32)
+
+    class Meta:
+        # Satu orang, satu emoji, satu pesan. Tanpa kunci ini, klik ganda
+        # membuat reaksi kembar yang tidak bisa dibatalkan dari UI.
+        unique_together = ["pesan", "user", "emoji", "deleted_at"]
+        verbose_name = "Reaksi Pesan"
+        verbose_name_plural = "Reaksi Pesan"
+        db_table = "direct_message_reactions"
+        ordering = ("created_at",)
+        indexes = [models.Index(fields=["pesan"], name="dm_reaksi_pesan_idx")]
+
+    def __str__(self):
+        return f"{self.user_id} {self.emoji} {self.pesan_id}"

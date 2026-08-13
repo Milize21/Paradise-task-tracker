@@ -9,7 +9,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { Link, useParams, useSearchParams } from "react-router";
 import useSWR, { mutate } from "swr";
-import { Eye, MessageSquare, Paperclip, Search, Send, SmilePlus, X } from "lucide-react";
+import {
+  ChevronUp,
+  CornerUpLeft,
+  Eye,
+  MessageSquare,
+  Paperclip,
+  Pencil,
+  Search,
+  Send,
+  SmilePlus,
+  X,
+} from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { stringToEmoji } from "@plane/propel/emoji-icon-picker";
@@ -25,10 +36,11 @@ import { useUser } from "@/hooks/store/user";
 // services
 import { EFileAssetType } from "@plane/types";
 import { FileService } from "@/services/file.service";
-import { ChatService, KUNCI_BELUM_DIBACA, type TPercakapan } from "@/services/chat.service";
+import { ChatService, KUNCI_BELUM_DIBACA, type TPercakapan, type TPesan } from "@/services/chat.service";
 // local imports
 import { susunBaris } from "./baris";
-import { DaftarLampiran, ukuranTerbaca } from "./lampiran";
+import { Gelembung } from "./gelembung";
+import { ukuranTerbaca } from "./lampiran";
 
 const chatService = new ChatService();
 const fileService = new FileService();
@@ -69,6 +81,11 @@ function ChatPage() {
   const [mengirim, setMengirim] = useState(false);
   const [emojiTerbuka, setEmojiTerbuka] = useState(false);
   const [lampiran, setLampiran] = useState<{ id: string; nama: string; ukuran: number }[]>([]);
+  const [membalas, setMembalas] = useState<TPesan | null>(null);
+  const [menyunting, setMenyunting] = useState<TPesan | null>(null);
+  const [lama, setLama] = useState<TPesan[]>([]);
+  const [memuatLama, setMemuatLama] = useState(false);
+  const [habis, setHabis] = useState(false);
   const [mengunggah, setMengunggah] = useState(false);
   const berkasRef = useRef<HTMLInputElement>(null);
   const akhirRef = useRef<HTMLDivElement>(null);
@@ -91,6 +108,15 @@ function ChatPage() {
     slug && dengan ? () => chatService.getPesan(slug, dengan) : null,
     { refreshInterval: SELANG_PESAN }
   );
+
+  // Ganti lawan bicara = buang riwayat lama yang sudah dimuat, kalau tidak
+  // pesan orang sebelumnya ikut menempel di atas percakapan berikutnya.
+  useEffect(() => {
+    setLama([]);
+    setHabis(false);
+    setMembalas(null);
+    setMenyunting(null);
+  }, [dengan]);
 
   // Selalu tampilkan pesan terbaru saat percakapan bertambah atau berganti.
   useEffect(() => {
@@ -119,7 +145,8 @@ function ChatPage() {
     return [...adaPesan, ...belumPernah].map((id) => ({ id, terakhir: peta.get(id) }));
   }, [percakapan, workspaceMemberIds, currentUser?.id, cari, getWorkspaceMemberDetails]);
 
-  const barisPesan = useMemo(() => susunBaris(pesan ?? [], currentUser?.id), [pesan, currentUser?.id]);
+  const semuaPesan = useMemo(() => [...lama, ...(pesan ?? [])], [lama, pesan]);
+  const barisPesan = useMemo(() => susunBaris(semuaPesan, currentUser?.id), [semuaPesan, currentUser?.id]);
 
   const lawanBicara = dengan ? getWorkspaceMemberDetails(dengan)?.member : undefined;
 
@@ -166,6 +193,67 @@ function ChatPage() {
     if (berkasRef.current) berkasRef.current.value = "";
   };
 
+  const muatLama = async () => {
+    const tertua = semuaPesan[0];
+    if (!slug || !dengan || !tertua || memuatLama) return;
+    setMemuatLama(true);
+    try {
+      const hasil = await chatService.getPesanLama(slug, dengan, tertua.created_at);
+      if (hasil.length === 0) setHabis(true);
+      else setLama((sebelumnya) => [...hasil, ...sebelumnya]);
+    } catch {
+      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal memuat pesan lama" });
+    } finally {
+      setMemuatLama(false);
+    }
+  };
+
+  const simpanSuntingan = async () => {
+    const isi = draf.trim();
+    if (!slug || !menyunting || !isi) return;
+    setMengirim(true);
+    try {
+      await chatService.suntingPesan(slug, menyunting.id, isi);
+      setMenyunting(null);
+      setDraf("");
+      await Promise.all([muatPesan(), muatPercakapan()]);
+    } catch (galat) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Gagal menyunting",
+        message: (galat as { error?: string })?.error ?? "Coba lagi sebentar.",
+      });
+    } finally {
+      setMengirim(false);
+    }
+  };
+
+  const hapus = async (p: TPesan) => {
+    if (!slug) return;
+    try {
+      await chatService.hapusPesan(slug, p.id);
+      // Riwayat lama disimpan terpisah dari SWR, jadi harus ikut dibersihkan.
+      setLama((sebelumnya) => sebelumnya.filter((x) => x.id !== p.id));
+      await Promise.all([muatPesan(), muatPercakapan()]);
+    } catch (galat) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Gagal menghapus",
+        message: (galat as { error?: string })?.error ?? "Coba lagi sebentar.",
+      });
+    }
+  };
+
+  const reaksi = async (p: TPesan, emoji: string) => {
+    if (!slug) return;
+    try {
+      await chatService.toggleReaksi(slug, p.id, emoji);
+      await muatPesan();
+    } catch {
+      setToast({ type: TOAST_TYPE.ERROR, title: "Gagal memberi reaksi" });
+    }
+  };
+
   const kirim = async () => {
     const isi = draf.trim();
     // Boleh mengirim tanpa teks asal ada lampiran.
@@ -176,10 +264,12 @@ function ChatPage() {
         slug,
         dengan,
         isi,
-        lampiran.map((l) => l.id)
+        lampiran.map((l) => l.id),
+        membalas?.id
       );
       setDraf("");
       setLampiran([]);
+      setMembalas(null);
       if (tulisRef.current) tulisRef.current.style.height = "auto";
       await Promise.all([muatPesan(), muatPercakapan()]);
     } catch (galat) {
@@ -301,6 +391,22 @@ function ChatPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-3">
+              {/* Tombol riwayat hanya muncul kalau memang ada kemungkinan ada
+                  yang lebih lama, dan menghilang setelah server bilang habis. */}
+              {barisPesan.length > 0 && !habis ? (
+                <div className="mb-2 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => void muatLama()}
+                    disabled={memuatLama}
+                    className="text-xs flex items-center gap-1.5 rounded-full border border-subtle px-3 py-1 text-secondary hover:bg-layer-1 disabled:opacity-50"
+                  >
+                    <ChevronUp className="size-3.5" />
+                    {memuatLama ? "Memuat…" : "Muat pesan lama"}
+                  </button>
+                </div>
+              ) : null}
+
               {barisPesan.length === 0 ? (
                 <p className="text-sm text-tertiary">Belum ada pesan. Mulai dari sini.</p>
               ) : (
@@ -332,9 +438,6 @@ function ChatPage() {
                           dariSaya ? "justify-end" : "justify-start"
                         }`}
                       >
-                        {/* Avatar hanya di pesan pertama tiap kelompok. Sisanya
-                            diberi ruang kosong selebar avatar supaya gelembungnya
-                            tetap sejajar. */}
                         {!dariSaya ? (
                           <div className="w-7 shrink-0">
                             {awalKelompok ? (
@@ -347,21 +450,31 @@ function ChatPage() {
                             ) : null}
                           </div>
                         ) : null}
-                        <div
-                          className={`max-w-[68%] px-3 py-2 ${
-                            dariSaya
-                              ? `bg-accent-primary text-white ${awalKelompok ? "rounded-2xl rounded-br-md" : "rounded-2xl rounded-tr-md rounded-br-md"}`
-                              : `bg-layer-3 text-primary ${awalKelompok ? "rounded-2xl rounded-bl-md" : "rounded-2xl rounded-tl-md rounded-bl-md"}`
-                          }`}
-                        >
-                          {p.isi ? <p className="text-sm break-words whitespace-pre-wrap">{p.isi}</p> : null}
-                          <DaftarLampiran lampiran={p.lampiran} terang={dariSaya} />
-                          {akhirKelompok ? (
-                            <p className={`text-xs mt-1 ${dariSaya ? "text-white/70" : "text-tertiary"}`}>
-                              {renderFormattedTime(p.created_at)}
-                            </p>
-                          ) : null}
-                        </div>
+                        <Gelembung
+                          pesan={p}
+                          dariSaya={dariSaya}
+                          awalKelompok={awalKelompok}
+                          akhirKelompok={akhirKelompok}
+                          sayaId={currentUser?.id}
+                          namaOrang={(id) =>
+                            id === currentUser?.id
+                              ? "Kamu"
+                              : (getWorkspaceMemberDetails(id)?.member?.display_name ?? "Anggota")
+                          }
+                          onBalas={(pesanIni) => {
+                            setMenyunting(null);
+                            setMembalas(pesanIni);
+                            tulisRef.current?.focus();
+                          }}
+                          onSunting={(pesanIni) => {
+                            setMembalas(null);
+                            setMenyunting(pesanIni);
+                            setDraf(pesanIni.isi);
+                            tulisRef.current?.focus();
+                          }}
+                          onHapus={(pesanIni) => void hapus(pesanIni)}
+                          onReaksi={(pesanIni, emoji) => void reaksi(pesanIni, emoji)}
+                        />
                       </div>
                     );
                   })}
@@ -371,6 +484,32 @@ function ChatPage() {
             </div>
 
             <div className="flex flex-col gap-2 border-t border-subtle p-3">
+              {membalas || menyunting ? (
+                <div className="border-accent-primary flex items-start gap-2 rounded-md border-l-2 bg-layer-1 px-2.5 py-1.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs flex items-center gap-1 font-medium text-accent-primary">
+                      {menyunting ? <Pencil className="size-3" /> : <CornerUpLeft className="size-3" />}
+                      {menyunting ? "Menyunting pesan" : `Membalas ${lawanBicara?.display_name ?? "pesan"}`}
+                    </p>
+                    <p className="text-xs truncate text-tertiary">{(menyunting ?? membalas)?.isi || "lampiran"}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Batal menyunting mengembalikan kotak tulis ke kosong,
+                      // bukan meninggalkan teks lama yang lalu terkirim sebagai
+                      // pesan baru tanpa disadari.
+                      if (menyunting) setDraf("");
+                      setMenyunting(null);
+                      setMembalas(null);
+                    }}
+                    aria-label="Batal"
+                    className="text-tertiary hover:text-primary"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              ) : null}
               {lampiran.length > 0 || mengunggah ? (
                 <div className="flex flex-wrap items-center gap-2">
                   {lampiran.map((l) => (
@@ -436,7 +575,14 @@ function ChatPage() {
                     // sudah dibawa orang dari aplikasi obrolan lain.
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
-                      void kirim();
+                      void (menyunting ? simpanSuntingan() : kirim());
+                    }
+                    // Escape membatalkan balas atau sunting. Tanpa ini, satu
+                    // satunya jalan keluar adalah mengklik tanda silang kecil.
+                    if (e.key === "Escape" && (menyunting || membalas)) {
+                      if (menyunting) setDraf("");
+                      setMenyunting(null);
+                      setMembalas(null);
                     }
                   }}
                   rows={1}
@@ -446,8 +592,12 @@ function ChatPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => void kirim()}
-                  disabled={mengirim || mengunggah || (draf.trim().length === 0 && lampiran.length === 0)}
+                  onClick={() => void (menyunting ? simpanSuntingan() : kirim())}
+                  disabled={
+                    mengirim ||
+                    mengunggah ||
+                    (menyunting ? draf.trim().length === 0 : draf.trim().length === 0 && lampiran.length === 0)
+                  }
                   aria-label="Kirim pesan"
                   className="flex size-9 items-center justify-center rounded-md bg-accent-primary text-white disabled:opacity-40"
                 >

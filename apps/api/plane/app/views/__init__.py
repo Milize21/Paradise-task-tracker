@@ -198,6 +198,8 @@ from .chat import (
     ChatConversationsEndpoint,
     ChatLampiranEndpoint,
     ChatPengawasanEndpoint,
+    ChatPesanEndpoint,
+    ChatReaksiEndpoint,
     ChatPengawasanThreadEndpoint,
     ChatThreadEndpoint,
     ChatUnreadEndpoint,
