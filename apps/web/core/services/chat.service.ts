@@ -58,6 +58,16 @@ export type TStatusObrolan = {
   jumlah: number;
 };
 
+/** Satu pesan hasil pencarian, berikut lawan bicaranya supaya UI bisa langsung
+ * membuka percakapan yang benar. */
+export type THasilCari = {
+  id: string;
+  isi: string;
+  created_at: string;
+  dari_saya: boolean;
+  lawan_bicara: string;
+};
+
 export class ChatService extends APIService {
   constructor() {
     super(API_BASE_URL);
@@ -85,6 +95,14 @@ export class ChatService extends APIService {
   /** Pesan lebih lama dari `sebelum`. Kursor waktu, bukan nomor halaman:
    * pesan baru terus berdatangan di ujung lain dan nomor halaman akan bergeser
    * di bawah jari orang yang sedang menggulung. */
+  async cariPesan(workspaceSlug: string, q: string): Promise<THasilCari[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/cari/`, { params: { q } })
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
   async getPesanLama(workspaceSlug: string, userId: string, sebelum: string): Promise<TPesan[]> {
     return this.get(`/api/workspaces/${workspaceSlug}/chat/${userId}/`, { params: { sebelum } })
       .then((res) => res?.data)

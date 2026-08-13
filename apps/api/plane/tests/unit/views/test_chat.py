@@ -305,6 +305,29 @@ class TestChat:
         assert res.data["balasan_ke"] is None
 
     @pytest.mark.django_db
+    def test_pencarian_tidak_menembus_obrolan_orang_lain(self, kantor):
+        """Ini penjaga pencarian.
+
+        Kalau saringannya lepas, satu kata kunci cukup untuk membaca cuplikan
+        obrolan seluruh kantor, dan tidak ada gejala apa pun di layar.
+        """
+        workspace, aku, budi, citra = kantor
+        _pesan(workspace, budi, aku, "invoice bulan ini sudah dibayar", menit_lalu=5)
+        _pesan(workspace, budi, citra, "invoice rahasia mereka berdua", menit_lalu=4)
+
+        client = APIClient()
+        client.force_authenticate(user=aku)
+        res = client.get(f"/api/workspaces/{workspace.slug}/chat/cari/", {"q": "invoice"})
+
+        assert res.status_code == 200
+        assert [h["isi"] for h in res.data] == ["invoice bulan ini sudah dibayar"]
+        assert res.data[0]["lawan_bicara"] == str(budi.id)
+
+        # Kata kunci terlalu pendek ditolak dengan keterangan.
+        pendek = client.get(f"/api/workspaces/{workspace.slug}/chat/cari/", {"q": "in"})
+        assert pendek.status_code == 400
+
+    @pytest.mark.django_db
     def test_pesan_kosong_ditolak(self, kantor):
         workspace, aku, budi, _ = kantor
 

@@ -64,6 +64,10 @@ mediafiles
 # lokal selalu jalan, dan CI selalu gagal karena berkasnya tidak ada di
 # checkout. `paradise-build` merah 5 hari karena ini. → BUG-07
 /apps/api/plane/logs/
+# Log deploy dari paradise/bin/deploy-lepas.sh, hidup di server. Diawali slash
+# dengan alasan yang sama seperti di atas: pola telanjang cocok di kedalaman
+# mana pun dan akan menelan direktori sumber bernama logs/.
+/logs/
 htmlcov/
 .coverage
 

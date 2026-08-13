@@ -195,6 +195,7 @@ from .google_calendar import (
     GoogleCalendarStatusEndpoint,
 )
 from .chat import (
+    ChatCariEndpoint,
     ChatConversationsEndpoint,
     ChatLampiranEndpoint,
     ChatPesanEndpoint,

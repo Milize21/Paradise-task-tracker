@@ -7,6 +7,7 @@ from django.urls import path
 
 from plane.app.views import (
     ProjectTrashEndpoint,
+    ChatCariEndpoint,
     ChatConversationsEndpoint,
     ChatLampiranEndpoint,
     ChatPesanEndpoint,
@@ -84,6 +85,11 @@ urlpatterns = [
         "workspaces/<str:slug>/chat/lampiran/<uuid:asset_id>/",
         ChatLampiranEndpoint.as_view(),
         name="chat-lampiran",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/cari/",
+        ChatCariEndpoint.as_view(),
+        name="chat-cari",
     ),
     # Operasi pada satu pesan. Ditaruh sebelum pola <uuid:user_id> supaya
     # "pesan" tidak pernah ditafsirkan sebagai id lawan bicara.

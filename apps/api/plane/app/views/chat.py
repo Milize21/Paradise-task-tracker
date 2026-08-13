@@ -51,6 +51,10 @@ logger = logging.getLogger("plane.api")
 # `sebelum=<created_at>` di sini kalau ada yang benar-benar memintanya.
 JUMLAH_PESAN = 100
 
+# Batas hasil pencarian. Tanpa batas, satu kata umum seperti "ya" menarik
+# seluruh riwayat ke dalam satu respons.
+JUMLAH_HASIL_CARI = 50
+
 # Berapa lampiran boleh menempel pada satu pesan.
 BATAS_LAMPIRAN = 5
 
@@ -181,6 +185,51 @@ class ChatConversationsEndpoint(BaseAPIView):
         ]
         percakapan.sort(key=lambda baris: baris["created_at"], reverse=True)
         return Response(percakapan, status=status.HTTP_200_OK)
+
+
+class ChatCariEndpoint(BaseAPIView):
+    """Cari isi pesan di SELURUH percakapan milik sendiri.
+
+    Hanya pesan yang kita kirim atau terima. Tidak ada jalan untuk mencari di
+    obrolan orang lain, dan itu bukan kelalaian melainkan batas yang sama dengan
+    seluruh fitur ini.
+    """
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def get(self, request, slug):
+        kunci = (request.query_params.get("q") or "").strip()
+        # Dua huruf terlalu pendek: hasilnya hampir seluruh isi kotak masuk, dan
+        # itu bukan pencarian, cuma pemborosan.
+        if len(kunci) < 3:
+            return Response(
+                {"error": "Kata kunci minimal 3 huruf."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        hasil = (
+            PesanLangsung.objects.filter(workspace__slug=slug)
+            .filter(Q(pengirim=request.user) | Q(penerima=request.user))
+            .filter(isi__icontains=kunci)
+            .order_by("-created_at")[:JUMLAH_HASIL_CARI]
+        )
+        return Response(
+            [
+                {
+                    "id": str(p.id),
+                    "isi": p.isi,
+                    "created_at": p.created_at,
+                    "dari_saya": p.pengirim_id == request.user.id,
+                    # Lawan bicara, supaya UI bisa langsung membuka
+                    # percakapannya tanpa menebak dari arah pesan.
+                    "lawan_bicara": str(
+                        p.penerima_id if p.pengirim_id == request.user.id else p.pengirim_id
+                    ),
+                }
+                for p in hasil
+            ],
+            status=status.HTTP_200_OK,
+        )
 
 
 class ChatUnreadEndpoint(BaseAPIView):

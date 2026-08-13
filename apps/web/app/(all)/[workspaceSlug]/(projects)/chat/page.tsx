@@ -38,7 +38,13 @@ import { useUser } from "@/hooks/store/user";
 // services
 import { EFileAssetType } from "@plane/types";
 import { FileService } from "@/services/file.service";
-import { ChatService, KUNCI_BELUM_DIBACA, type TPercakapan, type TPesan } from "@/services/chat.service";
+import {
+  ChatService,
+  KUNCI_BELUM_DIBACA,
+  type THasilCari,
+  type TPercakapan,
+  type TPesan,
+} from "@/services/chat.service";
 // local imports
 import { susunBaris } from "./baris";
 import { Gelembung } from "./gelembung";
@@ -79,6 +85,11 @@ function ChatPage() {
   const { t } = useTranslation();
   // states
   const [cari, setCari] = useState("");
+  // Kotak cari dipakai untuk dua hal: menyaring nama (langsung, tanpa server)
+  // dan mencari isi pesan (Enter atau tombol "Isi"). Dipisah begitu supaya
+  // mengetik nama tidak memanggil server tiap huruf.
+  const [hasilCari, setHasilCari] = useState<THasilCari[] | null>(null);
+  const [mencari, setMencari] = useState(false);
   const [draf, setDraf] = useState("");
   const [mengirim, setMengirim] = useState(false);
   const [emojiTerbuka, setEmojiTerbuka] = useState(false);
@@ -208,6 +219,26 @@ function ChatPage() {
     if (berkasRef.current) berkasRef.current.value = "";
   };
 
+  const cariIsiPesan = async () => {
+    const q = cari.trim();
+    if (!slug || q.length < 3) {
+      setToast({ type: TOAST_TYPE.ERROR, title: "Kata kunci minimal 3 huruf" });
+      return;
+    }
+    setMencari(true);
+    try {
+      setHasilCari(await chatService.cariPesan(slug, q));
+    } catch (galat) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Pencarian gagal",
+        message: (galat as { error?: string })?.error ?? "Coba lagi sebentar.",
+      });
+    } finally {
+      setMencari(false);
+    }
+  };
+
   const muatLama = async () => {
     const tertua = semuaPesan[0];
     if (!slug || !dengan || !tertua || memuatLama) return;
@@ -312,11 +343,35 @@ function ChatPage() {
             <input
               type="text"
               value={cari}
-              onChange={(e) => setCari(e.target.value)}
-              placeholder="Cari orang"
-              aria-label="Cari orang"
+              onChange={(e) => {
+                setCari(e.target.value);
+                // Mengetik ulang membatalkan hasil lama, kalau tidak daftar
+                // hasil bertahan padahal kata kuncinya sudah berubah.
+                if (hasilCari) setHasilCari(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void cariIsiPesan();
+                if (e.key === "Escape") {
+                  setCari("");
+                  setHasilCari(null);
+                }
+              }}
+              placeholder="Cari orang, Enter untuk cari isi pesan"
+              aria-label="Cari orang atau isi pesan"
               className="text-sm w-full bg-transparent text-primary outline-none placeholder:text-placeholder"
             />
+            {cari.trim().length >= 3 ? (
+              <button
+                type="button"
+                onClick={() => void cariIsiPesan()}
+                disabled={mencari}
+                aria-label="Cari isi pesan"
+                title="Cari isi pesan"
+                className="text-xs shrink-0 rounded px-1.5 py-0.5 font-medium text-accent-primary hover:bg-layer-1 disabled:opacity-50"
+              >
+                {mencari ? "…" : "Isi"}
+              </button>
+            ) : null}
           </div>
           <button
             type="button"
@@ -329,7 +384,46 @@ function ChatPage() {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {daftar.length === 0 ? (
+          {hasilCari ? (
+            <div>
+              <div className="flex items-center justify-between px-3 py-2">
+                <p className="text-xs font-medium text-secondary">
+                  {hasilCari.length === 0 ? "Tidak ada pesan yang cocok" : `${hasilCari.length} pesan ditemukan`}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setHasilCari(null)}
+                  className="text-xs text-tertiary hover:text-primary"
+                >
+                  Tutup
+                </button>
+              </div>
+              {hasilCari.map((h) => {
+                const anggota = getWorkspaceMemberDetails(h.lawan_bicara)?.member;
+                return (
+                  <button
+                    key={h.id}
+                    type="button"
+                    onClick={() => {
+                      setSearchParams({ dengan: h.lawan_bicara });
+                      setHasilCari(null);
+                      setCari("");
+                    }}
+                    className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left hover:bg-layer-1"
+                  >
+                    <span className="text-xs flex w-full items-center justify-between gap-2">
+                      <span className="truncate font-medium text-primary">{anggota?.display_name ?? "Anggota"}</span>
+                      <span className="shrink-0 text-tertiary">{waktuRingkas(h.created_at)}</span>
+                    </span>
+                    <span className="text-xs line-clamp-2 text-secondary">
+                      {h.dari_saya ? "Kamu: " : ""}
+                      {h.isi}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : daftar.length === 0 ? (
             <p className="text-sm p-3 text-tertiary">Tidak ada orang yang cocok.</p>
           ) : (
             daftar.map(({ id, terakhir }) => {
