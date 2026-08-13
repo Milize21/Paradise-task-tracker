@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams, useSearchParams } from "react-router";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { MessageSquare, Search, Send } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
@@ -21,14 +21,12 @@ import { PageHead } from "@/components/core/page-title";
 import { useMember } from "@/hooks/store/use-member";
 import { useUser } from "@/hooks/store/user";
 // services
-import { ChatService, type TPercakapan } from "@/services/chat.service";
+import { ChatService, KUNCI_BELUM_DIBACA, type TPercakapan } from "@/services/chat.service";
 
 const chatService = new ChatService();
 
 // Selang tarik-ulang. Percakapan yang sedang dibuka diperiksa lebih sering
-// daripada daftarnya, karena di situlah orang menunggu balasan. Lencana "belum
-// dibaca" ikut selang daftar, jadi bisa tertinggal beberapa detik setelah
-// percakapan dibuka. Itu diterima, bukan terlewat.
+// daripada daftarnya, karena di situlah orang menunggu balasan.
 // ponytail: angka tetap, bukan backoff. Naikkan kalau server terasa berat.
 const SELANG_PESAN = 5000;
 const SELANG_DAFTAR = 15000;
@@ -79,6 +77,10 @@ function ChatPage() {
   // Selalu tampilkan pesan terbaru saat percakapan bertambah atau berganti.
   useEffect(() => {
     akhirRef.current?.scrollIntoView({ block: "end" });
+    // Memuat percakapan berarti menandainya terbaca di server, jadi lencana di
+    // sidebar sudah basi sejak detik itu. Disegarkan di sini supaya angkanya
+    // turun seketika, bukan pada tarikan 30 detik berikutnya.
+    void mutate(KUNCI_BELUM_DIBACA);
   }, [pesan?.length, dengan]);
 
   const daftar: TBarisDaftar[] = useMemo(() => {

@@ -24,6 +24,14 @@ export type TPesan = {
   created_at: string;
 };
 
+/** Kunci SWR untuk jumlah belum dibaca.
+ *
+ * Dipakai di DUA tempat: lencana di sidebar yang menariknya berkala, dan halaman
+ * Obrolan yang memanggil `mutate` pada kunci ini begitu percakapan dibaca. Tanpa
+ * kunci bersama, lencana baru turun pada tarikan berikutnya dan orang melihat
+ * angka yang sudah tidak benar selama setengah menit. */
+export const KUNCI_BELUM_DIBACA = "CHAT_BELUM_DIBACA";
+
 export class ChatService extends APIService {
   constructor() {
     super(API_BASE_URL);
@@ -33,6 +41,17 @@ export class ChatService extends APIService {
     return this.get(`/api/workspaces/${workspaceSlug}/chat/`)
       .then((res) => res?.data)
       .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async getJumlahBelumDibaca(workspaceSlug: string): Promise<number> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/belum-dibaca/`)
+      .then((res) => res?.data?.jumlah ?? 0)
+      .catch((e) => {
+        // Dilempar, bukan ditelan jadi 0. SWR menyimpannya di `error` dan
+        // lencana cukup tidak tampil; menelannya berarti "tidak ada pesan baru"
+        // dan "endpointnya rusak" terlihat persis sama.
         throw e?.response?.data;
       });
   }

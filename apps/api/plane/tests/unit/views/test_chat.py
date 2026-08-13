@@ -98,6 +98,26 @@ class TestChat:
         assert PesanLangsung.objects.filter(pengirim=aku, dibaca_pada__isnull=False).count() == 0
 
     @pytest.mark.django_db
+    def test_jumlah_belum_dibaca_hanya_menghitung_pesan_masuk(self, kantor):
+        workspace, aku, budi, citra = kantor
+        _pesan(workspace, budi, aku, "satu", menit_lalu=3)
+        _pesan(workspace, citra, aku, "dua", menit_lalu=2)
+        # Pesan KELUAR tidak boleh ikut terhitung. Kalau filternya salah arah,
+        # lencana sidebar akan menghitung pesan yang kita kirim sendiri.
+        _pesan(workspace, aku, budi, "tiga", menit_lalu=1)
+
+        client = APIClient()
+        client.force_authenticate(user=aku)
+        res = client.get(f"/api/workspaces/{workspace.slug}/chat/belum-dibaca/")
+
+        assert res.status_code == 200
+        assert res.data["jumlah"] == 2
+
+        # Membuka percakapan dengan Budi menurunkan hitungannya, bukan menolkan.
+        client.get(f"/api/workspaces/{workspace.slug}/chat/{budi.id}/")
+        assert client.get(f"/api/workspaces/{workspace.slug}/chat/belum-dibaca/").data["jumlah"] == 1
+
+    @pytest.mark.django_db
     def test_tidak_bisa_mengirim_ke_orang_di_luar_workspace(self, kantor):
         workspace, aku, _, _ = kantor
         orang_luar = _orang("dewi")

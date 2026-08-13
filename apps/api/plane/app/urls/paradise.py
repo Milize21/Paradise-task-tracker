@@ -9,6 +9,7 @@ from plane.app.views import (
     ProjectTrashEndpoint,
     ChatConversationsEndpoint,
     ChatThreadEndpoint,
+    ChatUnreadEndpoint,
     DivisionDashboardEndpoint,
     WorkLogExportEndpoint,
     GoogleCalendarCallbackEndpoint,
@@ -68,6 +69,13 @@ urlpatterns = [
         "workspaces/<str:slug>/chat/",
         ChatConversationsEndpoint.as_view(),
         name="chat-conversations",
+    ),
+    # Sebelum pola <uuid:user_id> supaya niatnya terbaca. Tidak akan bentrok
+    # walau dibalik: "belum-dibaca" bukan UUID yang sah.
+    path(
+        "workspaces/<str:slug>/chat/belum-dibaca/",
+        ChatUnreadEndpoint.as_view(),
+        name="chat-unread",
     ),
     path(
         "workspaces/<str:slug>/chat/<uuid:user_id>/",

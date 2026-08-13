@@ -6,6 +6,8 @@
 
 import type { IWorkspaceSidebarNavigationItem } from "@plane/constants";
 import { SidebarItemBase } from "@/components/workspace/sidebar/sidebar-item";
+// local imports
+import { ChatUnreadBadge } from "./chat-unread-badge";
 
 type Props = {
   item: IWorkspaceSidebarNavigationItem;
@@ -25,6 +27,19 @@ type Props = {
 // saat halaman dimuat ulang. Karena itulah daftar ini ada.
 const PARADISE_ALWAYS_VISIBLE_ITEMS = ["wiki", "dashboard_divisi", "initiatives", "chat"];
 
+// `additionalRender` adalah titik ekstensi yang memang sudah disediakan
+// SidebarItemBase untuk menempelkan sesuatu di kanan label, dan itu yang dipakai
+// upstream untuk lencana notifikasi. Dipakai ulang di sini, bukan menambah props
+// baru ke komponen bersama.
+const renderTambahan = (itemKey: string, workspaceSlug: string) =>
+  itemKey === "chat" ? <ChatUnreadBadge workspaceSlug={workspaceSlug} /> : null;
+
 export function SidebarItem({ item }: Props) {
-  return <SidebarItemBase item={item} additionalStaticItems={PARADISE_ALWAYS_VISIBLE_ITEMS} />;
+  return (
+    <SidebarItemBase
+      item={item}
+      additionalStaticItems={PARADISE_ALWAYS_VISIBLE_ITEMS}
+      additionalRender={renderTambahan}
+    />
+  );
 }

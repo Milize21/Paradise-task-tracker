@@ -95,6 +95,26 @@ class ChatConversationsEndpoint(BaseAPIView):
         return Response(percakapan, status=status.HTTP_200_OK)
 
 
+class ChatUnreadEndpoint(BaseAPIView):
+    """Jumlah pesan belum dibaca di seluruh workspace, untuk lencana sidebar.
+
+    Endpoint terpisah dari daftar percakapan, dan itu bukan duplikasi: lencana
+    ini hidup di sidebar, jadi ikut ditarik dari SETIAP halaman. Memakai
+    endpoint percakapan untuk itu berarti membawa isi pesan terakhir setiap
+    lawan bicara ke tiap halaman cuma untuk menampilkan satu angka.
+
+    Satu COUNT yang seluruhnya dilayani indeks `dm_penerima_dibaca_idx`.
+    """
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def get(self, request, slug):
+        jumlah = PesanLangsung.objects.filter(
+            workspace__slug=slug, penerima=request.user, dibaca_pada__isnull=True
+        ).count()
+        return Response({"jumlah": jumlah}, status=status.HTTP_200_OK)
+
+
 class ChatThreadEndpoint(BaseAPIView):
     """Isi percakapan dengan satu orang, dan pengiriman pesan baru."""
 
