@@ -9,9 +9,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams, useSearchParams } from "react-router";
 import useSWR, { mutate } from "swr";
-import { MessageSquare, Search, Send } from "lucide-react";
+import { MessageSquare, Search, Send, SmilePlus } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
+import { stringToEmoji } from "@plane/propel/emoji-icon-picker";
+import { EmojiReactionPicker } from "@plane/propel/emoji-reaction";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Avatar } from "@plane/ui";
 import { getFileURL, renderFormattedDate, renderFormattedTime } from "@plane/utils";
@@ -22,6 +24,8 @@ import { useMember } from "@/hooks/store/use-member";
 import { useUser } from "@/hooks/store/user";
 // services
 import { ChatService, KUNCI_BELUM_DIBACA, type TPercakapan } from "@/services/chat.service";
+// local imports
+import { susunBaris } from "./baris";
 
 const chatService = new ChatService();
 
@@ -30,6 +34,7 @@ const chatService = new ChatService();
 // ponytail: angka tetap, bukan backoff. Naikkan kalau server terasa berat.
 const SELANG_PESAN = 5000;
 const SELANG_DAFTAR = 15000;
+const TINGGI_TULIS_MAKS = 160;
 
 type TBarisDaftar = { id: string; terakhir: TPercakapan | undefined };
 
@@ -58,7 +63,9 @@ function ChatPage() {
   const [cari, setCari] = useState("");
   const [draf, setDraf] = useState("");
   const [mengirim, setMengirim] = useState(false);
+  const [emojiTerbuka, setEmojiTerbuka] = useState(false);
   const akhirRef = useRef<HTMLDivElement>(null);
+  const tulisRef = useRef<HTMLTextAreaElement>(null);
 
   const slug = workspaceSlug?.toString();
 
@@ -101,7 +108,18 @@ function ChatPage() {
     return [...adaPesan, ...belumPernah].map((id) => ({ id, terakhir: peta.get(id) }));
   }, [percakapan, workspaceMemberIds, currentUser?.id, cari, getWorkspaceMemberDetails]);
 
+  const barisPesan = useMemo(() => susunBaris(pesan ?? [], currentUser?.id), [pesan, currentUser?.id]);
+
   const lawanBicara = dengan ? getWorkspaceMemberDetails(dengan)?.member : undefined;
+
+  const aturTinggiTulis = () => {
+    const el = tulisRef.current;
+    if (!el) return;
+    // Tinggi dinolkan dulu; tanpa itu scrollHeight ikut tinggi lama dan kotaknya
+    // tumbuh terus tapi tidak pernah menyusut lagi.
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, TINGGI_TULIS_MAKS)}px`;
+  };
 
   const kirim = async () => {
     const isi = draf.trim();
@@ -110,6 +128,7 @@ function ChatPage() {
     try {
       await chatService.kirimPesan(slug, dengan, isi);
       setDraf("");
+      if (tulisRef.current) tulisRef.current.style.height = "auto";
       await Promise.all([muatPesan(), muatPercakapan()]);
     } catch (galat) {
       setToast({
@@ -129,9 +148,9 @@ function ChatPage() {
       <PageHead title={t("chat_nav")} />
 
       {/* Daftar orang */}
-      <aside className="flex w-72 shrink-0 flex-col border-r border-subtle">
+      <aside className="flex w-80 shrink-0 flex-col border-r border-subtle">
         <div className="border-b border-subtle p-3">
-          <div className="flex items-center gap-2 rounded-md border border-subtle px-2.5 py-1.5">
+          <div className="focus-within:border-accent-primary flex items-center gap-2 rounded-md border border-subtle px-2.5 py-1.5">
             <Search className="size-3.5 shrink-0 text-tertiary" />
             <input
               type="text"
@@ -150,35 +169,42 @@ function ChatPage() {
             daftar.map(({ id, terakhir }) => {
               const anggota = getWorkspaceMemberDetails(id)?.member;
               const terpilih = id === dengan;
+              const adaBaru = (terakhir?.belum_dibaca ?? 0) > 0;
               return (
                 <button
                   key={id}
                   type="button"
                   onClick={() => setSearchParams({ dengan: id })}
-                  className={`flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-layer-1 ${
+                  className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left hover:bg-layer-1 ${
                     terpilih ? "bg-layer-1-selected" : ""
                   }`}
                 >
                   <Avatar
                     name={anggota?.display_name}
                     src={getFileURL(anggota?.avatar_url ?? "")}
-                    size={28}
+                    size={32}
                     shape="circle"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm truncate font-medium text-primary">{anggota?.display_name ?? "Anggota"}</p>
+                      {/* Belum dibaca ditandai tebal, bukan cuma lencana. Angka
+                          saja mudah terlewat saat menyapu daftar dengan mata. */}
+                      <p className={`text-sm truncate text-primary ${adaBaru ? "font-semibold" : "font-medium"}`}>
+                        {anggota?.display_name ?? "Anggota"}
+                      </p>
                       {terakhir ? (
-                        <span className="text-xs shrink-0 text-tertiary">{waktuRingkas(terakhir.created_at)}</span>
+                        <span className={`text-xs shrink-0 ${adaBaru ? "text-accent-primary" : "text-tertiary"}`}>
+                          {waktuRingkas(terakhir.created_at)}
+                        </span>
                       ) : null}
                     </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs truncate text-tertiary">
+                    <div className="mt-0.5 flex items-center justify-between gap-2">
+                      <p className={`text-xs truncate ${adaBaru ? "font-medium text-secondary" : "text-tertiary"}`}>
                         {terakhir ? `${terakhir.dari_saya ? "Kamu: " : ""}${terakhir.isi}` : "Belum ada pesan"}
                       </p>
-                      {terakhir && terakhir.belum_dibaca > 0 ? (
+                      {adaBaru ? (
                         <span className="text-xs shrink-0 rounded-full bg-accent-primary px-1.5 font-medium text-white">
-                          {terakhir.belum_dibaca}
+                          {terakhir?.belum_dibaca}
                         </span>
                       ) : null}
                     </div>
@@ -193,9 +219,12 @@ function ChatPage() {
       {/* Percakapan */}
       <section className="flex min-w-0 flex-1 flex-col">
         {!dengan ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-tertiary">
-            <MessageSquare className="size-8" />
-            <p className="text-sm">Pilih orang di sebelah kiri untuk mulai mengobrol.</p>
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-tertiary">
+            <MessageSquare className="size-10" strokeWidth={1.25} />
+            <div className="text-center">
+              <p className="text-sm font-medium text-secondary">Belum ada percakapan yang dibuka</p>
+              <p className="text-xs mt-1">Pilih orang di sebelah kiri untuk mulai mengobrol.</p>
+            </div>
           </div>
         ) : (
           <>
@@ -203,33 +232,72 @@ function ChatPage() {
               <Avatar
                 name={lawanBicara?.display_name}
                 src={getFileURL(lawanBicara?.avatar_url ?? "")}
-                size={28}
+                size={32}
                 shape="circle"
               />
               <p className="text-sm font-medium text-primary">{lawanBicara?.display_name ?? "Anggota"}</p>
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-3">
-              {(pesan ?? []).length === 0 ? (
+              {barisPesan.length === 0 ? (
                 <p className="text-sm text-tertiary">Belum ada pesan. Mulai dari sini.</p>
               ) : (
-                <div className="flex flex-col gap-2">
-                  {(pesan ?? []).map((baris) => {
-                    const dariSaya = baris.pengirim === currentUser?.id;
-                    // Gelembung pesan masuk memakai bg-layer-3, BUKAN bg-layer-2:
-                    // di tema terang layer-2 adalah putih polos, jadi gelembungnya
-                    // tidak terlihat sebagai gelembung sama sekali.
+                <div className="flex flex-col">
+                  {barisPesan.map((baris) => {
+                    if (baris.jenis === "tanggal")
+                      return (
+                        <div key={baris.kunci} className="my-3 flex items-center justify-center">
+                          <span className="text-xs rounded-full bg-layer-3 px-2.5 py-1 font-medium text-secondary">
+                            {baris.label}
+                          </span>
+                        </div>
+                      );
+
+                    if (baris.jenis === "belum-dibaca")
+                      return (
+                        <div key={baris.kunci} className="my-3 flex items-center gap-2">
+                          <div className="h-px flex-1 bg-accent-primary/40" />
+                          <span className="text-xs font-medium text-accent-primary">Pesan belum dibaca</span>
+                          <div className="h-px flex-1 bg-accent-primary/40" />
+                        </div>
+                      );
+
+                    const { pesan: p, dariSaya, awalKelompok, akhirKelompok } = baris;
                     return (
-                      <div key={baris.id} className={`flex ${dariSaya ? "justify-end" : "justify-start"}`}>
+                      <div
+                        key={baris.kunci}
+                        className={`flex items-end gap-2 ${awalKelompok ? "mt-2" : "mt-0.5"} ${
+                          dariSaya ? "justify-end" : "justify-start"
+                        }`}
+                      >
+                        {/* Avatar hanya di pesan pertama tiap kelompok. Sisanya
+                            diberi ruang kosong selebar avatar supaya gelembungnya
+                            tetap sejajar. */}
+                        {!dariSaya ? (
+                          <div className="w-7 shrink-0">
+                            {awalKelompok ? (
+                              <Avatar
+                                name={lawanBicara?.display_name}
+                                src={getFileURL(lawanBicara?.avatar_url ?? "")}
+                                size={28}
+                                shape="circle"
+                              />
+                            ) : null}
+                          </div>
+                        ) : null}
                         <div
-                          className={`max-w-[70%] rounded-lg px-3 py-2 ${
-                            dariSaya ? "bg-accent-primary text-white" : "bg-layer-3 text-primary"
+                          className={`max-w-[68%] px-3 py-2 ${
+                            dariSaya
+                              ? `bg-accent-primary text-white ${awalKelompok ? "rounded-2xl rounded-br-md" : "rounded-2xl rounded-tr-md rounded-br-md"}`
+                              : `bg-layer-3 text-primary ${awalKelompok ? "rounded-2xl rounded-bl-md" : "rounded-2xl rounded-tl-md rounded-bl-md"}`
                           }`}
                         >
-                          <p className="text-sm break-words whitespace-pre-wrap">{baris.isi}</p>
-                          <p className={`text-xs mt-1 ${dariSaya ? "text-white/70" : "text-tertiary"}`}>
-                            {renderFormattedTime(baris.created_at)}
-                          </p>
+                          <p className="text-sm break-words whitespace-pre-wrap">{p.isi}</p>
+                          {akhirKelompok ? (
+                            <p className={`text-xs mt-1 ${dariSaya ? "text-white/70" : "text-tertiary"}`}>
+                              {renderFormattedTime(p.created_at)}
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                     );
@@ -240,9 +308,33 @@ function ChatPage() {
             </div>
 
             <div className="flex items-end gap-2 border-t border-subtle p-3">
+              <EmojiReactionPicker
+                isOpen={emojiTerbuka}
+                handleToggle={setEmojiTerbuka}
+                placement="top-start"
+                onChange={(emoji) => {
+                  // Picker memberi kode desimal, bukan karakternya. Tanpa
+                  // stringToEmoji yang masuk ke pesan adalah angka.
+                  setDraf((sebelumnya) => `${sebelumnya}${stringToEmoji(emoji)}`);
+                  setEmojiTerbuka(false);
+                  tulisRef.current?.focus();
+                }}
+                label={
+                  <span
+                    className="flex size-9 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary"
+                    aria-label="Sisipkan emoji"
+                  >
+                    <SmilePlus className="size-4" />
+                  </span>
+                }
+              />
               <textarea
+                ref={tulisRef}
                 value={draf}
-                onChange={(e) => setDraf(e.target.value)}
+                onChange={(e) => {
+                  setDraf(e.target.value);
+                  aturTinggiTulis();
+                }}
                 onKeyDown={(e) => {
                   // Enter mengirim, Shift+Enter ganti baris. Kebiasaan yang
                   // sudah dibawa orang dari aplikasi obrolan lain.
@@ -254,14 +346,14 @@ function ChatPage() {
                 rows={1}
                 placeholder="Tulis pesan"
                 aria-label="Tulis pesan"
-                className="text-sm max-h-32 min-h-9 flex-1 resize-y rounded-md border border-subtle bg-transparent px-3 py-2 text-primary outline-none placeholder:text-placeholder"
+                className="text-sm focus:border-accent-primary min-h-9 flex-1 resize-none rounded-md border border-subtle bg-transparent px-3 py-2 text-primary outline-none placeholder:text-placeholder"
               />
               <button
                 type="button"
                 onClick={() => void kirim()}
                 disabled={mengirim || draf.trim().length === 0}
                 aria-label="Kirim pesan"
-                className="flex h-9 items-center gap-1.5 rounded-md bg-accent-primary px-3 text-white disabled:opacity-50"
+                className="flex size-9 items-center justify-center rounded-md bg-accent-primary text-white disabled:opacity-40"
               >
                 <Send className="size-4" />
               </button>

@@ -98,6 +98,27 @@ class TestChat:
         assert PesanLangsung.objects.filter(pengirim=aku, dibaca_pada__isnull=False).count() == 0
 
     @pytest.mark.django_db
+    def test_penanda_baru_dihitung_sebelum_ditandai_terbaca(self, kantor):
+        """UI memakai `baru` untuk menarik garis "pesan belum dibaca".
+
+        Kalau penandanya dihitung SESUDAH UPDATE terbaca jalan, semuanya sudah
+        terbaca dan garis itu tidak akan pernah muncul untuk siapa pun. Gagalnya
+        senyap: responsnya tetap 200 dan pesannya tetap lengkap.
+        """
+        workspace, aku, budi, _ = kantor
+        _pesan(workspace, aku, budi, "punyaku", menit_lalu=3)
+        _pesan(workspace, budi, aku, "punya budi", menit_lalu=2)
+
+        client = APIClient()
+        client.force_authenticate(user=aku)
+        res = client.get(f"/api/workspaces/{workspace.slug}/chat/{budi.id}/")
+
+        assert [p["baru"] for p in res.data] == [False, True]
+        # Muatan kedua: sudah terbaca, jadi tidak ada lagi yang ditandai baru.
+        res2 = client.get(f"/api/workspaces/{workspace.slug}/chat/{budi.id}/")
+        assert [p["baru"] for p in res2.data] == [False, False]
+
+    @pytest.mark.django_db
     def test_jumlah_belum_dibaca_hanya_menghitung_pesan_masuk(self, kantor):
         workspace, aku, budi, citra = kantor
         _pesan(workspace, budi, aku, "satu", menit_lalu=3)

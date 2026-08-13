@@ -22,6 +22,9 @@ export type TPesan = {
   pengirim: string;
   isi: string;
   created_at: string;
+  /** Belum dibaca saat percakapan ini dimuat. Dihitung server SEBELUM menandai
+   * terbaca, jadi hanya benar pada muatan pertama sesudah pesan itu masuk. */
+  baru: boolean;
 };
 
 /** Kunci SWR untuk jumlah belum dibaca.

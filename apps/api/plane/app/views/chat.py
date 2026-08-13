@@ -38,12 +38,17 @@ from .base import BaseAPIView
 JUMLAH_PESAN = 100
 
 
-def _bentuk(pesan):
+def _bentuk(pesan, saya_id=None):
     return {
         "id": str(pesan.id),
         "pengirim": str(pesan.pengirim_id),
         "isi": pesan.isi,
         "created_at": pesan.created_at,
+        # Dipakai UI untuk menarik garis "pesan belum dibaca" di posisi yang
+        # tepat. WAJIB dihitung SEBELUM percakapan ditandai terbaca: sesudah
+        # UPDATE jalan, semuanya sudah terbaca dan garisnya tidak akan pernah
+        # muncul untuk siapa pun.
+        "baru": pesan.dibaca_pada is None and pesan.pengirim_id != saya_id,
     }
 
 
@@ -130,7 +135,7 @@ class ChatThreadEndpoint(BaseAPIView):
         )
         # Diambil menurun supaya yang terpotong adalah pesan TERTUA, lalu
         # dibalik supaya peramban menerimanya urut waktu.
-        isi = [_bentuk(p) for p in reversed(list(pesan))]
+        isi = [_bentuk(p, request.user.id) for p in reversed(list(pesan))]
 
         # Membuka percakapan berarti membacanya. Satu UPDATE beríndeks, dan
         # tidak melakukan apa-apa kalau memang tidak ada yang belum dibaca.
@@ -170,4 +175,4 @@ class ChatThreadEndpoint(BaseAPIView):
             penerima_id=user_id,
             isi=isi,
         )
-        return Response(_bentuk(pesan), status=status.HTTP_201_CREATED)
+        return Response(_bentuk(pesan, request.user.id), status=status.HTTP_201_CREATED)
