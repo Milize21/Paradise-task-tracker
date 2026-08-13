@@ -14,7 +14,7 @@ import { MessageSquare, Search, Send } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Avatar } from "@plane/ui";
-import { calculateTimeAgo, getFileURL, renderFormattedTime } from "@plane/utils";
+import { getFileURL, renderFormattedDate, renderFormattedTime } from "@plane/utils";
 // components
 import { PageHead } from "@/components/core/page-title";
 // hooks
@@ -34,6 +34,17 @@ const SELANG_PESAN = 5000;
 const SELANG_DAFTAR = 15000;
 
 type TBarisDaftar = { id: string; terakhir: TPercakapan | undefined };
+
+/** Jam untuk pesan hari ini, tanggal untuk yang lebih lama.
+ *
+ * Bukan calculateTimeAgo: hasilnya berbahasa Inggris di UI berbahasa Indonesia,
+ * dan "less than a minute ago" cukup panjang untuk mendesak nama orang sampai
+ * terpotong jadi "Um...". */
+const waktuRingkas = (waktu: string): string => {
+  const tanggal = new Date(waktu);
+  const hariIni = new Date().toDateString() === tanggal.toDateString();
+  return (hariIni ? renderFormattedTime(waktu) : renderFormattedDate(waktu, "dd MMM")) ?? "";
+};
 
 function ChatPage() {
   const { workspaceSlug } = useParams();
@@ -79,18 +90,13 @@ function ChatPage() {
       const nama = getWorkspaceMemberDetails(id)?.member?.display_name ?? "";
       return nama.toLowerCase().includes(kunciCari);
     });
-    // Yang sudah pernah mengobrol naik ke atas menurut waktu; sisanya tetap
-    // menurut nama, karena store sudah mengurutkannya begitu.
-    return kandidat
-      .toSorted((a, b) => {
-        const pa = peta.get(a);
-        const pb = peta.get(b);
-        if (pa && pb) return pa.created_at < pb.created_at ? 1 : -1;
-        if (pa) return -1;
-        if (pb) return 1;
-        return 0;
-      })
-      .map((id) => ({ id, terakhir: peta.get(id) }));
+    // Tidak ada pengurutan di sini sama sekali. Server sudah mengirim percakapan
+    // terbaru lebih dulu, dan store sudah mengurutkan anggota menurut nama, jadi
+    // menyambung dua daftar yang masing-masing sudah urut sudah cukup.
+    const cocok = new Set(kandidat);
+    const adaPesan = (percakapan ?? []).map((baris) => baris.lawan_bicara).filter((id) => cocok.has(id));
+    const belumPernah = kandidat.filter((id) => !peta.has(id));
+    return [...adaPesan, ...belumPernah].map((id) => ({ id, terakhir: peta.get(id) }));
   }, [percakapan, workspaceMemberIds, currentUser?.id, cari, getWorkspaceMemberDetails]);
 
   const lawanBicara = dengan ? getWorkspaceMemberDetails(dengan)?.member : undefined;
@@ -147,8 +153,8 @@ function ChatPage() {
                   key={id}
                   type="button"
                   onClick={() => setSearchParams({ dengan: id })}
-                  className={`flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-layer-2 ${
-                    terpilih ? "bg-layer-2" : ""
+                  className={`flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-layer-1 ${
+                    terpilih ? "bg-layer-1-selected" : ""
                   }`}
                 >
                   <Avatar
@@ -161,7 +167,7 @@ function ChatPage() {
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm truncate font-medium text-primary">{anggota?.display_name ?? "Anggota"}</p>
                       {terakhir ? (
-                        <span className="text-xs shrink-0 text-tertiary">{calculateTimeAgo(terakhir.created_at)}</span>
+                        <span className="text-xs shrink-0 text-tertiary">{waktuRingkas(terakhir.created_at)}</span>
                       ) : null}
                     </div>
                     <div className="flex items-center justify-between gap-2">
@@ -208,11 +214,14 @@ function ChatPage() {
                 <div className="flex flex-col gap-2">
                   {(pesan ?? []).map((baris) => {
                     const dariSaya = baris.pengirim === currentUser?.id;
+                    // Gelembung pesan masuk memakai bg-layer-3, BUKAN bg-layer-2:
+                    // di tema terang layer-2 adalah putih polos, jadi gelembungnya
+                    // tidak terlihat sebagai gelembung sama sekali.
                     return (
                       <div key={baris.id} className={`flex ${dariSaya ? "justify-end" : "justify-start"}`}>
                         <div
                           className={`max-w-[70%] rounded-lg px-3 py-2 ${
-                            dariSaya ? "bg-accent-primary text-white" : "bg-layer-2 text-primary"
+                            dariSaya ? "bg-accent-primary text-white" : "bg-layer-3 text-primary"
                           }`}
                         >
                           <p className="text-sm break-words whitespace-pre-wrap">{baris.isi}</p>

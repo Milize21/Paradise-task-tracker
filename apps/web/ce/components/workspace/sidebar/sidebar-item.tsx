@@ -18,7 +18,12 @@ type Props = {
 // "Customize navigation", yang tidak akan dilakukan orang yang belum tahu
 // fiturnya ada. Didaftarkan di sini supaya selalu tampil, memakai titik
 // ekstensi yang memang sudah disediakan upstream.
-const PARADISE_ALWAYS_VISIBLE_ITEMS = ["wiki", "dashboard_divisi", "initiatives"];
+// ⚠️ Mem-pin lewat "Customize navigation" TIDAK berpengaruh untuk kunci di
+// daftar ini. Backend hanya menyimpan preferensi untuk kunci yang terdaftar di
+// WorkspaceUserPreference.UserPreferenceKeys, dan PATCH-nya `continue` diam-diam
+// untuk kunci yang tidak dikenal. Jadi centangnya tersimpan di layar lalu hilang
+// saat halaman dimuat ulang. Karena itulah daftar ini ada.
+const PARADISE_ALWAYS_VISIBLE_ITEMS = ["wiki", "dashboard_divisi", "initiatives", "chat"];
 
 export function SidebarItem({ item }: Props) {
   return <SidebarItemBase item={item} additionalStaticItems={PARADISE_ALWAYS_VISIBLE_ITEMS} />;
