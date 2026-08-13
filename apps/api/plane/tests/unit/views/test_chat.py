@@ -17,7 +17,7 @@ import pytest
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from plane.db.models import PesanLangsung, User, Workspace, WorkspaceMember
+from plane.db.models import FileAsset, PesanLangsung, User, Workspace, WorkspaceMember
 
 
 def _pesan(workspace, dari, ke, isi, menit_lalu):
@@ -191,6 +191,67 @@ class TestChat:
         # Yang diawasi tidak boleh kehilangan tanda "belum dibaca" gara-gara
         # dibaca pengawas.
         assert PesanLangsung.objects.filter(dibaca_pada__isnull=True).count() == 2
+
+    @pytest.mark.django_db
+    def test_lampiran_hanya_boleh_dibuka_pihak_yang_berhak(self, kantor):
+        """Penjaga lampiran, diuji lewat fungsinya langsung.
+
+        Fungsi ini dipanggil DUA endpoint: milik Obrolan dan endpoint unduhan
+        bawaan yang melayani setiap anggota workspace. Kalau ia salah, id
+        lampiran yang bocor sekali bisa dibuka siapa pun yang punya akun.
+        """
+        from plane.app.views.chat import boleh_lihat_lampiran
+
+        workspace, aku, budi, citra = kantor
+        pesan = _pesan(workspace, budi, citra, "ini fotonya", menit_lalu=1)
+        aset = FileAsset.objects.create(
+            attributes={"name": "foto.jpg", "type": "image/jpeg"},
+            asset="x/foto.jpg",
+            size=10,
+            workspace=workspace,
+            created_by=budi,
+            entity_type=FileAsset.EntityTypeContext.CHAT_ATTACHMENT,
+            entity_identifier=str(pesan.id),
+            is_uploaded=True,
+        )
+
+        assert boleh_lihat_lampiran(budi, aset, workspace.slug) is True, "pengirim boleh"
+        assert boleh_lihat_lampiran(citra, aset, workspace.slug) is True, "penerima boleh"
+        assert boleh_lihat_lampiran(aku, aset, workspace.slug) is True, "pemilik workspace boleh"
+
+        orang_lain = _orang("dewi")
+        WorkspaceMember.objects.create(workspace=workspace, member=orang_lain, role=15)
+        assert boleh_lihat_lampiran(orang_lain, aset, workspace.slug) is False, (
+            "anggota lain TIDAK boleh, walau punya akun dan tahu id-nya"
+        )
+
+    @pytest.mark.django_db
+    def test_lampiran_orang_lain_tidak_bisa_ditempel_ke_pesan_sendiri(self, kantor):
+        workspace, aku, budi, citra = kantor
+        # Berkas milik Citra, belum menempel ke pesan mana pun.
+        aset = FileAsset.objects.create(
+            attributes={"name": "rahasia.pdf", "type": "application/pdf"},
+            asset="x/rahasia.pdf",
+            size=10,
+            workspace=workspace,
+            created_by=citra,
+            entity_type=FileAsset.EntityTypeContext.CHAT_ATTACHMENT,
+            is_uploaded=True,
+        )
+
+        client = APIClient()
+        client.force_authenticate(user=budi)
+        res = client.post(
+            f"/api/workspaces/{workspace.slug}/chat/{aku.id}/",
+            {"isi": "lihat ini", "lampiran": [str(aset.id)]},
+            format="json",
+        )
+
+        # Pesannya tetap terkirim, tapi berkas orang lain TIDAK ikut menempel.
+        assert res.status_code == 201
+        assert res.data["lampiran"] == []
+        aset.refresh_from_db()
+        assert aset.entity_identifier is None
 
     @pytest.mark.django_db
     def test_pesan_kosong_ditolak(self, kantor):

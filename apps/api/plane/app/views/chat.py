@@ -25,12 +25,15 @@ from django.db.models import Count, Max, Q
 from django.utils import timezone
 
 # Third Party imports
+from django.http import HttpResponseRedirect
 from rest_framework import status
 from rest_framework.response import Response
 
+from plane.settings.storage import S3Storage
+
 # Module imports
 from plane.app.permissions import WorkspaceEntityPermission
-from plane.db.models import BATAS_ISI, PesanLangsung, Workspace, WorkspaceMember
+from plane.db.models import BATAS_ISI, FileAsset, PesanLangsung, Workspace, WorkspaceMember
 
 from .base import BaseAPIView
 
@@ -68,12 +71,45 @@ def _pengawas(request, slug) -> bool:
     return Workspace.objects.filter(slug=slug, owner=request.user).exists()
 
 
-def _bentuk(pesan, saya_id=None):
+# Berapa lampiran boleh menempel pada satu pesan.
+BATAS_LAMPIRAN = 5
+
+
+def _peta_lampiran(pesan_ids, slug):
+    """Lampiran seluruh pesan dalam SATU kueri, dikelompokkan per pesan.
+
+    Tanpa ini, merender 100 pesan berarti 100 kueri lampiran. Kuncinya
+    `entity_identifier`, yang sudah ter-indeks bersama `entity_type`.
+    """
+    peta = {}
+    aset = FileAsset.objects.filter(
+        entity_type=FileAsset.EntityTypeContext.CHAT_ATTACHMENT,
+        entity_identifier__in=[str(i) for i in pesan_ids],
+        is_uploaded=True,
+    )
+    for a in aset:
+        peta.setdefault(a.entity_identifier, []).append(
+            {
+                "id": str(a.id),
+                "nama": a.attributes.get("name", ""),
+                "tipe": a.attributes.get("type", ""),
+                "ukuran": a.size,
+                # URL berpenjaga milik Obrolan, BUKAN /assets/v2/static/ yang
+                # AllowAny. Yang statis itu memang hanya melayani avatar dan
+                # logo, dan memang seharusnya begitu.
+                "url": f"/api/workspaces/{slug}/chat/lampiran/{a.id}/",
+            }
+        )
+    return peta
+
+
+def _bentuk(pesan, slug, saya_id=None, lampiran=None):
     return {
         "id": str(pesan.id),
         "pengirim": str(pesan.pengirim_id),
         "isi": pesan.isi,
         "created_at": pesan.created_at,
+        "lampiran": lampiran or [],
         # Dipakai UI untuk menarik garis "pesan belum dibaca" di posisi yang
         # tepat. WAJIB dihitung SEBELUM percakapan ditandai terbaca: sesudah
         # UPDATE jalan, semuanya sudah terbaca dan garisnya tidak akan pernah
@@ -236,7 +272,68 @@ class ChatPengawasanThreadEndpoint(BaseAPIView):
         )
         # `saya_id` sengaja None: di layar pengawasan tidak ada "pesan saya",
         # dan tidak ada pesan yang perlu ditandai baru.
-        return Response([_bentuk(p) for p in reversed(list(pesan))], status=status.HTTP_200_OK)
+        urut = list(reversed(list(pesan)))
+        peta = _peta_lampiran([p.id for p in urut], slug)
+        return Response(
+            [_bentuk(p, slug, None, peta.get(str(p.id))) for p in urut],
+            status=status.HTTP_200_OK,
+        )
+
+
+def boleh_lihat_lampiran(user, aset, slug) -> bool:
+    """Penjaga tunggal lampiran obrolan.
+
+    Satu fungsi, dipakai endpoint Obrolan MAUPUN endpoint unduhan bawaan, supaya
+    tidak ada pintu belakang. Endpoint unduhan workspace bawaan melayani setiap
+    anggota untuk aset apa pun; tanpa penjaga ini, id lampiran yang bocor sekali
+    bisa dibuka siapa saja yang punya akun.
+    """
+    if aset.entity_type != FileAsset.EntityTypeContext.CHAT_ATTACHMENT:
+        return True  # bukan urusan fungsi ini
+    if not aset.entity_identifier:
+        # Belum menempel ke pesan mana pun: hanya pengunggahnya.
+        return aset.created_by_id == user.id
+    pesan = PesanLangsung.objects.filter(id=aset.entity_identifier).first()
+    if pesan is None:
+        return False
+    if user.id in (pesan.pengirim_id, pesan.penerima_id):
+        return True
+    # Pemilik workspace, jalur yang sama dengan layar pengawasan.
+    return Workspace.objects.filter(slug=slug, owner=user).exists()
+
+
+class ChatLampiranEndpoint(BaseAPIView):
+    """Unduh satu lampiran obrolan, hanya untuk pihak yang berhak."""
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def get(self, request, slug, asset_id):
+        aset = FileAsset.objects.filter(
+            id=asset_id,
+            workspace__slug=slug,
+            entity_type=FileAsset.EntityTypeContext.CHAT_ATTACHMENT,
+            is_uploaded=True,
+        ).first()
+        if aset is None:
+            return Response({"error": "Lampiran tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not boleh_lihat_lampiran(request.user, aset, slug):
+            logger.warning(
+                "lampiran-chat: %s DITOLAK membuka lampiran %s",
+                request.user.email,
+                asset_id,
+            )
+            return Response({"error": "Bukan lampiran Anda."}, status=status.HTTP_403_FORBIDDEN)
+
+        storage = S3Storage(request=request)
+        # `inline` supaya gambar dan video tampil di dalam percakapan, bukan
+        # terunduh sebagai berkas tiap kali dilihat.
+        signed = storage.generate_presigned_url(
+            object_name=aset.asset.name,
+            disposition="inline",
+            filename=aset.attributes.get("name", "lampiran"),
+        )
+        return HttpResponseRedirect(signed)
 
 
 class ChatThreadEndpoint(BaseAPIView):
@@ -254,7 +351,9 @@ class ChatThreadEndpoint(BaseAPIView):
         )
         # Diambil menurun supaya yang terpotong adalah pesan TERTUA, lalu
         # dibalik supaya peramban menerimanya urut waktu.
-        isi = [_bentuk(p, request.user.id) for p in reversed(list(pesan))]
+        urut = list(reversed(list(pesan)))
+        peta = _peta_lampiran([p.id for p in urut], slug)
+        isi = [_bentuk(p, slug, request.user.id, peta.get(str(p.id))) for p in urut]
 
         # Membuka percakapan berarti membacanya. Satu UPDATE beríndeks, dan
         # tidak melakukan apa-apa kalau memang tidak ada yang belum dibaca.
@@ -269,7 +368,15 @@ class ChatThreadEndpoint(BaseAPIView):
 
     def post(self, request, slug, user_id):
         isi = (request.data.get("isi") or "").strip()
-        if not isi:
+        lampiran_ids = request.data.get("lampiran") or []
+        if not isinstance(lampiran_ids, list) or len(lampiran_ids) > BATAS_LAMPIRAN:
+            return Response(
+                {"error": f"Lampiran maksimum {BATAS_LAMPIRAN} berkas."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # Kosong hanya ditolak kalau lampirannya juga kosong. Mengirim gambar
+        # tanpa keterangan apa pun itu hal yang wajar dilakukan orang.
+        if not isi and not lampiran_ids:
             return Response({"error": "Pesan kosong."}, status=status.HTTP_400_BAD_REQUEST)
         if len(isi) > BATAS_ISI:
             return Response(
@@ -294,4 +401,29 @@ class ChatThreadEndpoint(BaseAPIView):
             penerima_id=user_id,
             isi=isi,
         )
-        return Response(_bentuk(pesan, request.user.id), status=status.HTTP_201_CREATED)
+
+        if lampiran_ids:
+            # Yang boleh ditempel HANYA berkas yang diunggah orang ini sendiri,
+            # di workspace ini, bertipe lampiran obrolan, dan belum menempel di
+            # pesan mana pun. Tanpa keempatnya, id berkas milik orang lain bisa
+            # ditempelkan ke pesan sendiri lalu isinya ikut terbaca.
+            terpakai = FileAsset.objects.filter(
+                id__in=lampiran_ids,
+                workspace__slug=slug,
+                created_by=request.user,
+                entity_type=FileAsset.EntityTypeContext.CHAT_ATTACHMENT,
+                entity_identifier__isnull=True,
+            ).update(entity_identifier=str(pesan.id))
+            if terpakai != len(lampiran_ids):
+                logger.warning(
+                    "lampiran-chat: %s mengirim %s id, hanya %s yang sah",
+                    request.user.email,
+                    len(lampiran_ids),
+                    terpakai,
+                )
+
+        peta = _peta_lampiran([pesan.id], slug)
+        return Response(
+            _bentuk(pesan, slug, request.user.id, peta.get(str(pesan.id))),
+            status=status.HTTP_201_CREATED,
+        )

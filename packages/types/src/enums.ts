@@ -72,6 +72,8 @@ export enum EFileAssetType {
   INITIATIVE_DESCRIPTION = "INITIATIVE_DESCRIPTION",
   PROJECT_DESCRIPTION = "PROJECT_DESCRIPTION",
   TEAM_SPACE_COMMENT_DESCRIPTION = "TEAM_SPACE_COMMENT_DESCRIPTION",
+  /** Kustomisasi Paradise (Yorukaze Production): lampiran pesan Obrolan. */
+  CHAT_ATTACHMENT = "CHAT_ATTACHMENT",
 }
 
 export type TEditorAssetType =

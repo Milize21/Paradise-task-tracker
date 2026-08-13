@@ -17,11 +17,21 @@ export type TPercakapan = {
   belum_dibaca: number;
 };
 
+export type TLampiran = {
+  id: string;
+  nama: string;
+  tipe: string;
+  ukuran: number;
+  /** URL berpenjaga; hanya pengirim, penerima, dan pemilik workspace. */
+  url: string;
+};
+
 export type TPesan = {
   id: string;
   pengirim: string;
   isi: string;
   created_at: string;
+  lampiran: TLampiran[];
   /** Belum dibaca saat percakapan ini dimuat. Dihitung server SEBELUM menandai
    * terbaca, jadi hanya benar pada muatan pertama sesudah pesan itu masuk. */
   baru: boolean;
@@ -96,8 +106,8 @@ export class ChatService extends APIService {
       });
   }
 
-  async kirimPesan(workspaceSlug: string, userId: string, isi: string): Promise<TPesan> {
-    return this.post(`/api/workspaces/${workspaceSlug}/chat/${userId}/`, { isi })
+  async kirimPesan(workspaceSlug: string, userId: string, isi: string, lampiran: string[] = []): Promise<TPesan> {
+    return this.post(`/api/workspaces/${workspaceSlug}/chat/${userId}/`, { isi, lampiran })
       .then((res) => res?.data)
       .catch((e) => {
         throw e?.response?.data;

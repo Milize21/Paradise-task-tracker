@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { Link, useParams, useSearchParams } from "react-router";
 import useSWR, { mutate } from "swr";
-import { Eye, MessageSquare, Search, Send, SmilePlus } from "lucide-react";
+import { Eye, MessageSquare, Paperclip, Search, Send, SmilePlus, X } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { stringToEmoji } from "@plane/propel/emoji-icon-picker";
@@ -23,11 +23,15 @@ import { PageHead } from "@/components/core/page-title";
 import { useMember } from "@/hooks/store/use-member";
 import { useUser } from "@/hooks/store/user";
 // services
+import { EFileAssetType } from "@plane/types";
+import { FileService } from "@/services/file.service";
 import { ChatService, KUNCI_BELUM_DIBACA, type TPercakapan } from "@/services/chat.service";
 // local imports
 import { susunBaris } from "./baris";
+import { DaftarLampiran, ukuranTerbaca } from "./lampiran";
 
 const chatService = new ChatService();
+const fileService = new FileService();
 
 // Selang tarik-ulang. Percakapan yang sedang dibuka diperiksa lebih sering
 // daripada daftarnya, karena di situlah orang menunggu balasan.
@@ -64,6 +68,9 @@ function ChatPage() {
   const [draf, setDraf] = useState("");
   const [mengirim, setMengirim] = useState(false);
   const [emojiTerbuka, setEmojiTerbuka] = useState(false);
+  const [lampiran, setLampiran] = useState<{ id: string; nama: string; ukuran: number }[]>([]);
+  const [mengunggah, setMengunggah] = useState(false);
+  const berkasRef = useRef<HTMLInputElement>(null);
   const akhirRef = useRef<HTMLDivElement>(null);
   const tulisRef = useRef<HTMLTextAreaElement>(null);
 
@@ -125,13 +132,54 @@ function ChatPage() {
     el.style.height = `${Math.min(el.scrollHeight, TINGGI_TULIS_MAKS)}px`;
   };
 
+  const unggah = async (berkas: FileList | null) => {
+    if (!berkas || berkas.length === 0 || !slug) return;
+    setMengunggah(true);
+    // allSettled, bukan all: satu berkas yang ditolak server tidak boleh
+    // membuang berkas lain yang sudah berhasil naik.
+    const hasil = await Promise.allSettled(
+      Array.from(berkas).map(async (f) => {
+        // entity_identifier dikosongkan: pesannya belum ada saat berkas
+        // diunggah. Server yang menempelkannya ke pesan begitu terkirim, dan
+        // hanya menerima berkas yang diunggah orang yang sama.
+        const res = await fileService.uploadWorkspaceAsset(
+          slug,
+          { entity_identifier: "", entity_type: EFileAssetType.CHAT_ATTACHMENT },
+          f
+        );
+        return { id: res.asset_id, nama: f.name, ukuran: f.size };
+      })
+    );
+
+    const berhasil = hasil.filter((h) => h.status === "fulfilled").map((h) => h.value);
+    if (berhasil.length > 0) setLampiran((sebelumnya) => [...sebelumnya, ...berhasil]);
+
+    const gagal = hasil.length - berhasil.length;
+    if (gagal > 0)
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: gagal === hasil.length ? "Berkas gagal diunggah" : `${gagal} berkas gagal diunggah`,
+        message: "Ukurannya mungkin melebihi batas, atau tipenya tidak diizinkan.",
+      });
+
+    setMengunggah(false);
+    if (berkasRef.current) berkasRef.current.value = "";
+  };
+
   const kirim = async () => {
     const isi = draf.trim();
-    if (!isi || !slug || !dengan || mengirim) return;
+    // Boleh mengirim tanpa teks asal ada lampiran.
+    if ((!isi && lampiran.length === 0) || !slug || !dengan || mengirim || mengunggah) return;
     setMengirim(true);
     try {
-      await chatService.kirimPesan(slug, dengan, isi);
+      await chatService.kirimPesan(
+        slug,
+        dengan,
+        isi,
+        lampiran.map((l) => l.id)
+      );
       setDraf("");
+      setLampiran([]);
       if (tulisRef.current) tulisRef.current.style.height = "auto";
       await Promise.all([muatPesan(), muatPercakapan()]);
     } catch (galat) {
@@ -212,7 +260,9 @@ function ChatPage() {
                     </div>
                     <div className="mt-0.5 flex items-center justify-between gap-2">
                       <p className={`text-xs truncate ${adaBaru ? "font-medium text-secondary" : "text-tertiary"}`}>
-                        {terakhir ? `${terakhir.dari_saya ? "Kamu: " : ""}${terakhir.isi}` : "Belum ada pesan"}
+                        {terakhir
+                          ? `${terakhir.dari_saya ? "Kamu: " : ""}${terakhir.isi || "mengirim lampiran"}`
+                          : "Belum ada pesan"}
                       </p>
                       {adaBaru ? (
                         <span className="text-xs shrink-0 rounded-full bg-accent-primary px-1.5 font-medium text-white">
@@ -304,7 +354,8 @@ function ChatPage() {
                               : `bg-layer-3 text-primary ${awalKelompok ? "rounded-2xl rounded-bl-md" : "rounded-2xl rounded-tl-md rounded-bl-md"}`
                           }`}
                         >
-                          <p className="text-sm break-words whitespace-pre-wrap">{p.isi}</p>
+                          {p.isi ? <p className="text-sm break-words whitespace-pre-wrap">{p.isi}</p> : null}
+                          <DaftarLampiran lampiran={p.lampiran} terang={dariSaya} />
                           {akhirKelompok ? (
                             <p className={`text-xs mt-1 ${dariSaya ? "text-white/70" : "text-tertiary"}`}>
                               {renderFormattedTime(p.created_at)}
@@ -319,56 +370,90 @@ function ChatPage() {
               <div ref={akhirRef} />
             </div>
 
-            <div className="flex items-end gap-2 border-t border-subtle p-3">
-              <EmojiReactionPicker
-                isOpen={emojiTerbuka}
-                handleToggle={setEmojiTerbuka}
-                placement="top-start"
-                onChange={(emoji) => {
-                  // Picker memberi kode desimal, bukan karakternya. Tanpa
-                  // stringToEmoji yang masuk ke pesan adalah angka.
-                  setDraf((sebelumnya) => `${sebelumnya}${stringToEmoji(emoji)}`);
-                  setEmojiTerbuka(false);
-                  tulisRef.current?.focus();
-                }}
-                label={
-                  <span
-                    className="flex size-9 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary"
-                    aria-label="Sisipkan emoji"
-                  >
-                    <SmilePlus className="size-4" />
-                  </span>
-                }
-              />
-              <textarea
-                ref={tulisRef}
-                value={draf}
-                onChange={(e) => {
-                  setDraf(e.target.value);
-                  aturTinggiTulis();
-                }}
-                onKeyDown={(e) => {
-                  // Enter mengirim, Shift+Enter ganti baris. Kebiasaan yang
-                  // sudah dibawa orang dari aplikasi obrolan lain.
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void kirim();
+            <div className="flex flex-col gap-2 border-t border-subtle p-3">
+              {lampiran.length > 0 || mengunggah ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  {lampiran.map((l) => (
+                    <span
+                      key={l.id}
+                      className="text-xs flex items-center gap-1.5 rounded-md border border-subtle px-2 py-1 text-secondary"
+                    >
+                      <span className="max-w-40 truncate">{l.nama}</span>
+                      <span className="text-tertiary">{ukuranTerbaca(l.ukuran)}</span>
+                      <button
+                        type="button"
+                        onClick={() => setLampiran((s2) => s2.filter((x) => x.id !== l.id))}
+                        aria-label={`Buang ${l.nama}`}
+                        className="text-tertiary hover:text-primary"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </span>
+                  ))}
+                  {mengunggah ? <span className="text-xs text-tertiary">Mengunggah…</span> : null}
+                </div>
+              ) : null}
+              <div className="flex items-end gap-2">
+                <input ref={berkasRef} type="file" multiple hidden onChange={(e) => void unggah(e.target.files)} />
+                <button
+                  type="button"
+                  onClick={() => berkasRef.current?.click()}
+                  disabled={mengunggah}
+                  aria-label="Lampirkan berkas"
+                  className="flex size-9 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary disabled:opacity-40"
+                >
+                  <Paperclip className="size-4" />
+                </button>
+                <EmojiReactionPicker
+                  isOpen={emojiTerbuka}
+                  handleToggle={setEmojiTerbuka}
+                  placement="top-start"
+                  onChange={(emoji) => {
+                    // Picker memberi kode desimal, bukan karakternya. Tanpa
+                    // stringToEmoji yang masuk ke pesan adalah angka.
+                    setDraf((sebelumnya) => `${sebelumnya}${stringToEmoji(emoji)}`);
+                    setEmojiTerbuka(false);
+                    tulisRef.current?.focus();
+                  }}
+                  label={
+                    <span
+                      className="flex size-9 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary"
+                      aria-label="Sisipkan emoji"
+                    >
+                      <SmilePlus className="size-4" />
+                    </span>
                   }
-                }}
-                rows={1}
-                placeholder="Tulis pesan"
-                aria-label="Tulis pesan"
-                className="text-sm focus:border-accent-primary min-h-9 flex-1 resize-none rounded-md border border-subtle bg-transparent px-3 py-2 text-primary outline-none placeholder:text-placeholder"
-              />
-              <button
-                type="button"
-                onClick={() => void kirim()}
-                disabled={mengirim || draf.trim().length === 0}
-                aria-label="Kirim pesan"
-                className="flex size-9 items-center justify-center rounded-md bg-accent-primary text-white disabled:opacity-40"
-              >
-                <Send className="size-4" />
-              </button>
+                />
+                <textarea
+                  ref={tulisRef}
+                  value={draf}
+                  onChange={(e) => {
+                    setDraf(e.target.value);
+                    aturTinggiTulis();
+                  }}
+                  onKeyDown={(e) => {
+                    // Enter mengirim, Shift+Enter ganti baris. Kebiasaan yang
+                    // sudah dibawa orang dari aplikasi obrolan lain.
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      void kirim();
+                    }
+                  }}
+                  rows={1}
+                  placeholder="Tulis pesan"
+                  aria-label="Tulis pesan"
+                  className="text-sm focus:border-accent-primary min-h-9 flex-1 resize-none rounded-md border border-subtle bg-transparent px-3 py-2 text-primary outline-none placeholder:text-placeholder"
+                />
+                <button
+                  type="button"
+                  onClick={() => void kirim()}
+                  disabled={mengirim || mengunggah || (draf.trim().length === 0 && lampiran.length === 0)}
+                  aria-label="Kirim pesan"
+                  className="flex size-9 items-center justify-center rounded-md bg-accent-primary text-white disabled:opacity-40"
+                >
+                  <Send className="size-4" />
+                </button>
+              </div>
             </div>
           </>
         )}

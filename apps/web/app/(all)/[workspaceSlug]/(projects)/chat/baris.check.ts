@@ -28,6 +28,7 @@ const pesan = (id: string, pengirim: string, waktu: string, baru = false) => ({
   isi: id,
   created_at: waktu,
   baru,
+  lampiran: [],
 });
 
 const sekarang = new Date("2026-08-13T10:00:00");

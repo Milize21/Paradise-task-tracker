@@ -43,7 +43,11 @@ def allowed_mime_types(entity_type):
     Satu fungsi dipakai ketiga endpoint unggah supaya daftarnya tidak bercabang,
     dulu blok yang sama disalin tiga kali dan gampang tertinggal saat diubah.
     """
-    if entity_type == FileAsset.EntityTypeContext.PAGE_DESCRIPTION:
+    if entity_type in (
+        FileAsset.EntityTypeContext.PAGE_DESCRIPTION,
+        # Lampiran Obrolan: gambar, video, dan dokumen, sama seperti Wiki.
+        FileAsset.EntityTypeContext.CHAT_ATTACHMENT,
+    ):
         return settings.ATTACHMENT_MIME_TYPES
     return IMAGE_MIME_TYPES
 
@@ -905,6 +909,19 @@ class WorkspaceAssetDownloadEndpoint(BaseAPIView):
                 is_uploaded=True,
             )
         except FileAsset.DoesNotExist:
+            return Response(
+                {"error": "The requested asset could not be found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Kustomisasi Paradise (Yorukaze Production): endpoint ini melayani
+        # SETIAP anggota workspace untuk aset apa pun. Untuk lampiran Obrolan
+        # itu terlalu longgar: id yang bocor sekali bisa dibuka siapa saja yang
+        # punya akun. Penjaganya dipanggil di sini, bukan disalin, supaya
+        # aturannya cuma hidup di satu tempat.
+        from plane.app.views.chat import boleh_lihat_lampiran
+
+        if not boleh_lihat_lampiran(request.user, asset, slug):
             return Response(
                 {"error": "The requested asset could not be found."},
                 status=status.HTTP_404_NOT_FOUND,

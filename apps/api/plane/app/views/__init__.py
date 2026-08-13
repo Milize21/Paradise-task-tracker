@@ -196,6 +196,7 @@ from .google_calendar import (
 )
 from .chat import (
     ChatConversationsEndpoint,
+    ChatLampiranEndpoint,
     ChatPengawasanEndpoint,
     ChatPengawasanThreadEndpoint,
     ChatThreadEndpoint,
