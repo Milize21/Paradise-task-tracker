@@ -84,6 +84,11 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/initiatives", "./(all)/[workspaceSlug]/(projects)/initiatives/page.tsx"),
         ]),
 
+        // Obrolan antar-karyawan (Paradise/Yorukaze Production)
+        layout("./(all)/[workspaceSlug]/(projects)/chat/layout.tsx", [
+          route(":workspaceSlug/chat", "./(all)/[workspaceSlug]/(projects)/chat/page.tsx"),
+        ]),
+
         // Wiki (Paradise/Yorukaze Production), pintasan yang meresolusi project WIKI lalu
         // redirect. Tanpa layout: halamannya cuma redirect, tidak punya chrome.
         route(":workspaceSlug/wiki", "./(all)/[workspaceSlug]/(projects)/wiki/page.tsx"),

@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { BookText, LayoutDashboard, Target } from "lucide-react";
+import { BookText, LayoutDashboard, MessageSquare, Target } from "lucide-react";
 import {
   AnalyticsIcon,
   ArchiveIcon,
@@ -50,5 +50,7 @@ export const getSidebarNavigationItemIcon = (key: string, className: string = ""
       return <LayoutDashboard className={cn("size-4 flex-shrink-0", className)} />;
     case "initiatives":
       return <Target className={cn("size-4 flex-shrink-0", className)} />;
+    case "chat":
+      return <MessageSquare className={cn("size-4 flex-shrink-0", className)} />;
   }
 };

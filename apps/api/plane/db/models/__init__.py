@@ -88,6 +88,7 @@ from .wiki_access import WikiGovernedProject, WikiFolderAccess
 from .superadmin_visibility import SuperAdminTerlihatDiProject
 from .deadline_reminder import PengingatTenggat, SEMUA_TITIK, TITIK_OVERDUE, TITIK_SEBELUM
 from .google_calendar import AcaraKalender, KalenderGoogle, SCOPE_KALENDER
+from .chat import PesanLangsung, BATAS_ISI
 from .login_activity import LoginActivity, AMBANG_AKTIF_MENIT, RETENSI_HARI
 
 from .recent_visit import UserRecentVisit

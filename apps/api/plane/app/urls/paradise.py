@@ -7,6 +7,8 @@ from django.urls import path
 
 from plane.app.views import (
     ProjectTrashEndpoint,
+    ChatConversationsEndpoint,
+    ChatThreadEndpoint,
     DivisionDashboardEndpoint,
     WorkLogExportEndpoint,
     GoogleCalendarCallbackEndpoint,
@@ -61,6 +63,16 @@ urlpatterns = [
         "workspaces/<str:slug>/initiatives/<uuid:pk>/projects/<uuid:project_id>/",
         InitiativeViewSet.as_view({"delete": "unlink_project"}),
         name="initiative-projects",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/",
+        ChatConversationsEndpoint.as_view(),
+        name="chat-conversations",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/<uuid:user_id>/",
+        ChatThreadEndpoint.as_view(),
+        name="chat-thread",
     ),
     path(
         "workspaces/<str:slug>/divisi-dashboard/",

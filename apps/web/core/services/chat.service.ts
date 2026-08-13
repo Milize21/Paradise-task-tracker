@@ -1,0 +1,55 @@
+/**
+ * Copyright (c) 2023-present Plane Software, Inc. and contributors
+ * Kustomisasi Paradise Task Tracker: pesan langsung antar-karyawan (Yorukaze Production)
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * See the LICENSE file for details.
+ */
+
+import { API_BASE_URL } from "@plane/constants";
+// services
+import { APIService } from "@/services/api.service";
+
+export type TPercakapan = {
+  lawan_bicara: string;
+  isi: string;
+  dari_saya: boolean;
+  created_at: string;
+  belum_dibaca: number;
+};
+
+export type TPesan = {
+  id: string;
+  pengirim: string;
+  isi: string;
+  created_at: string;
+};
+
+export class ChatService extends APIService {
+  constructor() {
+    super(API_BASE_URL);
+  }
+
+  async getPercakapan(workspaceSlug: string): Promise<TPercakapan[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async getPesan(workspaceSlug: string, userId: string): Promise<TPesan[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/${userId}/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async kirimPesan(workspaceSlug: string, userId: string, isi: string): Promise<TPesan> {
+    return this.post(`/api/workspaces/${workspaceSlug}/chat/${userId}/`, { isi })
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+}

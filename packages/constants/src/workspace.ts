@@ -227,6 +227,16 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
+  // Obrolan antar-karyawan (Paradise/Yorukaze Production). "chat_nav", BUKAN
+  // "chat", mengikuti alasan wiki_nav di bawah: kunci daun bernama "chat" akan
+  // bentrok dengan sync:check begitu ada namespace chat.* di kemudian hari.
+  chat: {
+    key: "chat",
+    labelTranslationKey: "chat_nav",
+    href: `/chat/`,
+    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
+    highlight: (pathname: string, url: string) => pathname.includes(url),
+  },
   // Wiki perusahaan (Paradise/Yorukaze Production). href SENGAJA statis `/wiki/`, halaman itu
   // meresolusi project ber-identifier WIKI lalu redirect. Jangan menaruh UUID
   // project di sini: UUID-nya berbeda di tiap instance, jadi akan salah di server
@@ -255,6 +265,7 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS: IWorkspaceSidebar
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["analytics"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["dashboard_divisi"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["initiatives"],
+  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["chat"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["wiki"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["archives"],
 ];
