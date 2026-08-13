@@ -9,10 +9,8 @@ from plane.app.views import (
     ProjectTrashEndpoint,
     ChatConversationsEndpoint,
     ChatLampiranEndpoint,
-    ChatPengawasanEndpoint,
     ChatPesanEndpoint,
     ChatReaksiEndpoint,
-    ChatPengawasanThreadEndpoint,
     ChatThreadEndpoint,
     ChatUnreadEndpoint,
     DivisionDashboardEndpoint,
@@ -86,18 +84,6 @@ urlpatterns = [
         "workspaces/<str:slug>/chat/lampiran/<uuid:asset_id>/",
         ChatLampiranEndpoint.as_view(),
         name="chat-lampiran",
-    ),
-    # Pengawasan pemilik instance. Ditaruh SEBELUM pola <uuid:user_id> supaya
-    # "pengawasan" tidak pernah ditafsirkan sebagai id lawan bicara.
-    path(
-        "workspaces/<str:slug>/chat/pengawasan/",
-        ChatPengawasanEndpoint.as_view(),
-        name="chat-pengawasan",
-    ),
-    path(
-        "workspaces/<str:slug>/chat/pengawasan/<uuid:user_a>/<uuid:user_b>/",
-        ChatPengawasanThreadEndpoint.as_view(),
-        name="chat-pengawasan-thread",
     ),
     # Operasi pada satu pesan. Ditaruh sebelum pola <uuid:user_id> supaya
     # "pesan" tidak pernah ditafsirkan sebagai id lawan bicara.

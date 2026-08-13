@@ -56,15 +56,6 @@ export const KUNCI_BELUM_DIBACA = "CHAT_BELUM_DIBACA";
 
 export type TStatusObrolan = {
   jumlah: number;
-  /** Pemilik workspace: boleh membuka layar pengawasan. */
-  pengawas: boolean;
-};
-
-/** Satu percakapan antara dua orang, dilihat dari layar pengawasan. */
-export type TPasanganObrolan = {
-  orang: [string, string];
-  jumlah: number;
-  terakhir: string;
 };
 
 export class ChatService extends APIService {
@@ -82,7 +73,7 @@ export class ChatService extends APIService {
 
   async getStatus(workspaceSlug: string): Promise<TStatusObrolan> {
     return this.get(`/api/workspaces/${workspaceSlug}/chat/belum-dibaca/`)
-      .then((res) => ({ jumlah: res?.data?.jumlah ?? 0, pengawas: res?.data?.pengawas ?? false }))
+      .then((res) => ({ jumlah: res?.data?.jumlah ?? 0 }))
       .catch((e) => {
         // Dilempar, bukan ditelan jadi 0. SWR menyimpannya di `error` dan
         // lencana cukup tidak tampil; menelannya berarti "tidak ada pesan baru"
@@ -120,22 +111,6 @@ export class ChatService extends APIService {
 
   async toggleReaksi(workspaceSlug: string, pesanId: string, emoji: string): Promise<{ aktif: boolean }> {
     return this.post(`/api/workspaces/${workspaceSlug}/chat/pesan/${pesanId}/reaksi/`, { emoji })
-      .then((res) => res?.data)
-      .catch((e) => {
-        throw e?.response?.data;
-      });
-  }
-
-  async getPengawasan(workspaceSlug: string): Promise<TPasanganObrolan[]> {
-    return this.get(`/api/workspaces/${workspaceSlug}/chat/pengawasan/`)
-      .then((res) => res?.data)
-      .catch((e) => {
-        throw e?.response?.data;
-      });
-  }
-
-  async getPengawasanPesan(workspaceSlug: string, a: string, b: string): Promise<TPesan[]> {
-    return this.get(`/api/workspaces/${workspaceSlug}/chat/pengawasan/${a}/${b}/`)
       .then((res) => res?.data)
       .catch((e) => {
         throw e?.response?.data;

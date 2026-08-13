@@ -7,18 +7,19 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { Link, useParams, useSearchParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import useSWR, { mutate } from "swr";
 import {
   ChevronUp,
   CornerUpLeft,
-  Eye,
   MessageSquare,
   Paperclip,
   Pencil,
   Search,
   Send,
   SmilePlus,
+  Volume2,
+  VolumeX,
   X,
 } from "lucide-react";
 // plane imports
@@ -32,6 +33,7 @@ import { getFileURL, renderFormattedDate, renderFormattedTime } from "@plane/uti
 import { PageHead } from "@/components/core/page-title";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
+import { useSuaraNotifikasi } from "@/hooks/use-suara-notifikasi";
 import { useUser } from "@/hooks/store/user";
 // services
 import { EFileAssetType } from "@plane/types";
@@ -89,6 +91,8 @@ function ChatPage() {
   const [mengunggah, setMengunggah] = useState(false);
   const berkasRef = useRef<HTMLInputElement>(null);
   const akhirRef = useRef<HTMLDivElement>(null);
+  const { bunyikan, nyala: suaraNyala, setNyala: setSuaraNyala } = useSuaraNotifikasi();
+  const pesanTerakhirRef = useRef<string | null>(null);
   const tulisRef = useRef<HTMLTextAreaElement>(null);
 
   const slug = workspaceSlug?.toString();
@@ -98,10 +102,6 @@ function ChatPage() {
     slug ? () => chatService.getPercakapan(slug) : null,
     { refreshInterval: SELANG_DAFTAR }
   );
-
-  // Kunci yang sama dengan lencana di sidebar, jadi ini tidak menambah satu
-  // permintaan pun: SWR mengembalikan nilai yang sudah ada di cache.
-  const { data: status } = useSWR(slug ? KUNCI_BELUM_DIBACA : null, slug ? () => chatService.getStatus(slug) : null);
 
   const { data: pesan, mutate: muatPesan } = useSWR(
     slug && dengan ? `CHAT_PESAN_${slug}_${dengan}` : null,
@@ -117,6 +117,21 @@ function ChatPage() {
     setMembalas(null);
     setMenyunting(null);
   }, [dengan]);
+
+  // Berbunyi saat pesan MASUK baru tiba di percakapan yang sedang terbuka.
+  // Lencana sidebar tidak bisa mengurus ini: membuka percakapan menandainya
+  // terbaca, jadi angkanya tidak pernah naik dan bunyinya tidak pernah keluar.
+  useEffect(() => {
+    const daftar = pesan ?? [];
+    const terakhir = daftar[daftar.length - 1];
+    if (!terakhir) {
+      pesanTerakhirRef.current = null;
+      return;
+    }
+    const berganti = pesanTerakhirRef.current !== null && pesanTerakhirRef.current !== terakhir.id;
+    if (berganti && terakhir.pengirim !== currentUser?.id) bunyikan("pesan");
+    pesanTerakhirRef.current = terakhir.id;
+  }, [pesan, currentUser?.id, bunyikan]);
 
   // Selalu tampilkan pesan terbaru saat percakapan bertambah atau berganti.
   useEffect(() => {
@@ -291,8 +306,8 @@ function ChatPage() {
 
       {/* Daftar orang */}
       <aside className="flex w-80 shrink-0 flex-col border-r border-subtle">
-        <div className="border-b border-subtle p-3">
-          <div className="focus-within:border-accent-primary flex items-center gap-2 rounded-md border border-subtle px-2.5 py-1.5">
+        <div className="flex items-center gap-2 border-b border-subtle p-3">
+          <div className="focus-within:border-accent-primary flex flex-1 items-center gap-2 rounded-md border border-subtle px-2.5 py-1.5">
             <Search className="size-3.5 shrink-0 text-tertiary" />
             <input
               type="text"
@@ -303,14 +318,15 @@ function ChatPage() {
               className="text-sm w-full bg-transparent text-primary outline-none placeholder:text-placeholder"
             />
           </div>
-          {status?.pengawas ? (
-            <Link
-              to={`/${slug}/chat/pengawasan`}
-              className="text-xs mt-2 flex items-center justify-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-secondary hover:bg-layer-1"
-            >
-              <Eye className="size-3.5" /> Pengawasan semua obrolan
-            </Link>
-          ) : null}
+          <button
+            type="button"
+            onClick={() => setSuaraNyala(!suaraNyala)}
+            aria-label={suaraNyala ? "Matikan suara notifikasi" : "Nyalakan suara notifikasi"}
+            title={suaraNyala ? "Suara notifikasi menyala" : "Suara notifikasi mati"}
+            className="flex size-9 shrink-0 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary"
+          >
+            {suaraNyala ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+          </button>
         </div>
         <div className="flex-1 overflow-y-auto">
           {daftar.length === 0 ? (
