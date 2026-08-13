@@ -165,6 +165,14 @@ function ChatPage() {
               className="text-sm w-full bg-transparent text-primary outline-none placeholder:text-placeholder"
             />
           </div>
+          {status?.pengawas ? (
+            <Link
+              to={`/${slug}/chat/pengawasan`}
+              className="text-xs mt-2 flex items-center justify-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-secondary hover:bg-layer-1"
+            >
+              <Eye className="size-3.5" /> Pengawasan semua obrolan
+            </Link>
+          ) : null}
         </div>
         <div className="flex-1 overflow-y-auto">
           {daftar.length === 0 ? (
@@ -240,14 +248,6 @@ function ChatPage() {
                 shape="circle"
               />
               <p className="text-sm font-medium text-primary">{lawanBicara?.display_name ?? "Anggota"}</p>
-              {status?.pengawas ? (
-                <Link
-                  to={`/${slug}/chat/pengawasan`}
-                  className="text-xs ml-auto flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-secondary hover:bg-layer-1"
-                >
-                  <Eye className="size-3.5" /> Pengawasan
-                </Link>
-              ) : null}
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-3">
