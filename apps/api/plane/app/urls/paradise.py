@@ -8,6 +8,8 @@ from django.urls import path
 from plane.app.views import (
     ProjectTrashEndpoint,
     ChatConversationsEndpoint,
+    ChatPengawasanEndpoint,
+    ChatPengawasanThreadEndpoint,
     ChatThreadEndpoint,
     ChatUnreadEndpoint,
     DivisionDashboardEndpoint,
@@ -76,6 +78,18 @@ urlpatterns = [
         "workspaces/<str:slug>/chat/belum-dibaca/",
         ChatUnreadEndpoint.as_view(),
         name="chat-unread",
+    ),
+    # Pengawasan pemilik instance. Ditaruh SEBELUM pola <uuid:user_id> supaya
+    # "pengawasan" tidak pernah ditafsirkan sebagai id lawan bicara.
+    path(
+        "workspaces/<str:slug>/chat/pengawasan/",
+        ChatPengawasanEndpoint.as_view(),
+        name="chat-pengawasan",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/pengawasan/<uuid:user_a>/<uuid:user_b>/",
+        ChatPengawasanThreadEndpoint.as_view(),
+        name="chat-pengawasan-thread",
     ),
     path(
         "workspaces/<str:slug>/chat/<uuid:user_id>/",

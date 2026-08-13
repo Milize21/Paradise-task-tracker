@@ -17,8 +17,11 @@ Kalau tercapai, jalur naiknya sudah ada dan jangan ganti dengan Django Channels:
 yang menyiarkan pesan baru, dan endpoint ini tetap jadi satu-satunya penulis.
 """
 
+# Python imports
+import logging
+
 # Django imports
-from django.db.models import Count, Q
+from django.db.models import Count, Max, Q
 from django.utils import timezone
 
 # Third Party imports
@@ -27,15 +30,42 @@ from rest_framework.response import Response
 
 # Module imports
 from plane.app.permissions import WorkspaceEntityPermission
-from plane.db.models import BATAS_ISI, PesanLangsung, WorkspaceMember
+from plane.db.models import BATAS_ISI, PesanLangsung, Workspace, WorkspaceMember
 
 from .base import BaseAPIView
+
+# "plane.api", BUKAN "plane". Konfigurasi logging produksi memakai
+# disable_existing_loggers dan TIDAK punya entri untuk "plane" polos, jadi
+# catatan yang dikirim ke sana tidak sampai ke mana-mana. Untuk jejak audit,
+# itu kegagalan yang paling buruk bentuknya: terlihat ada di kode, tidak ada
+# di kenyataan, dan baru ketahuan saat dibutuhkan.
+logger = logging.getLogger("plane.api")
 
 # Berapa pesan terakhir yang dikirim ke peramban saat percakapan dibuka.
 # ponytail: tanpa penggulungan ke belakang. Pesan ke-101 masih ada di database
 # dan tidak hilang, cuma belum bisa dilihat dari UI. Tambahkan parameter
 # `sebelum=<created_at>` di sini kalau ada yang benar-benar memintanya.
 JUMLAH_PESAN = 100
+
+# Berapa pesan yang ditampilkan di layar pengawasan sekali buka.
+JUMLAH_PESAN_PENGAWASAN = 500
+
+
+def _pengawas(request, slug) -> bool:
+    """Boleh membaca obrolan orang lain?
+
+    HANYA pemilik workspace. Sengaja BUKAN `super_admin_user_ids()` yang dipakai
+    penyembunyian project, walaupun itu terdengar setara: instance ini punya
+    lima instance admin dan tiga di antaranya akun vendor luar
+    (@itechmandiri.com). Melihat seluruh project adalah kewenangan operasional;
+    membaca pesan pribadi 79 orang bukan, dan memberikannya ke pihak ketiga
+    lewat kesetaraan peran adalah keputusan yang tidak pernah diambil siapa pun
+    secara sadar.
+
+    Kalau nanti memang diinginkan, ganti isi fungsi ini, jangan tambal di
+    endpoint satu per satu.
+    """
+    return Workspace.objects.filter(slug=slug, owner=request.user).exists()
 
 
 def _bentuk(pesan, saya_id=None):
@@ -117,7 +147,96 @@ class ChatUnreadEndpoint(BaseAPIView):
         jumlah = PesanLangsung.objects.filter(
             workspace__slug=slug, penerima=request.user, dibaca_pada__isnull=True
         ).count()
-        return Response({"jumlah": jumlah}, status=status.HTTP_200_OK)
+        # `pengawas` menumpang di sini, dan itu disengaja: endpoint ini sudah
+        # ditarik dari setiap halaman, jadi UI bisa tahu apakah perlu menampilkan
+        # tautan pengawasan tanpa satu pun permintaan tambahan. Menaruhnya di
+        # endpoint sendiri berarti 79 orang memanggil endpoint yang jawabannya
+        # "tidak" selamanya.
+        return Response(
+            {"jumlah": jumlah, "pengawas": _pengawas(request, slug)},
+            status=status.HTTP_200_OK,
+        )
+
+
+class ChatPengawasanEndpoint(BaseAPIView):
+    """Daftar SELURUH percakapan di workspace, untuk pemilik instance.
+
+    Aplikasi internal perusahaan, dan pemiliknya berhak mengawasi. Tiga hal
+    dipasang supaya kewenangan ini tetap bisa dipertanggungjawabkan:
+
+    1. Hanya pemilik workspace, lihat `_pengawas()`.
+    2. Tiap pembacaan dicatat ke log aplikasi berikut siapa membaca percakapan
+       siapa. Kewenangan yang tidak meninggalkan jejak adalah kewenangan yang
+       tidak bisa dibela kalau suatu hari dipertanyakan.
+    3. Membaca di sini TIDAK menandai pesan terbaca. Kalau menandai, penerima
+       aslinya kehilangan tanda "belum dibaca" tanpa pernah membukanya, dan
+       pengawasan diam-diam mengubah keadaan yang diawasinya.
+    """
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def get(self, request, slug):
+        if not _pengawas(request, slug):
+            return Response({"error": "Hanya pemilik workspace."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Satu GROUP BY untuk seluruh workspace, lalu arah bolak-balik digabung
+        # jadi satu pasangan di Python. Tanpa penggabungan itu, obrolan A ke B
+        # dan B ke A tampil sebagai dua baris terpisah.
+        arah = (
+            PesanLangsung.objects.filter(workspace__slug=slug)
+            .values("pengirim_id", "penerima_id")
+            .annotate(jumlah=Count("id"), terakhir=Max("created_at"))
+        )
+
+        pasangan = {}
+        for baris in arah:
+            kunci = tuple(sorted([str(baris["pengirim_id"]), str(baris["penerima_id"])]))
+            ada = pasangan.get(kunci)
+            if ada is None:
+                pasangan[kunci] = {
+                    "orang": list(kunci),
+                    "jumlah": baris["jumlah"],
+                    "terakhir": baris["terakhir"],
+                }
+            else:
+                ada["jumlah"] += baris["jumlah"]
+                ada["terakhir"] = max(ada["terakhir"], baris["terakhir"])
+
+        hasil = sorted(pasangan.values(), key=lambda b: b["terakhir"], reverse=True)
+        logger.info(
+            "pengawasan-chat: %s membuka daftar percakapan workspace %s (%s pasangan)",
+            request.user.email,
+            slug,
+            len(hasil),
+        )
+        return Response(hasil, status=status.HTTP_200_OK)
+
+
+class ChatPengawasanThreadEndpoint(BaseAPIView):
+    """Isi percakapan antara dua orang mana pun, untuk pemilik instance."""
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def get(self, request, slug, user_a, user_b):
+        if not _pengawas(request, slug):
+            return Response({"error": "Hanya pemilik workspace."}, status=status.HTTP_403_FORBIDDEN)
+
+        pesan = (
+            PesanLangsung.objects.filter(workspace__slug=slug)
+            .filter(
+                Q(pengirim_id=user_a, penerima_id=user_b) | Q(pengirim_id=user_b, penerima_id=user_a)
+            )
+            .order_by("-created_at")[:JUMLAH_PESAN_PENGAWASAN]
+        )
+        logger.info(
+            "pengawasan-chat: %s membaca percakapan %s dengan %s",
+            request.user.email,
+            user_a,
+            user_b,
+        )
+        # `saya_id` sengaja None: di layar pengawasan tidak ada "pesan saya",
+        # dan tidak ada pesan yang perlu ditandai baru.
+        return Response([_bentuk(p) for p in reversed(list(pesan))], status=status.HTTP_200_OK)
 
 
 class ChatThreadEndpoint(BaseAPIView):

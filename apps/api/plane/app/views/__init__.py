@@ -194,7 +194,13 @@ from .google_calendar import (
     GoogleCalendarConnectEndpoint,
     GoogleCalendarStatusEndpoint,
 )
-from .chat import ChatConversationsEndpoint, ChatThreadEndpoint, ChatUnreadEndpoint
+from .chat import (
+    ChatConversationsEndpoint,
+    ChatPengawasanEndpoint,
+    ChatPengawasanThreadEndpoint,
+    ChatThreadEndpoint,
+    ChatUnreadEndpoint,
+)
 from .page.wiki_access import WikiAccessEndpoint, WikiFolderAccessEndpoint
 
 from .search.base import GlobalSearchEndpoint, SearchEndpoint

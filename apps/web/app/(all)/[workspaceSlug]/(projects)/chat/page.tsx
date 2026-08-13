@@ -7,9 +7,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { useParams, useSearchParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 import useSWR, { mutate } from "swr";
-import { MessageSquare, Search, Send, SmilePlus } from "lucide-react";
+import { Eye, MessageSquare, Search, Send, SmilePlus } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { stringToEmoji } from "@plane/propel/emoji-icon-picker";
@@ -74,6 +74,10 @@ function ChatPage() {
     slug ? () => chatService.getPercakapan(slug) : null,
     { refreshInterval: SELANG_DAFTAR }
   );
+
+  // Kunci yang sama dengan lencana di sidebar, jadi ini tidak menambah satu
+  // permintaan pun: SWR mengembalikan nilai yang sudah ada di cache.
+  const { data: status } = useSWR(slug ? KUNCI_BELUM_DIBACA : null, slug ? () => chatService.getStatus(slug) : null);
 
   const { data: pesan, mutate: muatPesan } = useSWR(
     slug && dengan ? `CHAT_PESAN_${slug}_${dengan}` : null,
@@ -236,6 +240,14 @@ function ChatPage() {
                 shape="circle"
               />
               <p className="text-sm font-medium text-primary">{lawanBicara?.display_name ?? "Anggota"}</p>
+              {status?.pengawas ? (
+                <Link
+                  to={`/${slug}/chat/pengawasan`}
+                  className="text-xs ml-auto flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-secondary hover:bg-layer-1"
+                >
+                  <Eye className="size-3.5" /> Pengawasan
+                </Link>
+              ) : null}
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-3">

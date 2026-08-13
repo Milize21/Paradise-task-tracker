@@ -89,6 +89,14 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/chat", "./(all)/[workspaceSlug]/(projects)/chat/page.tsx"),
         ]),
 
+        // Pengawasan obrolan, hanya pemilik workspace. Layout sendiri karena
+        // breadcrumb-nya berbeda dan halaman ini bukan bagian dari alur chat
+        // biasa. Penjaga sebenarnya ada di server; halaman ini hanya menutup
+        // pintunya di layar.
+        layout("./(all)/[workspaceSlug]/(projects)/chat/pengawasan/layout.tsx", [
+          route(":workspaceSlug/chat/pengawasan", "./(all)/[workspaceSlug]/(projects)/chat/pengawasan/page.tsx"),
+        ]),
+
         // Wiki (Paradise/Yorukaze Production), pintasan yang meresolusi project WIKI lalu
         // redirect. Tanpa layout: halamannya cuma redirect, tidak punya chrome.
         route(":workspaceSlug/wiki", "./(all)/[workspaceSlug]/(projects)/wiki/page.tsx"),

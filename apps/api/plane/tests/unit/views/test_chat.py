@@ -151,6 +151,48 @@ class TestChat:
         assert PesanLangsung.objects.count() == 0
 
     @pytest.mark.django_db
+    def test_pengawasan_ditolak_untuk_yang_bukan_pemilik(self, kantor):
+        """Ini penjaga utama fitur pengawasan.
+
+        Kalau rusak, seluruh isi obrolan 79 orang terbuka untuk anggota biasa,
+        dan tidak ada gejala apa pun di layar yang menandakannya.
+        """
+        workspace, aku, budi, citra = kantor
+        _pesan(workspace, budi, citra, "obrolan orang lain", menit_lalu=5)
+
+        client = APIClient()
+        client.force_authenticate(user=budi)  # anggota biasa, bukan pemilik
+        daftar = client.get(f"/api/workspaces/{workspace.slug}/chat/pengawasan/")
+        isi = client.get(f"/api/workspaces/{workspace.slug}/chat/pengawasan/{budi.id}/{citra.id}/")
+
+        assert daftar.status_code == 403
+        assert isi.status_code == 403
+
+    @pytest.mark.django_db
+    def test_pemilik_melihat_percakapan_orang_lain_tanpa_menandai_terbaca(self, kantor):
+        workspace, aku, budi, citra = kantor
+        _pesan(workspace, budi, citra, "halo citra", menit_lalu=5)
+        _pesan(workspace, citra, budi, "halo budi", menit_lalu=4)
+
+        client = APIClient()
+        client.force_authenticate(user=aku)  # pemilik workspace
+        daftar = client.get(f"/api/workspaces/{workspace.slug}/chat/pengawasan/")
+
+        assert daftar.status_code == 200
+        # Dua arah digabung jadi SATU pasangan, bukan dua baris.
+        assert len(daftar.data) == 1
+        assert daftar.data[0]["jumlah"] == 2
+        assert sorted(daftar.data[0]["orang"]) == sorted([str(budi.id), str(citra.id)])
+
+        isi = client.get(f"/api/workspaces/{workspace.slug}/chat/pengawasan/{budi.id}/{citra.id}/")
+        assert isi.status_code == 200
+        assert [p["isi"] for p in isi.data] == ["halo citra", "halo budi"]
+
+        # Yang diawasi tidak boleh kehilangan tanda "belum dibaca" gara-gara
+        # dibaca pengawas.
+        assert PesanLangsung.objects.filter(dibaca_pada__isnull=True).count() == 2
+
+    @pytest.mark.django_db
     def test_pesan_kosong_ditolak(self, kantor):
         workspace, aku, budi, _ = kantor
 

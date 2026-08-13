@@ -36,7 +36,9 @@ from plane.utils.exception_logger import log_exception
 from .chat_email import kirim_email_pesan
 from celery import shared_task
 
-logger = logging.getLogger("plane")
+# "plane.worker": lihat catatan yang sama di app/views/chat.py. Logger "plane"
+# polos tidak terdaftar di konfigurasi produksi.
+logger = logging.getLogger("plane.worker")
 
 # Umur minimum pesan sebelum layak diberitahukan.
 JEDA_TENANG = timedelta(minutes=10)

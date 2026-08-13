@@ -24,13 +24,14 @@ const SELANG = 30000;
 type Props = { workspaceSlug: string };
 
 export const ChatUnreadBadge = observer(function ChatUnreadBadge({ workspaceSlug }: Props) {
-  const { data: jumlah } = useSWR(
+  const { data: status } = useSWR(
     workspaceSlug ? KUNCI_BELUM_DIBACA : null,
-    workspaceSlug ? () => chatService.getJumlahBelumDibaca(workspaceSlug) : null,
+    workspaceSlug ? () => chatService.getStatus(workspaceSlug) : null,
     { refreshInterval: SELANG }
   );
 
-  if (!jumlah || jumlah <= 0) return <></>;
+  const jumlah = status?.jumlah ?? 0;
+  if (jumlah <= 0) return <></>;
 
   return (
     <div className="ml-auto">
