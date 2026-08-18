@@ -52,7 +52,18 @@ async function tuangKandidat(pc: RTCPeerConnection, antre: RTCIceCandidateInit[]
   await Promise.all(antre.map((k) => pc.addIceCandidate(new RTCIceCandidate(k)).catch(() => undefined)));
 }
 
-export type TStatusPanggilan = "diam" | "memanggil" | "berdering" | "tersambung";
+/**
+ * `menyambungkan` ADA karena versi sebelumnya berbohong.
+ *
+ * Dulu status langsung jadi `tersambung` begitu SDP selesai dipertukarkan,
+ * padahal saat itu ICE belum tentu berhasil menemukan jalur dan media belum
+ * tentu mengalir sama sekali. Layar menulis "Tersambung" sementara kedua pihak
+ * tidak mendengar apa-apa, dan yang melaporkannya hanya bisa bilang "aneh".
+ *
+ * Sekarang `tersambung` HANYA disetel dari `connectionState === "connected"`,
+ * yaitu satu-satunya penanda bahwa jalur medianya benar-benar terbentuk.
+ */
+export type TStatusPanggilan = "diam" | "memanggil" | "berdering" | "menyambungkan" | "tersambung";
 
 type TSinyal =
   | { jenis: "tawaran"; sdp: RTCSessionDescriptionInit; video: boolean }
@@ -92,6 +103,8 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
    * tawaran hanya beberapa milidetik kemudian. Yang dibuang di sini biasanya
    * justru kandidat host, yaitu satu-satunya yang berguna di dalam LAN. */
   const antreIceRef = useRef<RTCIceCandidateInit[]>([]);
+  const gagalRef = useRef(onGagal);
+  gagalRef.current = onGagal;
 
   const bereskan = useCallback(() => {
     pcRef.current?.close();
@@ -133,11 +146,21 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
       pc.oniceconnectionstatechange = () => setKoneksi("ice: " + pc.iceConnectionState);
       pc.onconnectionstatechange = () => {
         setKoneksi(pc.connectionState);
+        // SATU-SATUNYA tempat status naik jadi `tersambung`.
         if (pc.connectionState === "connected") setStatus("tersambung");
         // `failed` dan `closed` saja. `disconnected` sering pulih sendiri dalam
         // beberapa detik saat jaringan berkedip, dan membereskannya di situ
         // memutus panggilan yang sebenarnya masih bisa diselamatkan.
-        if (pc.connectionState === "failed" || pc.connectionState === "closed") bereskan();
+        if (pc.connectionState === "failed") {
+          // Berbicara, bukan menghilang diam-diam. Sebelumnya layar panggilan
+          // sekadar lenyap tanpa keterangan, dan dari sisi pemakai itu tidak
+          // bisa dibedakan dari panggilan yang ditutup lawan.
+          gagalRef.current?.(
+            "Tidak berhasil menyambungkan jalur suara. Biasanya jaringan kantor memblokir sambungan langsung antar-komputer."
+          );
+          bereskan();
+        }
+        if (pc.connectionState === "closed") bereskan();
       };
       return pc;
     },
@@ -221,7 +244,9 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
     kirimSinyal(ke, { jenis: "jawaban", sdp: jawaban });
 
     tawaranMasukRef.current = null;
-    setStatus("tersambung");
+    // BUKAN `tersambung`. SDP sudah lengkap, tapi ICE baru mulai mencari jalur.
+    // Naik ke `tersambung` ditangani `onconnectionstatechange`.
+    setStatus("menyambungkan");
   }, [ambilMedia, buatKoneksi, kirimSinyal]);
 
   /** Tutup panggilan, baik yang sedang berdering maupun yang sedang jalan. */
@@ -259,7 +284,8 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
         await pc.setRemoteDescription(new RTCSessionDescription(sinyal.sdp));
         await tuangKandidat(pc, antreIceRef.current);
         antreIceRef.current = [];
-        setStatus("tersambung");
+        // Jawaban diterima, tapi jalur medianya belum tentu ada.
+        setStatus("menyambungkan");
         return;
       }
 

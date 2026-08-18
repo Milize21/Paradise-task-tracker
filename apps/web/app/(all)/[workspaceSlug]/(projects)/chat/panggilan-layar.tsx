@@ -86,7 +86,13 @@ export function PanggilanLayar({
   if (!tata.tampil) return null;
 
   const keterangan =
-    status === "berdering" ? "Memanggil Anda" : status === "memanggil" ? "Menunggu dijawab..." : "Tersambung";
+    status === "berdering"
+      ? "Memanggil Anda"
+      : status === "memanggil"
+        ? "Menunggu dijawab..."
+        : status === "menyambungkan"
+          ? "Menyambungkan jalur suara..."
+          : "Tersambung";
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/85 p-6">
