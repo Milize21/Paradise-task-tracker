@@ -401,6 +401,7 @@ function ChatPage() {
 
   const panggilan = usePanggilan({
     slug,
+    ruangId: ruangSaatIni,
     kirimSinyal,
     onGagal: (pesanGalat) => setToast({ type: TOAST_TYPE.ERROR, title: "Panggilan gagal", message: pesanGalat }),
   });

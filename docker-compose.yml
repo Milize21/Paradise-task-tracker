@@ -137,6 +137,30 @@ services:
     volumes:
       - redisdata:/data
 
+  # Server media panggilan suara & video.
+  #
+  # LiveKit adalah SFU: kedua peramban menyambung KE SERVER, lalu server yang
+  # meneruskan media. Itu sengaja menggantikan sambungan peer ke peer, yang
+  # menuntut kedua KOMPUTER bisa saling menghubungi langsung. Banyak jaringan
+  # kantor tidak mengizinkan itu, dan tidak ada yang bisa diperbaiki dari sisi
+  # kode untuk melawannya. Jalur komputer ke server sudah pasti terbuka, karena
+  # aplikasinya sendiri berjalan lewat jalur itu.
+  #
+  # `network_mode: host` WAJIB, alasan yang sama dengan coturn: media memakai
+  # rentang port dinamis, dan memetakannya lewat bridge Docker membuat alamat
+  # yang diiklankan tidak cocok dengan yang benar-benar bisa dihubungi.
+  livekit:
+    container_name: livekit
+    image: livekit/livekit-server:v1.9.1
+    restart: always
+    network_mode: host
+    command: --config /etc/livekit.yaml
+    volumes:
+      - ./paradise/livekit.yaml:/etc/livekit.yaml:ro
+    environment:
+      # Format "kunci: rahasia". Dibaca dari .env supaya tidak masuk git.
+      LIVEKIT_KEYS: ${LIVEKIT_KEYS}
+
   # Relai media untuk panggilan suara & video.
   #
   # Infrastruktur, bukan aplikasi tambahan: tanpa UI, tanpa akun, tanpa basis

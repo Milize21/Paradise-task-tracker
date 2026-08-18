@@ -12,6 +12,7 @@ from plane.app.views import (
     ChatConversationsEndpoint,
     ChatGabungEndpoint,
     ChatIceEndpoint,
+    ChatPanggilanTokenEndpoint,
     ChatRuangEndpoint,
     ChatRuangThreadEndpoint,
     ChatLampiranEndpoint,
@@ -125,6 +126,11 @@ urlpatterns = [
         "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/",
         ChatRuangThreadEndpoint.as_view(),
         name="chat-ruang-isi",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/panggilan/",
+        ChatPanggilanTokenEndpoint.as_view(),
+        name="chat-panggilan-token",
     ),
     path(
         "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/gabung/",

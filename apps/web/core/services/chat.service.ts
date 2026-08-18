@@ -202,6 +202,19 @@ export class ChatService extends APIService {
       });
   }
 
+  /** Izin masuk ruang panggilan LiveKit.
+   *
+   * POST, bukan GET: ia menerbitkan kredensial berumur pendek, dan kredensial
+   * tidak boleh tersimpan di riwayat peramban maupun cache proxy.
+   */
+  async getTokenPanggilan(workspaceSlug: string, ruangId: string): Promise<{ url: string; token: string }> {
+    return this.post(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/panggilan/`, {})
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
   async getDaftarRuang(workspaceSlug: string): Promise<TRuang[]> {
     return this.get(`/api/workspaces/${workspaceSlug}/chat/ruang/`)
       .then((res) => res?.data)

@@ -200,6 +200,7 @@ from .chat import (
     ChatConversationsEndpoint,
     ChatGabungEndpoint,
     ChatIceEndpoint,
+    ChatPanggilanTokenEndpoint,
     ChatLampiranEndpoint,
     ChatPesanEndpoint,
     ChatReaksiEndpoint,

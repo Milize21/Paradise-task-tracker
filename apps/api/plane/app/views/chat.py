@@ -32,6 +32,7 @@ from rest_framework.response import Response
 
 from plane.settings.storage import S3Storage
 from plane.utils.ice import daftar_ice
+from plane.utils.livekit import konfigurasi_ada, nama_ruang, token_panggilan, url_livekit
 from plane.utils.obrolan_siaran import siarkan
 
 # Module imports
@@ -738,6 +739,41 @@ class ChatIceEndpoint(BaseAPIView):
 
     def get(self, request, slug):
         return Response({"iceServers": daftar_ice(request.user.id)}, status=status.HTTP_200_OK)
+
+
+class ChatPanggilanTokenEndpoint(BaseAPIView):
+    """Token masuk ruang panggilan LiveKit.
+
+    Hak panggil = hak baca. Yang boleh membuka isi ruang boleh meneleponnya, dan
+    itu diperiksa lewat Langganan yang sama seperti seluruh fitur ini. Definisi
+    kedua berarti dua aturan yang harus dijaga sinkron, dan yang satu pasti
+    ketinggalan.
+    """
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def post(self, request, slug, ruang_id):
+        ruang = Ruang.objects.filter(id=ruang_id, workspace__slug=slug).first()
+        if ruang is None or _langganan(request.user.id, ruang) is None:
+            return Response({"error": "Ruang tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not konfigurasi_ada() or not url_livekit():
+            # Dijawab jelas, bukan token kosong. Kegagalan konfigurasi yang
+            # menyamar jadi kegagalan jaringan adalah yang paling lama dicari.
+            return Response(
+                {"error": "Panggilan belum dikonfigurasi di server ini."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        logger.info("panggilan: %s masuk ruang %s", request.user.email, ruang_id)
+        return Response(
+            {
+                "url": url_livekit(),
+                "token": token_panggilan(request.user, ruang_id),
+                "ruang": nama_ruang(ruang_id),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class ChatRuangEndpoint(BaseAPIView):
