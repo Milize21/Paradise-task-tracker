@@ -15,29 +15,142 @@ from .base import BaseModel
 BATAS_ISI = 5000
 
 
+class Ruang(BaseModel):
+    """Tempat pesan hidup: obrolan berdua, kanal publik, atau kanal privat.
+
+    Model ini menggantikan keputusan lama "tanpa tabel Percakapan". Keputusan itu
+    benar selama chat hanya melayani dua orang, dan catatan di PesanLangsung sudah
+    memperingatkan bahwa ia tidak akan sanggup menampung kanal. Sekarang saatnya.
+
+    Bentuknya meniru Rocket.Chat: SATU tabel untuk ketiga jenis ruang, dibedakan
+    oleh `tipe`. Alternatifnya tabel terpisah untuk DM dan kanal, dan itu berarti
+    setiap kueri daftar percakapan, pencarian, dan hitungan belum dibaca ditulis
+    dua kali lalu digabung. Satu tabel membuat semuanya jadi satu jalur.
+    """
+
+    class Tipe(models.TextChoices):
+        DM = "dm", "Pesan Langsung"
+        KANAL = "kanal", "Kanal Publik"
+        PRIVAT = "privat", "Kanal Privat"
+
+    workspace = models.ForeignKey("db.Workspace", related_name="ruang_obrolan", on_delete=models.CASCADE)
+    tipe = models.CharField(max_length=10, choices=Tipe.choices, default=Tipe.DM)
+    # Kosong untuk DM: namanya adalah lawan bicaranya, dan itu berbeda tergantung
+    # siapa yang melihat. Wajib untuk kanal.
+    nama = models.CharField(max_length=80, null=True, blank=True)
+    topik = models.CharField(max_length=255, blank=True, default="")
+
+    # Dua id pengguna diurutkan lalu disambung titik dua, hanya untuk DM.
+    # Tanpa ini, "cari ruang antara A dan B" berarti dua kali join ke tabel
+    # langganan tiap kali orang membuka percakapan. Dengan ini, satu lookup
+    # ke indeks unik. Urutan id-nya di-sort supaya A-ke-B dan B-ke-A
+    # menghasilkan kunci yang sama persis.
+    kunci_dm = models.CharField(max_length=73, null=True, blank=True, unique=True)
+
+    # Disalin dari pesan terakhir supaya daftar percakapan bisa diurutkan tanpa
+    # subquery per ruang. Denormalisasi yang disengaja: daftar itu dibuka jauh
+    # lebih sering daripada pesan dikirim.
+    pesan_terakhir_pada = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Ruang Obrolan"
+        verbose_name_plural = "Ruang Obrolan"
+        db_table = "chat_rooms"
+        ordering = ("-pesan_terakhir_pada",)
+        indexes = [
+            models.Index(fields=["workspace", "tipe"], name="ruang_ws_tipe_idx"),
+            models.Index(fields=["workspace", "pesan_terakhir_pada"], name="ruang_ws_terakhir_idx"),
+        ]
+
+    def __str__(self):
+        return self.nama or f"dm:{self.kunci_dm}"
+
+    @staticmethod
+    def buat_kunci_dm(user_a_id, user_b_id) -> str:
+        """Kunci DM yang sama untuk arah mana pun."""
+        return ":".join(sorted([str(user_a_id), str(user_b_id)]))
+
+
+class Langganan(BaseModel):
+    """Hubungan satu orang dengan satu ruang: sudah dibaca sampai mana, dan maunya
+    diberi tahu seperti apa.
+
+    Inilah bagian yang membuat kanal mungkin, dan yang paling mudah salah
+    dirancang. Menandai terbaca PER PESAN seperti yang dipakai DM sekarang berarti
+    satu baris untuk tiap anggota dikali tiap pesan. Untuk kanal berisi 20 orang,
+    seribu pesan menjadi dua puluh ribu baris yang tidak menyimpan satu fakta pun
+    yang tidak bisa diturunkan dari satu cap waktu.
+
+    Jadi di sini yang disimpan cuma `dibaca_sampai`. Jumlah belum dibaca adalah
+    hitungan pesan yang lebih baru dari cap itu dan bukan kiriman sendiri.
+
+    `PesanLangsung.dibaca_pada` TETAP ADA dan tidak digantikan, tapi maknanya kini
+    sempit: tanda terima untuk DM, supaya pengirim tahu pesannya sudah dibaca.
+    Kanal sengaja tidak punya itu. Tidak ada yang mau membaca "dibaca oleh 14 dari
+    20 orang", dan biayanya persis ledakan baris yang baru saja dihindari.
+    """
+
+    class Notifikasi(models.TextChoices):
+        SEMUA = "semua", "Semua pesan"
+        MENTION = "mention", "Hanya kalau disebut"
+        MATI = "mati", "Bisukan"
+
+    ruang = models.ForeignKey("db.Ruang", related_name="langganan", on_delete=models.CASCADE)
+    user = models.ForeignKey("db.User", related_name="langganan_ruang", on_delete=models.CASCADE)
+    dibaca_sampai = models.DateTimeField(null=True, blank=True)
+    notifikasi = models.CharField(max_length=10, choices=Notifikasi.choices, default=Notifikasi.SEMUA)
+    disematkan = models.BooleanField(default=False)
+
+    class Meta:
+        # `deleted_at` ikut kunci supaya orang yang keluar kanal lalu bergabung
+        # lagi tidak menabrak baris lamanya yang sudah dihapus lunak.
+        unique_together = ["ruang", "user", "deleted_at"]
+        verbose_name = "Langganan Ruang"
+        verbose_name_plural = "Langganan Ruang"
+        db_table = "chat_subscriptions"
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["user", "ruang"], name="langganan_user_ruang_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} @ {self.ruang_id}"
+
+
 class PesanLangsung(BaseModel):
-    """Satu pesan dari satu orang ke satu orang, di dalam satu workspace.
+    """Satu pesan di dalam satu Ruang.
 
-    TIDAK ADA model Percakapan, dan itu keputusan sadar. Untuk obrolan dua orang,
-    "percakapan" sepenuhnya bisa diturunkan dari pasangan pengirim-penerima, jadi
-    tabel kedua hanya menambah satu baris yang harus dibuat, dikunci, dan
-    dibersihkan tanpa menyimpan satu fakta pun yang belum ada di sini.
+    Versi pertama model ini sengaja tidak punya tabel Percakapan, karena untuk
+    obrolan berdua percakapan bisa diturunkan sepenuhnya dari pasangan
+    pengirim-penerima. Catatan lamanya juga sudah memperingatkan bahwa model itu
+    tidak akan sanggup menampung kanal. Peringatan itu terbukti, dan sejak
+    migrasi 0136 tempatnya adalah `Ruang`.
 
-    Konsekuensinya yang perlu diketahui lebih dulu: kalau nanti chat diperluas ke
-    kanal per project (lebih dari dua peserta), model ini TIDAK bisa dipakai dan
-    memang tidak dirancang untuk itu. Kanal butuh tabel ruang + keanggotaan, dan
-    saat itu tiba yang benar adalah menambah model baru di samping model ini,
-    bukan memaksa `penerima` jadi banyak.
+    Nama kelasnya sengaja TIDAK diganti jadi `Pesan`. Mengganti nama model
+    berarti mengganti nama tabel, dan `direct_messages` sudah dirujuk oleh
+    migrasi lama, tugas email, penjaga lampiran, serta indeks yang ditulis
+    tangan. Nama yang sedikit meleset jauh lebih murah daripada migrasi
+    penggantian nama pada tabel yang sedang dipakai orang.
 
-    `dibaca_pada` ditaruh di pesan, bukan penanda "terakhir dibaca" di
-    percakapan. Alasannya sama: tidak ada tabel percakapan yang bisa menampungnya,
-    dan hitungan belum dibaca jadi satu COUNT beríndeks.
+    `penerima` dan `dibaca_pada` hanya berarti untuk DM. Untuk kanal keduanya
+    kosong, dan yang menggantikannya adalah `Langganan.dibaca_sampai`.
     """
 
     workspace = models.ForeignKey("db.Workspace", related_name="pesan_langsung", on_delete=models.CASCADE)
+    # Tempat pesan ini tinggal. Boleh kosong HANYA selama migrasi 0136 berjalan;
+    # sesudah backfill setiap baris punya ruang, dan penulis baru wajib mengisinya.
+    ruang = models.ForeignKey(
+        "db.Ruang", related_name="pesan", on_delete=models.CASCADE, null=True, blank=True
+    )
     pengirim = models.ForeignKey("db.User", related_name="pesan_terkirim", on_delete=models.CASCADE)
-    penerima = models.ForeignKey("db.User", related_name="pesan_diterima", on_delete=models.CASCADE)
+    # Kosong untuk pesan kanal: penerimanya adalah seluruh anggota ruang, dan itu
+    # sudah tercatat di Langganan. Tetap diisi untuk DM karena tanda terima,
+    # email pemberitahuan, dan penjaga lampiran semuanya bersandar padanya.
+    penerima = models.ForeignKey(
+        "db.User", related_name="pesan_diterima", on_delete=models.CASCADE, null=True, blank=True
+    )
     isi = models.TextField()
+    # Tanda terima, dan HANYA berarti untuk DM. Lihat alasannya di Langganan.
     dibaca_pada = models.DateTimeField(null=True, blank=True)
     # Diisi saat pesan ini sudah pernah masuk email pemberitahuan. Ditaruh di
     # pesan, bukan di penerima, karena inilah yang membuat email tidak pernah
@@ -66,7 +179,24 @@ class PesanLangsung(BaseModel):
         indexes = [
             models.Index(fields=["workspace", "pengirim", "penerima"], name="dm_ws_pengirim_penerima_idx"),
             models.Index(fields=["penerima", "dibaca_pada"], name="dm_penerima_dibaca_idx"),
+            # Memuat isi satu ruang urut waktu, dan menghitung belum dibaca
+            # sesudah `dibaca_sampai`. Keduanya dilayani indeks yang sama.
+            models.Index(fields=["ruang", "created_at"], name="dm_ruang_created_idx"),
         ]
+
+    def save(self, *args, **kwargs):
+        """Tolak pesan baru yang tidak punya ruang.
+
+        Kolomnya nullable karena migrasi 0136 harus bisa menambahkannya ke tabel
+        yang sudah berisi, bukan karena pesan tanpa ruang itu sah. Pesan yatim
+        tidak akan muncul di percakapan mana pun, dan tidak menimbulkan error di
+        mana pun: percakapannya sekadar tampak kosong bagi pemiliknya. Itu bentuk
+        kegagalan yang paling mahal ditemukan, jadi ditutup di sini, di satu
+        tempat yang dilewati semua penulis.
+        """
+        if self._state.adding and self.ruang_id is None:
+            raise ValueError("PesanLangsung wajib punya ruang. Pakai _ruang_dm() atau ruang kanal.")
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.pengirim_id} -> {self.penerima_id}"

@@ -17,7 +17,24 @@ import pytest
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from plane.db.models import FileAsset, PesanLangsung, ReaksiPesan, User, Workspace, WorkspaceMember
+from plane.db.models import Langganan, Ruang, FileAsset, PesanLangsung, ReaksiPesan, User, Workspace, WorkspaceMember
+
+
+def _ruang_dm(workspace, a, b):
+    """Ruang DM antara dua orang, dibuat kalau belum ada.
+
+    Sengaja meniru `_ruang_dm` di views, bukan memanggilnya: kalau nanti keduanya
+    berbeda, ujinya harus MERAH, bukan diam-diam ikut berubah bersama kodenya.
+    """
+    kunci = Ruang.buat_kunci_dm(a.id, b.id)
+    ruang, dibuat = Ruang.objects.get_or_create(
+        kunci_dm=kunci, defaults={"workspace": workspace, "tipe": Ruang.Tipe.DM}
+    )
+    if dibuat:
+        Langganan.objects.bulk_create(
+            [Langganan(ruang=ruang, user=a), Langganan(ruang=ruang, user=b)]
+        )
+    return ruang
 
 
 def _pesan(workspace, dari, ke, isi, menit_lalu):
@@ -27,8 +44,16 @@ def _pesan(workspace, dari, ke, isi, menit_lalu):
     tarikan napas bisa berbagi mikrodetik yang sama dan urutannya jadi undian.
     Ditimpa lewat update supaya urutan yang diuji memang urutan yang dimaksud.
     """
-    pesan = PesanLangsung.objects.create(workspace=workspace, pengirim=dari, penerima=ke, isi=isi)
-    PesanLangsung.objects.filter(pk=pesan.pk).update(created_at=timezone.now() - timedelta(minutes=menit_lalu))
+    ruang = _ruang_dm(workspace, dari, ke)
+    pesan = PesanLangsung.objects.create(
+        workspace=workspace, ruang=ruang, pengirim=dari, penerima=ke, isi=isi
+    )
+    waktu = timezone.now() - timedelta(minutes=menit_lalu)
+    PesanLangsung.objects.filter(pk=pesan.pk).update(created_at=waktu)
+    # Ruang ikut digeser, karena daftar percakapan diurutkan dari medan ini dan
+    # penanda baca dibandingkan terhadapnya.
+    if ruang.pesan_terakhir_pada is None or waktu > ruang.pesan_terakhir_pada:
+        Ruang.objects.filter(pk=ruang.pk).update(pesan_terakhir_pada=waktu)
     return pesan
 
 

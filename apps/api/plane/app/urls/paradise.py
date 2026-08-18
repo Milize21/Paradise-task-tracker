@@ -7,8 +7,12 @@ from django.urls import path
 
 from plane.app.views import (
     ProjectTrashEndpoint,
+    ChatAnggotaEndpoint,
     ChatCariEndpoint,
     ChatConversationsEndpoint,
+    ChatGabungEndpoint,
+    ChatRuangEndpoint,
+    ChatRuangThreadEndpoint,
     ChatLampiranEndpoint,
     ChatPesanEndpoint,
     ChatReaksiEndpoint,
@@ -102,6 +106,29 @@ urlpatterns = [
         "workspaces/<str:slug>/chat/pesan/<uuid:pesan_id>/reaksi/",
         ChatReaksiEndpoint.as_view(),
         name="chat-reaksi",
+    ),
+    # Kanal. Ditaruh sebelum pola <uuid:user_id> mengikuti alasan yang sama
+    # dengan "pesan" dan "belum-dibaca" di atas: "ruang" bukan UUID yang sah,
+    # jadi tidak akan bentrok, tapi urutannya membuat niatnya terbaca.
+    path(
+        "workspaces/<str:slug>/chat/ruang/",
+        ChatRuangEndpoint.as_view(),
+        name="chat-ruang",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/",
+        ChatRuangThreadEndpoint.as_view(),
+        name="chat-ruang-isi",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/gabung/",
+        ChatGabungEndpoint.as_view(),
+        name="chat-ruang-gabung",
+    ),
+    path(
+        "workspaces/<str:slug>/chat/ruang/<uuid:ruang_id>/anggota/",
+        ChatAnggotaEndpoint.as_view(),
+        name="chat-ruang-anggota",
     ),
     path(
         "workspaces/<str:slug>/chat/<uuid:user_id>/",

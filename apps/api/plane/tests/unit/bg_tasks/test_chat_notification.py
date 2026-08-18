@@ -17,7 +17,7 @@ import pytest
 from django.utils import timezone
 
 from plane.bgtasks.chat_notification_task import kirim_pemberitahuan_pesan
-from plane.db.models import PesanLangsung, User, Workspace, WorkspaceMember
+from plane.db.models import Langganan, Ruang, PesanLangsung, User, Workspace, WorkspaceMember
 
 
 def _orang(nama):
@@ -36,8 +36,28 @@ def kantor(db):
     return workspace, pemilik, budi
 
 
+def _ruang_dm(workspace, a, b):
+    """Ruang DM antara dua orang, dibuat kalau belum ada.
+
+    Ditambahkan bersama migrasi 0136: sejak pesan tinggal di dalam Ruang, model
+    menolak pesan tanpa ruang. Penolakan itu disengaja, karena pesan yatim tidak
+    muncul di percakapan mana pun dan tidak menimbulkan error di mana pun.
+    """
+    kunci = Ruang.buat_kunci_dm(a.id, b.id)
+    ruang, dibuat = Ruang.objects.get_or_create(
+        kunci_dm=kunci, defaults={"workspace": workspace, "tipe": Ruang.Tipe.DM}
+    )
+    if dibuat:
+        Langganan.objects.bulk_create(
+            [Langganan(ruang=ruang, user=a), Langganan(ruang=ruang, user=b)]
+        )
+    return ruang
+
+
 def _pesan(workspace, dari, ke, isi, menit_lalu):
-    pesan = PesanLangsung.objects.create(workspace=workspace, pengirim=dari, penerima=ke, isi=isi)
+    pesan = PesanLangsung.objects.create(
+        workspace=workspace, ruang=_ruang_dm(workspace, dari, ke), pengirim=dari, penerima=ke, isi=isi
+    )
     PesanLangsung.objects.filter(pk=pesan.pk).update(created_at=timezone.now() - timedelta(minutes=menit_lalu))
     return pesan
 

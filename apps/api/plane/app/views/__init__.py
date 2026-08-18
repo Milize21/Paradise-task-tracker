@@ -195,11 +195,15 @@ from .google_calendar import (
     GoogleCalendarStatusEndpoint,
 )
 from .chat import (
+    ChatAnggotaEndpoint,
     ChatCariEndpoint,
     ChatConversationsEndpoint,
+    ChatGabungEndpoint,
     ChatLampiranEndpoint,
     ChatPesanEndpoint,
     ChatReaksiEndpoint,
+    ChatRuangEndpoint,
+    ChatRuangThreadEndpoint,
     ChatThreadEndpoint,
     ChatUnreadEndpoint,
 )
