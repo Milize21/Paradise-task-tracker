@@ -704,13 +704,40 @@ function ChatPage() {
                   )}
                   <p className="text-sm font-medium text-primary">{kanalAktif?.nama ?? "Kanal"}</p>
                   {kanalAktif?.topik ? <p className="text-xs truncate text-tertiary">{kanalAktif.topik}</p> : null}
-                  <button
-                    type="button"
-                    onClick={() => keluar(ruangParam as string)}
-                    className="text-xs ml-auto rounded-md px-2 py-1 text-tertiary hover:bg-layer-1 hover:text-secondary"
-                  >
-                    Keluar kanal
-                  </button>
+                  {/* Panggilan kanal = konferensi. Tidak berdering ke satu orang;
+                      undangannya disiarkan ke anggota yang sedang membuka kanal
+                      ini, lalu mereka memutuskan sendiri mau gabung atau tidak.
+                      Meneleponkan dering ke belasan orang sekaligus akan jadi
+                      gangguan, bukan fitur. */}
+                  <div className="ml-auto flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => void panggilan.mulaiKonferensi(false)}
+                      disabled={!tersambung || panggilan.status !== "diam"}
+                      title={tersambung ? "Mulai panggilan suara di kanal" : "Sambungan real-time sedang putus"}
+                      aria-label="Panggilan suara kanal"
+                      className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary disabled:opacity-40"
+                    >
+                      <Phone className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void panggilan.mulaiKonferensi(true)}
+                      disabled={!tersambung || panggilan.status !== "diam"}
+                      title={tersambung ? "Mulai panggilan video di kanal" : "Sambungan real-time sedang putus"}
+                      aria-label="Panggilan video kanal"
+                      className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary disabled:opacity-40"
+                    >
+                      <Video className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => keluar(ruangParam as string)}
+                      className="text-xs rounded-md px-2 py-1 text-tertiary hover:bg-layer-1 hover:text-secondary"
+                    >
+                      Keluar kanal
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>
@@ -970,19 +997,35 @@ function ChatPage() {
         )}
       </section>
 
+      {/* Ajakan gabung, bukan dering. Muncul untuk yang sedang membuka ruang
+          saat orang lain memulai panggilan di sana. */}
+      {panggilan.konferensiBerjalan && panggilan.status === "diam" ? (
+        <div className="shadow-lg fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full border border-subtle bg-layer-3 px-4 py-2">
+          <span className="text-sm text-primary">Ada panggilan berlangsung di sini</span>
+          <button
+            type="button"
+            onClick={() => void panggilan.mulaiKonferensi(panggilan.pakaiVideo)}
+            className="text-xs rounded-full bg-accent-primary px-3 py-1.5 font-medium text-white"
+          >
+            Gabung
+          </button>
+        </div>
+      ) : null}
+
       <PanggilanLayar
         status={panggilan.status}
         koneksi={panggilan.koneksi}
-        namaLawan={
-          (panggilan.lawan ? getWorkspaceMemberDetails(panggilan.lawan)?.member?.display_name : undefined) ?? "Anggota"
+        judul={
+          adalahKanal
+            ? (kanalAktif?.nama ?? "Kanal")
+            : ((panggilan.lawan ? getWorkspaceMemberDetails(panggilan.lawan)?.member?.display_name : undefined) ??
+              "Anggota")
         }
-        avatarLawan={panggilan.lawan ? getWorkspaceMemberDetails(panggilan.lawan)?.member?.avatar_url : undefined}
         pakaiVideo={panggilan.pakaiVideo}
         mikMati={panggilan.mikMati}
         kameraMati={panggilan.kameraMati}
         streamLokal={panggilan.streamLokal}
-        streamJauh={panggilan.streamJauh}
-        adaVideoJauh={panggilan.adaVideoJauh}
+        pesertaJauh={panggilan.pesertaJauh}
         byteMasuk={panggilan.byteMasuk}
         onAngkat={() => void panggilan.angkat()}
         onTutup={panggilan.tutup}

@@ -39,7 +39,24 @@ const chatService = new ChatService();
 
 export type TStatusPanggilan = "diam" | "memanggil" | "berdering" | "menyambungkan" | "tersambung";
 
-type TSinyal = { jenis: "panggil"; video: boolean } | { jenis: "tolak" } | { jenis: "tutup" };
+/** Satu lawan bicara di dalam panggilan.
+ *
+ * Bentuknya daftar, bukan satu objek, sejak awal. Konferensi bukan fitur
+ * terpisah dari panggilan berdua: SFU memperlakukan keduanya sama, dan
+ * membedakannya di sini cuma menciptakan dua jalur kode yang harus dijaga
+ * sinkron. Panggilan berdua sekadar konferensi berisi satu orang. */
+export type TPesertaJauh = {
+  id: string;
+  nama: string;
+  stream: MediaStream;
+  adaVideo: boolean;
+};
+
+type TSinyal =
+  | { jenis: "panggil"; video: boolean }
+  | { jenis: "konferensi"; video: boolean }
+  | { jenis: "tolak" }
+  | { jenis: "tutup" };
 
 type Opsi = {
   slug?: string;
@@ -58,8 +75,9 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
   const [mikMati, setMikMati] = useState(false);
   const [kameraMati, setKameraMati] = useState(false);
   const [streamLokal, setStreamLokal] = useState<MediaStream | null>(null);
-  const [streamJauh, setStreamJauh] = useState<MediaStream | null>(null);
-  const [adaVideoJauh, setAdaVideoJauh] = useState(false);
+  const [pesertaJauh, setPesertaJauh] = useState<TPesertaJauh[]>([]);
+  /** Ada panggilan berlangsung di kanal ini yang belum kita ikuti. */
+  const [konferensiBerjalan, setKonferensiBerjalan] = useState(false);
   const [byteMasuk, setByteMasuk] = useState({ audio: 0, video: 0 });
 
   const roomRef = useRef<Room | null>(null);
@@ -79,27 +97,40 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
     setKoneksi("belum mulai");
     setLawan(null);
     setStreamLokal(null);
-    setStreamJauh(null);
-    setAdaVideoJauh(false);
+    setPesertaJauh([]);
+    setKonferensiBerjalan(false);
     setMikMati(false);
     setKameraMati(false);
     setByteMasuk({ audio: 0, video: 0 });
   }, []);
 
-  /** Rakit ulang stream jauh dari seluruh track yang sedang berlangganan. */
-  const susunStreamJauh = useCallback((room: Room) => {
-    const track: MediaStreamTrack[] = [];
-    let adaVideo = false;
+  /** Rakit ulang daftar peserta dari seluruh track yang sedang berlangganan.
+   *
+   * Stream dirakit PER ORANG, bukan satu stream gabungan. Menggabungkan semua
+   * track ke satu MediaStream membuat suara semua orang keluar dari satu elemen
+   * dan gambarnya bertumpuk; untuk dua orang itu masih terlihat benar, dan baru
+   * ketahuan salah begitu ada orang ketiga.
+   */
+  const susunPeserta = useCallback((room: Room) => {
+    const daftar: TPesertaJauh[] = [];
     room.remoteParticipants.forEach((peserta) => {
+      const track: MediaStreamTrack[] = [];
+      let adaVideo = false;
       peserta.trackPublications.forEach((pub) => {
         const mst = pub.track?.mediaStreamTrack;
         if (!mst) return;
         track.push(mst);
         if (pub.kind === Track.Kind.Video) adaVideo = true;
       });
+      if (track.length === 0) return;
+      daftar.push({
+        id: peserta.identity,
+        nama: peserta.name || peserta.identity,
+        stream: new MediaStream(track),
+        adaVideo,
+      });
     });
-    setAdaVideoJauh(adaVideo);
-    setStreamJauh(track.length > 0 ? new MediaStream(track) : null);
+    setPesertaJauh(daftar);
   }, []);
 
   /** Sambung ke ruang panggilan dan mulai mengirim media. */
@@ -127,10 +158,14 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
       room
         .on(RoomEvent.ConnectionStateChanged, (s: ConnectionState) => setKoneksi(String(s)))
         .on(RoomEvent.Connected, () => setStatus("tersambung"))
-        .on(RoomEvent.TrackSubscribed, () => susunStreamJauh(room))
-        .on(RoomEvent.TrackUnsubscribed, () => susunStreamJauh(room))
+        .on(RoomEvent.TrackSubscribed, () => susunPeserta(room))
+        .on(RoomEvent.TrackUnsubscribed, () => susunPeserta(room))
+        .on(RoomEvent.ParticipantConnected, () => susunPeserta(room))
         .on(RoomEvent.ParticipantDisconnected, () => {
-          // Untuk panggilan berdua, lawan yang keluar berarti panggilan selesai.
+          susunPeserta(room);
+          // Ruang yang tinggal berisi kita sendiri berarti panggilannya selesai.
+          // Berlaku sama untuk berdua maupun konferensi, jadi tidak perlu
+          // cabang kode kedua.
           if (room.remoteParticipants.size === 0) bereskan();
         })
         .on(RoomEvent.Disconnected, () => bereskan());
@@ -153,7 +188,7 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
 
       return room;
     },
-    [slug, ruangId, susunStreamJauh, bereskan]
+    [slug, ruangId, susunPeserta, bereskan]
   );
 
   const panggil = useCallback(
@@ -175,6 +210,32 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
       setStatus("memanggil");
     },
     [status, masukRuang, kirimSinyal, bereskan]
+  );
+
+  /** Mulai atau ikut panggilan di sebuah kanal.
+   *
+   * Kanal tidak berdering ke satu orang. Undangannya disiarkan ke seluruh
+   * anggota yang sedang membuka kanal itu, lalu mereka memutuskan sendiri mau
+   * gabung atau tidak, seperti panggilan di kanal aplikasi obrolan lain.
+   * Meneleponkan dering ke belasan orang sekaligus akan jadi gangguan, bukan
+   * fitur.
+   */
+  const mulaiKonferensi = useCallback(
+    async (video: boolean) => {
+      if (status !== "diam") return;
+      setPakaiVideo(video);
+      setStatus("menyambungkan");
+
+      const room = await masukRuang(video);
+      if (!room) return;
+
+      // Disiarkan tanpa tujuan tertentu: server meneruskannya ke semua orang di
+      // ruang itu kecuali pengirimnya.
+      kirimSinyal("", { jenis: "konferensi", video });
+      setStatus("tersambung");
+      setKonferensiBerjalan(false);
+    },
+    [status, masukRuang, kirimSinyal]
   );
 
   const angkat = useCallback(async () => {
@@ -205,6 +266,16 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
         setLawan(dari);
         setPakaiVideo(sinyal.video);
         setStatus("berdering");
+        return;
+      }
+
+      if (sinyal.jenis === "konferensi") {
+        // Tidak berdering, hanya menandai. Yang sedang membuka kanal akan
+        // melihat ajakan bergabung.
+        if (status === "diam") {
+          setPakaiVideo(sinyal.video);
+          setKonferensiBerjalan(true);
+        }
         return;
       }
 
@@ -289,10 +360,11 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
     mikMati,
     kameraMati,
     streamLokal,
-    streamJauh,
-    adaVideoJauh,
+    pesertaJauh,
+    konferensiBerjalan,
     byteMasuk,
     panggil,
+    mulaiKonferensi,
     angkat,
     tutup,
     terimaSinyal,

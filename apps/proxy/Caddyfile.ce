@@ -11,6 +11,22 @@
 	
 	reverse_proxy /live/* live:3000
 
+	# Sinyal LiveKit (panggilan suara, video, dan konferensi).
+	#
+	# WAJIB lewat sini, tidak bisa langsung ke port 7880. Halaman dilayani lewat
+	# HTTPS, dan peramban MEMBLOKIR WebSocket `ws://` dari halaman HTTPS sebagai
+	# mixed content. Sambungannya ditolak sebelum satu paket pun terkirim, dan
+	# pesannya hanya muncul di konsol peramban. Lewat sini ia jadi `wss://` dengan
+	# sertifikat yang sudah ada.
+	#
+	# Prefiksnya `/rtc` tanpa dipotong, karena itu memang jalur milik LiveKit dan
+	# aplikasi kita tidak memakainya. Dengan begitu tidak ada penulisan ulang URL
+	# yang bisa meleset.
+	#
+	# ⚠️ Ini HANYA jalur sinyal. Media tetap langsung ke port 7881/UDP dan tidak
+	# lewat proxy; aturan mixed content tidak berlaku untuk media WebRTC.
+	reverse_proxy /rtc/* {$LIVEKIT_UPSTREAM:host.docker.internal:7880}
+
 	reverse_proxy /api/* api:8000
 
 	reverse_proxy /auth/* api:8000

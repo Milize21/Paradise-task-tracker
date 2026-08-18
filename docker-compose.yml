@@ -220,6 +220,10 @@ services:
 
   # Comment this if you already have a reverse proxy running
   proxy:
+    # `host.docker.internal` tidak ada di Linux tanpa baris ini, dan proxy
+    # membutuhkannya untuk menjangkau LiveKit yang berjalan di jaringan host.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     container_name: proxy
     build:
       context: ./apps/proxy

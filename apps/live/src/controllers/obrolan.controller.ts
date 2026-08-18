@@ -197,15 +197,21 @@ export class ObrolanController {
     } catch {
       return;
     }
-    if (masuk.tipe !== "sinyal" || !masuk.ke) return;
+    if (masuk.tipe !== "sinyal") return;
 
     // `dari` diisi server dari identitas yang sudah diperiksa, BUKAN dari isi
     // pesan. Kalau peramban yang menentukannya, siapa pun di ruang ini bisa
     // menelepon sambil menyamar jadi orang lain.
+    //
+    // `ke` kosong berarti SIARAN ke seluruh ruang, dan itu sah: undangan
+    // konferensi kanal memang ditujukan ke semua anggota yang sedang membukanya,
+    // bukan ke satu orang. `oleh` diisi supaya pengirimnya tidak menerima
+    // gaung undangannya sendiri.
+    const menyiar = !masuk.ke;
     await this.siarkan(klien.ruang, {
       tipe: "sinyal",
       dari: klien.userId,
-      ke: masuk.ke,
+      ...(menyiar ? { oleh: klien.userId } : { ke: masuk.ke }),
       muatan: masuk.muatan,
     });
   }

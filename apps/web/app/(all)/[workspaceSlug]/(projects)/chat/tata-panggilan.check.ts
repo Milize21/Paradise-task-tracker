@@ -7,7 +7,12 @@
  * Jalankan DARI packages/i18n, karena tsx hanya terpasang di situ:
  *   pnpm exec tsx "../../apps/web/app/(all)/[workspaceSlug]/(projects)/chat/tata-panggilan.check.ts"
  *
- * Urutan argumen: (status, pakaiVideo, adaStreamLokal, adaVideoJauh)
+ * Urutan argumen: (status, pakaiVideo, adaStreamLokal, jumlahPeserta)
+ *
+ * Catatan: aturan "elemen media lawan SELALU terpasang walau hanya audio" tidak
+ * lagi diuji di sini karena sekarang dijamin oleh struktur komponen `Peserta`,
+ * yang selalu merender `Media` dan hanya menyembunyikannya lewat CSS. Aturan itu
+ * pernah dilanggar dan membuat panggilan sunyi total.
  */
 
 import assert from "node:assert/strict";
@@ -15,69 +20,54 @@ import { tataPanggilan } from "./tata-panggilan";
 
 // Diam: tidak ada apa pun di layar.
 {
-  const t = tataPanggilan("diam", true, true, true);
+  const t = tataPanggilan("diam", true, true, 3);
   assert.equal(t.tampil, false, "status diam tidak boleh menampilkan layar panggilan");
-  assert.equal(t.mediaLawanTerpasang, false, "tanpa layar, tidak ada elemen media");
 }
 
-// PERNAH SALAH #1, panggilan sunyi total.
-// Panggilan suara: tidak ada gambar, tapi elemen media lawan WAJIB terpasang,
-// karena di situlah audionya keluar.
+// PERNAH SALAH: peserta dianggap ada berdasarkan NIAT memakai video, bukan
+// media yang benar-benar tiba. Akibatnya layar menampilkan kotak hitam kosong
+// yang terlihat seperti kerusakan padahal panggilannya hidup.
 {
-  const t = tataPanggilan("tersambung", false, true, false);
-  assert.equal(t.gambarLawanTerlihat, false, "panggilan suara tidak menampilkan gambar");
-  assert.equal(t.mediaLawanTerpasang, true, "media lawan WAJIB terpasang walau tanpa gambar");
+  const t = tataPanggilan("tersambung", true, true, 0);
+  assert.equal(t.adaPeserta, false, "tersambung tapi belum ada peserta: jangan tampilkan kisi kosong");
+  assert.equal(t.tampil, true, "layarnya tetap tampil, cuma isinya belum ada");
 }
 
-// PERNAH SALAH #2, panggilan video tanpa gambar lawan.
-// Negosiasi video bisa gagal sementara audionya lolos. Saat itu terjadi,
-// `pakaiVideo` TETAP menyala karena ia cuma menyatakan niat saat menekan
-// tombol. Menggantungkan tampilan padanya berarti menampilkan kotak hitam
-// kosong yang terlihat seperti kerusakan, padahal panggilannya hidup.
+// Belum tersambung: peserta belum ditampilkan walau datanya sudah ada.
+for (const status of ["memanggil", "berdering", "menyambungkan"] as const) {
+  const t = tataPanggilan(status, true, true, 2);
+  assert.equal(t.adaPeserta, false, `belum tersambung (${status}), peserta belum ditampilkan`);
+}
+
+// Satu lawan bicara tampil besar, bukan dipaksa masuk kisi.
 {
-  const t = tataPanggilan("tersambung", true, true, false);
-  assert.equal(
-    t.gambarLawanTerlihat,
-    false,
-    "video diniatkan tapi track video tidak pernah tiba: jangan tampilkan kotak kosong"
-  );
-  assert.equal(t.mediaLawanTerpasang, true, "elemennya tetap terpasang, audionya harus tetap keluar");
+  const t = tataPanggilan("tersambung", true, true, 1);
+  assert.equal(t.adaPeserta, true, "satu peserta sudah cukup untuk menampilkan");
+  assert.equal(t.kolom, 1, "panggilan berdua tampil penuh, bukan setengah layar");
 }
 
-// Begitu track video benar-benar tiba, gambarnya ditampilkan.
+// Konferensi: kisi tumbuh mengikuti jumlah peserta.
 {
-  const t = tataPanggilan("tersambung", true, true, true);
-  assert.equal(t.gambarLawanTerlihat, true, "track video tiba, gambarnya harus tampil");
-}
-
-// Belum tersambung: apa pun keadaan tracknya, belum ada yang ditampilkan.
-for (const status of ["memanggil", "berdering"] as const) {
-  const t = tataPanggilan(status, true, true, true);
-  assert.equal(t.gambarLawanTerlihat, false, `belum tersambung (${status}), gambar lawan belum ditampilkan`);
-}
-
-// Media lawan tetap terpasang di setiap tahap, supaya aliran pertama tidak tiba
-// saat elemennya belum ada.
-for (const status of ["memanggil", "berdering", "tersambung"] as const) {
-  const t = tataPanggilan(status, true, false, false);
-  assert.equal(t.mediaLawanTerpasang, true, `media lawan harus terpasang saat ${status}`);
+  assert.equal(tataPanggilan("tersambung", true, true, 2).kolom, 2, "tiga orang: dua kolom");
+  assert.equal(tataPanggilan("tersambung", true, true, 4).kolom, 2, "lima orang: masih dua kolom");
+  assert.equal(tataPanggilan("tersambung", true, true, 5).kolom, 3, "enam orang ke atas: tiga kolom");
 }
 
 // Pratinjau diri tampil SEJAK MEMANGGIL, bukan menunggu tersambung.
 {
-  const t = tataPanggilan("memanggil", true, true, false);
+  const t = tataPanggilan("memanggil", true, true, 0);
   assert.equal(t.pratinjauDiriTerlihat, true, "pratinjau diri tampil sejak memanggil");
 }
 
 // Tanpa stream lokal tidak ada yang bisa dipratinjau.
 {
-  const t = tataPanggilan("memanggil", true, false, false);
+  const t = tataPanggilan("memanggil", true, false, 0);
   assert.equal(t.pratinjauDiriTerlihat, false, "tanpa stream lokal, pratinjau tidak dipaksakan");
 }
 
-// Panggilan suara tidak menampilkan pratinjau diri sama sekali.
+// Panggilan suara tidak menampilkan pratinjau kamera sama sekali.
 {
-  const t = tataPanggilan("tersambung", false, true, false);
+  const t = tataPanggilan("tersambung", false, true, 1);
   assert.equal(t.pratinjauDiriTerlihat, false, "panggilan suara tidak butuh pratinjau kamera");
 }
 

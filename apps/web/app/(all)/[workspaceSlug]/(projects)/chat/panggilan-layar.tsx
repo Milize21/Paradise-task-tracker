@@ -8,21 +8,18 @@
 import { useEffect, useRef } from "react";
 import { Mic, MicOff, Phone, PhoneOff, Video, VideoOff } from "lucide-react";
 import { Avatar } from "@plane/propel/avatar";
-import { getFileURL } from "@plane/utils";
-import type { TStatusPanggilan } from "./panggilan";
+import type { TPesertaJauh, TStatusPanggilan } from "./panggilan";
 import { tataPanggilan } from "./tata-panggilan";
 
 type Props = {
   status: TStatusPanggilan;
   koneksi: string;
-  namaLawan: string;
-  avatarLawan?: string;
+  judul: string;
   pakaiVideo: boolean;
   mikMati: boolean;
   kameraMati: boolean;
   streamLokal: MediaStream | null;
-  streamJauh: MediaStream | null;
-  adaVideoJauh: boolean;
+  pesertaJauh: TPesertaJauh[];
   byteMasuk: { audio: number; video: number };
   onAngkat: () => void;
   onTutup: () => void;
@@ -34,18 +31,14 @@ type Props = {
  * Satu elemen media yang memegang streamnya sendiri.
  *
  * KENAPA KOMPONEN SENDIRI, dan ini pernah salah sampai panggilan tidak
- * mengeluarkan suara maupun gambar sama sekali:
+ * mengeluarkan suara maupun gambar sama sekali: versi sebelumnya memasang
+ * `srcObject` lewat useEffect di komponen induk, sementara elemen videonya
+ * dirender bersyarat. Saat stream didapat elemennya belum ada; saat elemennya
+ * muncul efeknya tidak jalan lagi karena dependensinya tidak berubah.
+ * `srcObject` tidak pernah terpasang, dan tidak ada satu pun error yang muncul.
  *
- * Versi sebelumnya memasang `srcObject` lewat useEffect di komponen induk,
- * sementara elemen videonya dirender BERSYARAT (hanya saat status `tersambung`).
- * Urutannya jadi mematikan. Saat stream kamera didapat, elemennya belum ada
- * sehingga ref-nya null dan efeknya tidak berbuat apa-apa. Saat elemennya
- * akhirnya dirender, efeknya tidak jalan lagi karena dependensinya tidak
- * berubah. `srcObject` tidak pernah terpasang, dan tidak ada satu pun error
- * yang muncul: panggilan terlihat tersambung, tapi sunyi dan gelap.
- *
- * Di sini elemennya selalu ikut siklus hidup komponen ini dan efeknya
- * bergantung pada streamnya, jadi keduanya tidak bisa lagi saling mendahului.
+ * Di sini elemen dan efeknya hidup di komponen yang sama, jadi keduanya tidak
+ * bisa lagi saling mendahului.
  */
 function Media({ stream, className, bisu = false }: { stream: MediaStream | null; className: string; bisu?: boolean }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -54,9 +47,9 @@ function Media({ stream, className, bisu = false }: { stream: MediaStream | null
     const el = ref.current;
     if (!el || el.srcObject === stream) return;
     el.srcObject = stream;
-    // Kebijakan autoplay peramban bisa menolak pemutaran tanpa gestur.
-    // Panggilan selalu dimulai dari klik jadi normalnya lolos; ditangkap supaya
-    // penolakannya tidak jatuh sebagai unhandled rejection yang tak terlihat.
+    // Kebijakan autoplay bisa menolak pemutaran tanpa gestur. Panggilan selalu
+    // dimulai dari klik jadi normalnya lolos; ditangkap supaya penolakannya
+    // tidak jatuh sebagai unhandled rejection yang tak terlihat.
     void el.play().catch(() => undefined);
   }, [stream]);
 
@@ -64,27 +57,37 @@ function Media({ stream, className, bisu = false }: { stream: MediaStream | null
   return <video ref={ref} autoPlay playsInline muted={bisu} className={className} />;
 }
 
+/** Satu kotak peserta: gambarnya kalau ada, avatar kalau hanya suara. */
+function Peserta({ peserta }: { peserta: TPesertaJauh }) {
+  return (
+    <div className="relative flex min-h-0 items-center justify-center overflow-hidden rounded-lg bg-black/60">
+      {/* Elemen media SELALU terpasang, juga saat peserta hanya mengirim suara.
+          Kalau ia ikut dirender bersyarat, audionya tidak punya tempat keluar. */}
+      <Media stream={peserta.stream} className={peserta.adaVideo ? "h-full w-full object-contain" : "hidden"} />
+      {!peserta.adaVideo ? <Avatar name={peserta.nama} size={64} shape="circle" /> : null}
+      <span className="text-xs absolute bottom-2 left-2 rounded bg-black/60 px-1.5 py-0.5 text-white/90">
+        {peserta.nama}
+      </span>
+    </div>
+  );
+}
+
 export function PanggilanLayar({
   status,
   koneksi,
-  namaLawan,
-  avatarLawan,
+  judul,
   pakaiVideo,
   mikMati,
   kameraMati,
   streamLokal,
-  streamJauh,
-  adaVideoJauh,
+  pesertaJauh,
   byteMasuk,
   onAngkat,
   onTutup,
   onSetelMik,
   onSetelKamera,
 }: Props) {
-  // Keputusan apa yang tampil hidup di `tata-panggilan.ts` sebagai fungsi murni,
-  // supaya bisa diuji tanpa DOM. Aturan terpentingnya, elemen media lawan selalu
-  // terpasang, pernah dilanggar dan membuat panggilan sunyi total.
-  const tata = tataPanggilan(status, pakaiVideo, Boolean(streamLokal), adaVideoJauh);
+  const tata = tataPanggilan(status, pakaiVideo, Boolean(streamLokal), pesertaJauh.length);
   if (!tata.tampil) return null;
 
   const keterangan =
@@ -93,23 +96,26 @@ export function PanggilanLayar({
       : status === "memanggil"
         ? "Menunggu dijawab..."
         : status === "menyambungkan"
-          ? "Menyambungkan jalur suara..."
-          : "Tersambung";
+          ? "Menyambungkan..."
+          : pesertaJauh.length > 1
+            ? `${pesertaJauh.length + 1} peserta`
+            : "Tersambung";
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/85 p-6">
-      <div className="relative flex min-h-0 w-full max-w-3xl flex-1 items-center justify-center">
-        {/* Media lawan SELALU terpasang, termasuk saat panggilan suara. Kalau ia
-            ikut dirender bersyarat, suaranya tidak keluar karena elemennya belum
-            ada saat aliran audio pertama tiba. */}
-        <Media
-          stream={streamJauh}
-          className={tata.gambarLawanTerlihat ? "max-h-full w-full rounded-lg bg-black object-contain" : "hidden"}
-        />
-
-        {!tata.gambarLawanTerlihat ? (
-          <Avatar name={namaLawan} src={getFileURL(avatarLawan ?? "")} size={80} shape="circle" />
-        ) : null}
+      <div className="relative flex min-h-0 w-full max-w-5xl flex-1 items-center justify-center">
+        {tata.adaPeserta ? (
+          <div
+            className="grid h-full w-full gap-2"
+            style={{ gridTemplateColumns: `repeat(${tata.kolom}, minmax(0, 1fr))` }}
+          >
+            {pesertaJauh.map((p) => (
+              <Peserta key={p.id} peserta={p} />
+            ))}
+          </div>
+        ) : (
+          <Avatar name={judul} size={80} shape="circle" />
+        )}
 
         {/* Pratinjau diri tampil SEJAK MEMANGGIL, bukan setelah tersambung.
             Kalau kameranya bermasalah, orang tahu sejak detik pertama alih-alih
@@ -124,26 +130,21 @@ export function PanggilanLayar({
         ) : null}
       </div>
 
-      <p className="text-lg mt-5 font-medium text-white">{namaLawan}</p>
+      <p className="text-lg mt-5 font-medium text-white">{judul}</p>
       <p className="text-sm mt-1 text-white/60">{keterangan}</p>
-      {/* Keadaan koneksi ditampilkan apa adanya. Tanpa ini, "tersambung tapi
-          sunyi" dan "tidak pernah tersambung" terlihat persis sama dari layar,
-          dan yang melapor tidak punya kata untuk membedakannya. */}
-      {/* Angka byte adalah SATU-SATUNYA bukti media benar-benar mengalir.
-          Status koneksi, track yang tiba, bahkan tulisan "Tersambung" semuanya
-          bisa terlihat benar sementara nol byte berpindah. */}
+      {/* Angka byte adalah SATU-SATUNYA bukti media benar-benar mengalir. Status
+          koneksi, track yang tiba, bahkan tulisan "Tersambung" semuanya bisa
+          terlihat benar sementara nol byte berpindah. */}
       <p className="text-xs mt-1 text-white/35">
         {koneksi}
         {streamLokal ? " · mik siap" : " · mik BELUM siap"}
         {" · masuk "}
-        {Math.round(byteMasuk.audio / 1024)} KB audio
-        {" / "}
-        {Math.round(byteMasuk.video / 1024)} KB video
+        {Math.round(byteMasuk.audio / 1024)} KB audio / {Math.round(byteMasuk.video / 1024)} KB video
       </p>
       {status === "tersambung" && byteMasuk.audio === 0 && byteMasuk.video === 0 ? (
         <p className="text-xs text-amber-300/80 mt-2 max-w-md text-center">
-          Jalur terbentuk tapi belum ada data yang masuk. Kalau angka di atas tetap nol beberapa detik, lalu lintas
-          media sedang diblokir jaringan.
+          Tersambung tapi belum ada data yang masuk. Kalau angka di atas tetap nol beberapa detik, lalu lintas media
+          sedang diblokir jaringan.
         </p>
       ) : null}
 
