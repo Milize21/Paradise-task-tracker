@@ -366,6 +366,7 @@ CELERY_IMPORTS = (
     "plane.bgtasks.login_activity_retention",
     "plane.bgtasks.deadline_reminder_task",
     "plane.bgtasks.google_calendar_sync",
+    "plane.bgtasks.chat_notification_task",
     "plane.license.bgtasks.telemetry_metrics",
     # management tasks
     "plane.bgtasks.dummy_data_task",
