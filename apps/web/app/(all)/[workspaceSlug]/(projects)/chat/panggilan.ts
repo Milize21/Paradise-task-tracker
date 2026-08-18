@@ -71,6 +71,9 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
   // Ditampilkan apa adanya di layar. Tanpa ini, "tersambung tapi sunyi" dan
   // "tidak pernah tersambung" tidak bisa dibedakan oleh yang melaporkannya.
   const [koneksi, setKoneksi] = useState("belum mulai");
+  // Apakah track video lawan benar-benar tiba. Dipisah dari `pakaiVideo`,
+  // yang hanya menyatakan panggilan ini DIMULAI sebagai panggilan video.
+  const [adaVideoJauh, setAdaVideoJauh] = useState(false);
   const [lawan, setLawan] = useState<string | null>(null);
   const [pakaiVideo, setPakaiVideo] = useState(false);
   const [mikMati, setMikMati] = useState(false);
@@ -102,6 +105,7 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
     lawanRef.current = null;
     setStreamLokal(null);
     setStreamJauh(null);
+    setAdaVideoJauh(false);
     setStatus("diam");
     setKoneksi("belum mulai");
     setLawan(null);
@@ -119,6 +123,11 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
       };
       pc.ontrack = (ev) => {
         setStreamJauh(ev.streams[0] ?? null);
+        // Ditandai dari track yang BENAR-BENAR tiba, bukan dari bendera
+        // `pakaiVideo` yang cuma menyatakan niat saat panggilan dimulai.
+        // Kalau video gagal dinegosiasikan, bendera tetap menyala dan layar
+        // menampilkan kotak hitam yang terlihat seperti kerusakan.
+        if (ev.track.kind === "video") setAdaVideoJauh(true);
         setKoneksi("media lawan diterima");
       };
       pc.oniceconnectionstatechange = () => setKoneksi("ice: " + pc.iceConnectionState);
@@ -188,9 +197,22 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
     if (!stream) return;
 
     const pc = buatKoneksi(ke);
+
+    // URUTAN INI TIDAK BOLEH DIBALIK, dan pernah terbalik sampai video tidak
+    // pernah sampai ke penelepon.
+    //
+    // `setRemoteDescription` WAJIB lebih dulu: ia yang membentuk transceiver
+    // sesuai m-line di dalam tawaran. Baru sesudah itu `addTrack` menempelkan
+    // track lokal ke transceiver yang sudah ada, mengubahnya jadi dua arah.
+    //
+    // Kalau `addTrack` didahulukan, track lokal membuat transceiver BARU yang
+    // tidak sejajar dengan tawaran. Peramban lalu memasangkan seadanya: audio
+    // biasanya masih menemukan jalur dan terdengar normal, sementara video
+    // tersangkut di m-line yang salah dan tidak pernah terkirim. Gejalanya
+    // menyesatkan karena panggilan terasa berhasil, cuma gambarnya tidak ada.
+    await pc.setRemoteDescription(new RTCSessionDescription(masuk.sdp));
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
-    await pc.setRemoteDescription(new RTCSessionDescription(masuk.sdp));
     await tuangKandidat(pc, antreIceRef.current);
     antreIceRef.current = [];
 
@@ -292,6 +314,7 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
     kameraMati,
     streamLokal,
     streamJauh,
+    adaVideoJauh,
     panggil,
     angkat,
     tutup,

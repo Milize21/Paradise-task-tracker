@@ -32,7 +32,7 @@ export function tataPanggilan(
   status: TStatusPanggilan,
   pakaiVideo: boolean,
   adaStreamLokal: boolean,
-  adaStreamJauh: boolean
+  adaVideoJauh: boolean
 ): TTataPanggilan {
   if (status === "diam") {
     return {
@@ -47,7 +47,10 @@ export function tataPanggilan(
     tampil: true,
     // Selalu, tanpa syarat apa pun selain layarnya tampil.
     mediaLawanTerpasang: true,
-    gambarLawanTerlihat: status === "tersambung" && pakaiVideo && adaStreamJauh,
+    // Berdasarkan track video yang BENAR-BENAR tiba, bukan `pakaiVideo`.
+    // Bendera itu cuma menyatakan niat; kalau negosiasi videonya gagal,
+    // mengandalkannya berarti menampilkan kotak hitam yang terlihat rusak.
+    gambarLawanTerlihat: status === "tersambung" && adaVideoJauh,
     // Sejak memanggil, bukan setelah tersambung: kalau kameranya bermasalah,
     // orang tahu sejak detik pertama.
     pratinjauDiriTerlihat: pakaiVideo && adaStreamLokal,

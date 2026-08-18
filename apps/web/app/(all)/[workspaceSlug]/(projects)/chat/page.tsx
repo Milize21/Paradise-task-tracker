@@ -980,6 +980,7 @@ function ChatPage() {
         kameraMati={panggilan.kameraMati}
         streamLokal={panggilan.streamLokal}
         streamJauh={panggilan.streamJauh}
+        adaVideoJauh={panggilan.adaVideoJauh}
         onAngkat={() => void panggilan.angkat()}
         onTutup={panggilan.tutup}
         onSetelMik={panggilan.setelMik}

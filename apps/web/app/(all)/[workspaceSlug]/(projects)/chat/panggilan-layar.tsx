@@ -22,6 +22,7 @@ type Props = {
   kameraMati: boolean;
   streamLokal: MediaStream | null;
   streamJauh: MediaStream | null;
+  adaVideoJauh: boolean;
   onAngkat: () => void;
   onTutup: () => void;
   onSetelMik: (mati: boolean) => void;
@@ -72,6 +73,7 @@ export function PanggilanLayar({
   kameraMati,
   streamLokal,
   streamJauh,
+  adaVideoJauh,
   onAngkat,
   onTutup,
   onSetelMik,
@@ -80,7 +82,7 @@ export function PanggilanLayar({
   // Keputusan apa yang tampil hidup di `tata-panggilan.ts` sebagai fungsi murni,
   // supaya bisa diuji tanpa DOM. Aturan terpentingnya, elemen media lawan selalu
   // terpasang, pernah dilanggar dan membuat panggilan sunyi total.
-  const tata = tataPanggilan(status, pakaiVideo, Boolean(streamLokal), Boolean(streamJauh));
+  const tata = tataPanggilan(status, pakaiVideo, Boolean(streamLokal), adaVideoJauh);
   if (!tata.tampil) return null;
 
   const keterangan =
@@ -122,7 +124,13 @@ export function PanggilanLayar({
       <p className="text-xs mt-1 text-white/35">
         koneksi: {koneksi}
         {streamLokal ? " · mik siap" : " · mik BELUM siap"}
-        {status === "tersambung" ? (streamJauh ? " · media lawan diterima" : " · media lawan BELUM tiba") : ""}
+        {status === "tersambung"
+          ? streamJauh
+            ? adaVideoJauh
+              ? " · video lawan diterima"
+              : " · hanya audio lawan yang tiba"
+            : " · media lawan BELUM tiba"
+          : ""}
       </p>
 
       <div className="mt-7 flex items-center gap-3">
