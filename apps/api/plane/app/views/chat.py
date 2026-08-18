@@ -31,6 +31,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from plane.settings.storage import S3Storage
+from plane.utils.obrolan_siaran import siarkan
 
 # Module imports
 from plane.app.permissions import WorkspaceEntityPermission
@@ -425,6 +426,7 @@ class ChatPesanEndpoint(BaseAPIView):
         pesan.isi = isi
         pesan.disunting_pada = timezone.now()
         pesan.save(update_fields=["isi", "disunting_pada", "updated_at"])
+        siarkan(pesan.ruang_id, "sunting", request.user.id)
         peta = _peta_lampiran([pesan.id], slug)
         return Response(
             _bentuk(pesan, slug, request.user.id, peta.get(str(pesan.id))),
@@ -437,7 +439,9 @@ class ChatPesanEndpoint(BaseAPIView):
             return Response({"error": "Bukan pesan Anda."}, status=status.HTTP_404_NOT_FOUND)
         # Soft delete: barisnya tetap ada untuk audit, tapi hilang dari semua
         # daftar karena manager bawaan menyaring deleted_at.
+        ruang_id = pesan.ruang_id
         pesan.delete()
+        siarkan(ruang_id, "hapus", request.user.id)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -464,9 +468,11 @@ class ChatReaksiEndpoint(BaseAPIView):
             # Klik kedua pada emoji yang sama = membatalkan. Satu endpoint untuk
             # dua arah, karena dari sisi UI ini memang satu tombol.
             ada.delete(soft=False)
+            siarkan(pesan.ruang_id, "reaksi", request.user.id)
             return Response({"aktif": False}, status=status.HTTP_200_OK)
 
         ReaksiPesan.objects.create(pesan=pesan, user=request.user, emoji=emoji)
+        siarkan(pesan.ruang_id, "reaksi", request.user.id)
         return Response({"aktif": True}, status=status.HTTP_201_CREATED)
 
 
@@ -618,6 +624,11 @@ def _kirim_ke_ruang(request, slug, ruang, penerima_id=None):
 
     # Denormalisasi yang membuat daftar percakapan bisa diurutkan tanpa subquery.
     Ruang.objects.filter(id=ruang.id).update(pesan_terakhir_pada=pesan.created_at)
+
+    # Beri tahu yang sedang membuka ruang ini. Ditaruh SESUDAH pesan tersimpan:
+    # siaran yang mendahului commit membuat peramban menarik ulang lalu tidak
+    # menemukan apa-apa, dan pesannya baru muncul pada penarikan berikutnya.
+    siarkan(ruang.id, "pesan", request.user.id)
 
     if lampiran_ids:
         # Yang boleh ditempel HANYA berkas yang diunggah orang ini sendiri, di

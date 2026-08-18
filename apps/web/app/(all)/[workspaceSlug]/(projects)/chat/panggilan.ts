@@ -1,0 +1,280 @@
+/**
+ * Copyright (c) 2023-present Plane Software, Inc. and contributors
+ * Kustomisasi Paradise Task Tracker: panggilan suara & video (Yorukaze Production)
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * See the LICENSE file for details.
+ */
+
+import { useCallback, useEffect, useRef, useState } from "react";
+
+/**
+ * Panggilan satu lawan satu lewat WebRTC.
+ *
+ * TANPA SERVER MEDIA, dan itu bukan penyederhanaan yang menunggu diperbaiki.
+ * Untuk dua orang, WebRTC menyambungkan kedua peramban LANGSUNG. Server hanya
+ * dibutuhkan untuk perkenalan awal (menukar SDP dan kandidat ICE), dan itu sudah
+ * dilayani soket obrolan yang sama. Setelah tersambung, suara dan video tidak
+ * pernah melewati server kita.
+ *
+ * ponytail: dua orang saja. Untuk tiga orang ke atas, peer-ke-peer boros karena
+ * tiap orang mengirim salinan ke semua orang lain, dan jalur naiknya adalah SFU.
+ * `mediasoup` itu pustaka Node yang memang dirancang ditanam ke aplikasi Express
+ * yang sudah ada, jadi tempatnya nanti di dalam `apps/live`, bukan layanan baru.
+ *
+ * ⚠️ SEMUA INI HANYA JALAN DI DALAM JARINGAN KANTOR. Di satu LAN, kandidat host
+ * sudah cukup dan STUN pun tidak diperlukan. Dari luar kantor, panggilan butuh
+ * TURN untuk menembus NAT, dan lagipula servernya sendiri belum bisa dijangkau
+ * dari luar. Jadi jangan mengira ini rusak kalau dicoba dari rumah.
+ */
+
+/** Kandidat ICE dibiarkan kosong: satu LAN tidak butuh STUN, dan menaruh alamat
+ * STUN yang tidak terjangkau justru menambah jeda sebelum panggilan tersambung.
+ * Isi ini kalau nanti panggilan harus menyeberang jaringan. */
+const KONFIG: RTCConfiguration = { iceServers: [] };
+
+/** Tuang kandidat yang tertahan, sekaligus.
+ *
+ * Urutannya tidak penting bagi WebRTC, jadi menunggunya satu per satu cuma
+ * menunda saat panggilan tersambung. Kegagalan per kandidat sengaja ditelan:
+ * kandidat yang sudah usang wajar ditolak, dan satu yang gagal tidak boleh
+ * menjatuhkan sisanya.
+ */
+async function tuangKandidat(pc: RTCPeerConnection, antre: RTCIceCandidateInit[]) {
+  await Promise.all(antre.map((k) => pc.addIceCandidate(new RTCIceCandidate(k)).catch(() => undefined)));
+}
+
+export type TStatusPanggilan = "diam" | "memanggil" | "berdering" | "tersambung";
+
+type TSinyal =
+  | { jenis: "tawaran"; sdp: RTCSessionDescriptionInit; video: boolean }
+  | { jenis: "jawaban"; sdp: RTCSessionDescriptionInit }
+  | { jenis: "ice"; kandidat: RTCIceCandidateInit }
+  | { jenis: "tutup" };
+
+type Opsi = {
+  /** Mengembalikan false kalau soket sedang putus. */
+  kirimSinyal: (ke: string, muatan: unknown) => boolean;
+  onGagal?: (pesan: string) => void;
+};
+
+export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
+  const [status, setStatus] = useState<TStatusPanggilan>("diam");
+  const [lawan, setLawan] = useState<string | null>(null);
+  const [pakaiVideo, setPakaiVideo] = useState(false);
+  const [mikMati, setMikMati] = useState(false);
+  const [kameraMati, setKameraMati] = useState(false);
+  const [streamLokal, setStreamLokal] = useState<MediaStream | null>(null);
+  const [streamJauh, setStreamJauh] = useState<MediaStream | null>(null);
+
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const lokalRef = useRef<MediaStream | null>(null);
+  const lawanRef = useRef<string | null>(null);
+  const tawaranMasukRef = useRef<{ sdp: RTCSessionDescriptionInit; video: boolean } | null>(null);
+  /** Kandidat ICE yang tiba SEBELUM remote description dipasang.
+   *
+   * Ini jebakan WebRTC yang paling sering terlewat: `addIceCandidate` melempar
+   * kalau remote description belum ada, dan kandidat pertama sering menyusul
+   * tawaran hanya beberapa milidetik kemudian. Yang dibuang di sini biasanya
+   * justru kandidat host, yaitu satu-satunya yang berguna di dalam LAN. */
+  const antreIceRef = useRef<RTCIceCandidateInit[]>([]);
+
+  const bereskan = useCallback(() => {
+    pcRef.current?.close();
+    pcRef.current = null;
+    // Track WAJIB dihentikan satu per satu. Membuang referensi stream saja
+    // meninggalkan lampu kamera menyala sampai tabnya ditutup.
+    lokalRef.current?.getTracks().forEach((t) => t.stop());
+    lokalRef.current = null;
+    antreIceRef.current = [];
+    tawaranMasukRef.current = null;
+    lawanRef.current = null;
+    setStreamLokal(null);
+    setStreamJauh(null);
+    setStatus("diam");
+    setLawan(null);
+    setMikMati(false);
+    setKameraMati(false);
+  }, []);
+
+  const buatKoneksi = useCallback(
+    (ke: string) => {
+      const pc = new RTCPeerConnection(KONFIG);
+      pcRef.current = pc;
+
+      pc.onicecandidate = (ev) => {
+        if (ev.candidate) kirimSinyal(ke, { jenis: "ice", kandidat: ev.candidate.toJSON() });
+      };
+      pc.ontrack = (ev) => setStreamJauh(ev.streams[0] ?? null);
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === "connected") setStatus("tersambung");
+        if (pc.connectionState === "failed" || pc.connectionState === "closed") bereskan();
+      };
+      return pc;
+    },
+    [kirimSinyal, bereskan]
+  );
+
+  const ambilMedia = useCallback(
+    async (video: boolean) => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
+        lokalRef.current = stream;
+        setStreamLokal(stream);
+        return stream;
+      } catch {
+        // Izin ditolak, atau tidak ada mikrofon. Dibedakan dari kegagalan
+        // jaringan supaya pesannya bisa menunjuk sebabnya.
+        onGagal?.("Tidak bisa memakai mikrofon atau kamera. Periksa izin peramban.");
+        return null;
+      }
+    },
+    [onGagal]
+  );
+
+  /** Mulai memanggil seseorang. */
+  const panggil = useCallback(
+    async (ke: string, video: boolean) => {
+      if (status !== "diam") return;
+      const stream = await ambilMedia(video);
+      if (!stream) return;
+
+      lawanRef.current = ke;
+      setLawan(ke);
+      setPakaiVideo(video);
+      setStatus("memanggil");
+
+      const pc = buatKoneksi(ke);
+      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+
+      const tawaran = await pc.createOffer();
+      await pc.setLocalDescription(tawaran);
+      if (!kirimSinyal(ke, { jenis: "tawaran", sdp: tawaran, video })) {
+        onGagal?.("Sambungan sedang putus. Coba lagi sebentar.");
+        bereskan();
+      }
+    },
+    [status, ambilMedia, buatKoneksi, kirimSinyal, onGagal, bereskan]
+  );
+
+  /** Angkat panggilan yang sedang berdering. */
+  const angkat = useCallback(async () => {
+    const masuk = tawaranMasukRef.current;
+    const ke = lawanRef.current;
+    if (!masuk || !ke) return;
+
+    const stream = await ambilMedia(masuk.video);
+    if (!stream) return;
+
+    const pc = buatKoneksi(ke);
+    stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+
+    await pc.setRemoteDescription(new RTCSessionDescription(masuk.sdp));
+    await tuangKandidat(pc, antreIceRef.current);
+    antreIceRef.current = [];
+
+    const jawaban = await pc.createAnswer();
+    await pc.setLocalDescription(jawaban);
+    kirimSinyal(ke, { jenis: "jawaban", sdp: jawaban });
+
+    tawaranMasukRef.current = null;
+    setStatus("tersambung");
+  }, [ambilMedia, buatKoneksi, kirimSinyal]);
+
+  /** Tutup panggilan, baik yang sedang berdering maupun yang sedang jalan. */
+  const tutup = useCallback(() => {
+    const ke = lawanRef.current;
+    if (ke) kirimSinyal(ke, { jenis: "tutup" });
+    bereskan();
+  }, [kirimSinyal, bereskan]);
+
+  /** Sinyal masuk dari lawan bicara. Dipanggil oleh hook soket obrolan. */
+  const terimaSinyal = useCallback(
+    async (dari: string, muatan: unknown) => {
+      const sinyal = muatan as TSinyal;
+      if (!sinyal?.jenis) return;
+
+      if (sinyal.jenis === "tawaran") {
+        // Dua orang menelepon bersamaan. Yang datang belakangan ditolak, bukan
+        // dibiarkan menimpa: menerima dua tawaran sekaligus menghasilkan satu
+        // koneksi yang tidak pernah selesai dan tidak bisa ditutup dari UI.
+        if (status !== "diam") {
+          kirimSinyal(dari, { jenis: "tutup" });
+          return;
+        }
+        tawaranMasukRef.current = { sdp: sinyal.sdp, video: sinyal.video };
+        lawanRef.current = dari;
+        setLawan(dari);
+        setPakaiVideo(sinyal.video);
+        setStatus("berdering");
+        return;
+      }
+
+      if (sinyal.jenis === "jawaban") {
+        const pc = pcRef.current;
+        if (!pc) return;
+        await pc.setRemoteDescription(new RTCSessionDescription(sinyal.sdp));
+        await tuangKandidat(pc, antreIceRef.current);
+        antreIceRef.current = [];
+        setStatus("tersambung");
+        return;
+      }
+
+      if (sinyal.jenis === "ice") {
+        const pc = pcRef.current;
+        // Belum ada remote description: disimpan dulu, jangan dibuang.
+        if (!pc || !pc.remoteDescription) {
+          antreIceRef.current.push(sinyal.kandidat);
+          return;
+        }
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(sinyal.kandidat));
+        } catch {
+          // Kandidat yang sudah usang wajar ditolak dan tidak perlu diributkan.
+        }
+        return;
+      }
+
+      if (sinyal.jenis === "tutup") bereskan();
+    },
+    [status, kirimSinyal, bereskan]
+  );
+
+  /** Lawan bicara menutup tab. Sama artinya dengan menutup panggilan. */
+  const lawanPergi = useCallback(
+    (dari: string) => {
+      if (lawanRef.current === dari) bereskan();
+    },
+    [bereskan]
+  );
+
+  const setelMik = useCallback((mati: boolean) => {
+    lokalRef.current?.getAudioTracks().forEach((t) => (t.enabled = !mati));
+    setMikMati(mati);
+  }, []);
+
+  const setelKamera = useCallback((mati: boolean) => {
+    lokalRef.current?.getVideoTracks().forEach((t) => (t.enabled = !mati));
+    setKameraMati(mati);
+  }, []);
+
+  // Lampu kamera harus padam walau komponennya dilepas mendadak, misalnya saat
+  // orang berpindah halaman di tengah panggilan.
+  useEffect(() => () => bereskan(), [bereskan]);
+
+  return {
+    status,
+    lawan,
+    pakaiVideo,
+    mikMati,
+    kameraMati,
+    streamLokal,
+    streamJauh,
+    panggil,
+    angkat,
+    tutup,
+    terimaSinyal,
+    lawanPergi,
+    setelMik,
+    setelKamera,
+  };
+}

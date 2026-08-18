@@ -25,6 +25,8 @@ import {
   Lock,
   Plus,
   Compass,
+  Phone,
+  Video,
 } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
@@ -51,6 +53,9 @@ import {
 } from "@/services/chat.service";
 // local imports
 import { susunBaris } from "./baris";
+import { useObrolanLangsung } from "./langsung";
+import { usePanggilan } from "./panggilan";
+import { PanggilanLayar } from "./panggilan-layar";
 import { Gelembung } from "./gelembung";
 import { ukuranTerbaca } from "./lampiran";
 
@@ -61,6 +66,10 @@ const fileService = new FileService();
 // daripada daftarnya, karena di situlah orang menunggu balasan.
 // ponytail: angka tetap, bukan backoff. Naikkan kalau server terasa berat.
 const SELANG_PESAN = 5000;
+// Dipakai saat soket real-time hidup. Bukan dimatikan, cuma dijarangkan:
+// satu penarikan tiap setengah menit cukup untuk menambal siaran yang
+// terlewat saat soket sempat putus dan menyambung lagi.
+const SELANG_PESAN_CADANGAN = 30000;
 const SELANG_DAFTAR = 15000;
 const TINGGI_TULIS_MAKS = 160;
 
@@ -119,6 +128,7 @@ function ChatPage() {
   const pesanTerakhirRef = useRef<string | null>(null);
   const tulisRef = useRef<HTMLTextAreaElement>(null);
   const namaKanalRef = useRef<HTMLInputElement>(null);
+  const panggilanRef = useRef<ReturnType<typeof usePanggilan> | null>(null);
 
   const slug = workspaceSlug?.toString();
 
@@ -134,6 +144,27 @@ function ChatPage() {
     { refreshInterval: SELANG_DAFTAR }
   );
 
+  // Ruang yang sedang dibuka. Untuk kanal langsung dari URL; untuk DM dicari
+  // dari daftar percakapan. DM yang belum pernah berisi pesan belum punya
+  // ruang, dan itu wajar: soketnya menyusul begitu pesan pertama terkirim.
+  const ruangSaatIni = ruangParam ?? (percakapan ?? []).find((p) => p.lawan_bicara === dengan)?.id ?? null;
+  const kunciIsi = slug && (ruangParam || dengan) ? `CHAT_ISI_${slug}_${ruangParam ?? dengan}` : null;
+
+  // Sengaja memakai `mutate` global, bukan handle dari useSWR di bawah: hook ini
+  // harus berdiri SEBELUM SWR isi percakapan supaya `tersambung` bisa dipakai
+  // menentukan seberapa sering penarikan cadangan berjalan.
+  const { tersambung, kirimSinyal } = useObrolanLangsung({
+    slug,
+    ruangId: ruangSaatIni,
+    onPerubahan: () => {
+      if (kunciIsi) void mutate(kunciIsi);
+      void mutate(`CHAT_PERCAKAPAN_${slug}`);
+      void mutate(KUNCI_BELUM_DIBACA);
+    },
+    onSinyal: (dari, muatan) => void panggilanRef.current?.terimaSinyal(dari, muatan),
+    onPergi: (dari) => panggilanRef.current?.lawanPergi(dari),
+  });
+
   // Satu SWR untuk dua jenis percakapan. Kuncinya dibedakan supaya berpindah
   // dari kanal ke DM tidak menampilkan sisa pesan sebelumnya sekejap.
   const { data: pesan, mutate: muatPesan } = useSWR(
@@ -143,7 +174,10 @@ function ChatPage() {
       : slug && dengan
         ? () => chatService.getPesan(slug, dengan)
         : null,
-    { refreshInterval: SELANG_PESAN }
+    // Soket hidup = pesan sudah datang seketika, jadi penarikan tinggal jadi
+    // jaring pengaman. TIDAK dimatikan sama sekali: kalau soketnya putus tanpa
+    // sempat menyambung lagi, ini satu-satunya yang menyelamatkan percakapan.
+    { refreshInterval: tersambung ? SELANG_PESAN_CADANGAN : SELANG_PESAN }
   );
 
   // Ganti lawan bicara = buang riwayat lama yang sudah dimuat, kalau tidak
@@ -364,6 +398,14 @@ function ChatPage() {
   useEffect(() => {
     if (buatTerbuka) namaKanalRef.current?.focus();
   }, [buatTerbuka]);
+
+  const panggilan = usePanggilan({
+    kirimSinyal,
+    onGagal: (pesanGalat) => setToast({ type: TOAST_TYPE.ERROR, title: "Panggilan gagal", message: pesanGalat }),
+  });
+  // Soket dibuat lebih dulu daripada hook panggilan, jadi callback-nya tidak
+  // bisa menunjuk `panggilan` secara langsung. Ref ini yang menjembatani.
+  panggilanRef.current = panggilan;
 
   const kanalAktif = (daftarKanal ?? []).find((r) => r.id === ruangParam);
   const kanalDiikuti = (daftarKanal ?? []).filter((r) => r.ikut);
@@ -677,6 +719,32 @@ function ChatPage() {
                     shape="circle"
                   />
                   <p className="text-sm font-medium text-primary">{lawanBicara?.display_name ?? "Anggota"}</p>
+                  {/* Panggilan hanya untuk DM. Untuk kanal butuh SFU, dan itu
+                      pekerjaan lain. Tombolnya mati kalau soket sedang putus,
+                      karena tanpa jalur sinyal panggilan tidak akan tersambung
+                      dan yang menekan cuma menunggu tanpa tahu sebabnya. */}
+                  <div className="ml-auto flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => dengan && void panggilan.panggil(dengan, false)}
+                      disabled={!tersambung || panggilan.status !== "diam"}
+                      title={tersambung ? "Panggilan suara" : "Sambungan real-time sedang putus"}
+                      aria-label="Panggilan suara"
+                      className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary disabled:opacity-40"
+                    >
+                      <Phone className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => dengan && void panggilan.panggil(dengan, true)}
+                      disabled={!tersambung || panggilan.status !== "diam"}
+                      title={tersambung ? "Panggilan video" : "Sambungan real-time sedang putus"}
+                      aria-label="Panggilan video"
+                      className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary disabled:opacity-40"
+                    >
+                      <Video className="size-4" />
+                    </button>
+                  </div>
                 </>
               )}
             </div>
@@ -899,6 +967,23 @@ function ChatPage() {
           </>
         )}
       </section>
+
+      <PanggilanLayar
+        status={panggilan.status}
+        namaLawan={
+          (panggilan.lawan ? getWorkspaceMemberDetails(panggilan.lawan)?.member?.display_name : undefined) ?? "Anggota"
+        }
+        avatarLawan={panggilan.lawan ? getWorkspaceMemberDetails(panggilan.lawan)?.member?.avatar_url : undefined}
+        pakaiVideo={panggilan.pakaiVideo}
+        mikMati={panggilan.mikMati}
+        kameraMati={panggilan.kameraMati}
+        streamLokal={panggilan.streamLokal}
+        streamJauh={panggilan.streamJauh}
+        onAngkat={() => void panggilan.angkat()}
+        onTutup={panggilan.tutup}
+        onSetelMik={panggilan.setelMik}
+        onSetelKamera={panggilan.setelKamera}
+      />
 
       {/* Buat kanal */}
       {buatTerbuka ? (
