@@ -151,7 +151,9 @@ services:
   # yang diiklankan tidak cocok dengan yang benar-benar bisa dihubungi.
   livekit:
     container_name: livekit
-    image: livekit/livekit-server:v1.9.1
+    # v1.9.1 belum punya jalur `/rtc/v1` yang dipakai klien 2.x, sehingga klien
+    # harus mundur ke `/rtc` dan kehilangan satu putaran tiap memulai panggilan.
+    image: livekit/livekit-server:v1.13.5
     restart: always
     network_mode: host
     command: --config /etc/livekit.yaml

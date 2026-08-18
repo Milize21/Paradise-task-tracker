@@ -25,6 +25,11 @@
 	#
 	# ⚠️ Ini HANYA jalur sinyal. Media tetap langsung ke port 7881/UDP dan tidak
 	# lewat proxy; aturan mixed content tidak berlaku untuk media WebRTC.
+	# DUA pola, dan keduanya WAJIB. `/rtc/*` TIDAK cocok dengan `/rtc` polos.
+	# Klien LiveKit mencoba `/rtc/v1` lebih dulu lalu MUNDUR ke `/rtc` untuk
+	# server versi lama; tanpa pola kedua, permintaan mundur itu jatuh ke
+	# aplikasi web dan soketnya gagal tanpa sebab yang jelas dari sisi server.
+	reverse_proxy /rtc {$LIVEKIT_UPSTREAM:host.docker.internal:7880}
 	reverse_proxy /rtc/* {$LIVEKIT_UPSTREAM:host.docker.internal:7880}
 
 	reverse_proxy /api/* api:8000
