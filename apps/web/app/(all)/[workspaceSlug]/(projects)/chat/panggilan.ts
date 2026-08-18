@@ -27,10 +27,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * dari luar. Jadi jangan mengira ini rusak kalau dicoba dari rumah.
  */
 
-/** Kandidat ICE dibiarkan kosong: satu LAN tidak butuh STUN, dan menaruh alamat
- * STUN yang tidak terjangkau justru menambah jeda sebelum panggilan tersambung.
- * Isi ini kalau nanti panggilan harus menyeberang jaringan. */
-const KONFIG: RTCConfiguration = { iceServers: [] };
+/** Di satu LAN, kandidat host sudah cukup dan itu jalur yang dipakai.
+ *
+ * STUN tetap dicantumkan sebagai CADANGAN, bukan jalur utama: ICE mencoba semua
+ * kandidat berbarengan dan memilih pasangan tercepat, jadi kandidat host tetap
+ * menang di dalam kantor. Gunanya kalau dua orang ternyata berada di segmen
+ * jaringan berbeda, atau kalau peramban menyamarkan alamat lokalnya jadi nama
+ * `.local` yang tidak bisa diresolusi lawan.
+ *
+ * Kalau internet kantor mati, ini tidak merusak apa-apa: kandidat host tetap
+ * terkumpul dan panggilan di dalam LAN tetap tersambung. */
+const KONFIG: RTCConfiguration = {
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+};
 
 /** Tuang kandidat yang tertahan, sekaligus.
  *
@@ -59,6 +68,9 @@ type Opsi = {
 
 export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
   const [status, setStatus] = useState<TStatusPanggilan>("diam");
+  // Ditampilkan apa adanya di layar. Tanpa ini, "tersambung tapi sunyi" dan
+  // "tidak pernah tersambung" tidak bisa dibedakan oleh yang melaporkannya.
+  const [koneksi, setKoneksi] = useState("belum mulai");
   const [lawan, setLawan] = useState<string | null>(null);
   const [pakaiVideo, setPakaiVideo] = useState(false);
   const [mikMati, setMikMati] = useState(false);
@@ -91,6 +103,7 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
     setStreamLokal(null);
     setStreamJauh(null);
     setStatus("diam");
+    setKoneksi("belum mulai");
     setLawan(null);
     setMikMati(false);
     setKameraMati(false);
@@ -104,9 +117,17 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
       pc.onicecandidate = (ev) => {
         if (ev.candidate) kirimSinyal(ke, { jenis: "ice", kandidat: ev.candidate.toJSON() });
       };
-      pc.ontrack = (ev) => setStreamJauh(ev.streams[0] ?? null);
+      pc.ontrack = (ev) => {
+        setStreamJauh(ev.streams[0] ?? null);
+        setKoneksi("media lawan diterima");
+      };
+      pc.oniceconnectionstatechange = () => setKoneksi("ice: " + pc.iceConnectionState);
       pc.onconnectionstatechange = () => {
+        setKoneksi(pc.connectionState);
         if (pc.connectionState === "connected") setStatus("tersambung");
+        // `failed` dan `closed` saja. `disconnected` sering pulih sendiri dalam
+        // beberapa detik saat jaringan berkedip, dan membereskannya di situ
+        // memutus panggilan yang sebenarnya masih bisa diselamatkan.
         if (pc.connectionState === "failed" || pc.connectionState === "closed") bereskan();
       };
       return pc;
@@ -120,6 +141,7 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
         lokalRef.current = stream;
         setStreamLokal(stream);
+        setKoneksi(video ? "kamera & mik siap" : "mik siap");
         return stream;
       } catch {
         // Izin ditolak, atau tidak ada mikrofon. Dibedakan dari kegagalan
@@ -263,6 +285,7 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
 
   return {
     status,
+    koneksi,
     lawan,
     pakaiVideo,
     mikMati,

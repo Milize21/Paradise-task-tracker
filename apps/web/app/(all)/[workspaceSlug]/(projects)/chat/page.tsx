@@ -970,6 +970,7 @@ function ChatPage() {
 
       <PanggilanLayar
         status={panggilan.status}
+        koneksi={panggilan.koneksi}
         namaLawan={
           (panggilan.lawan ? getWorkspaceMemberDetails(panggilan.lawan)?.member?.display_name : undefined) ?? "Anggota"
         }

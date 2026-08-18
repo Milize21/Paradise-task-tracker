@@ -10,9 +10,11 @@ import { Mic, MicOff, Phone, PhoneOff, Video, VideoOff } from "lucide-react";
 import { Avatar } from "@plane/propel/avatar";
 import { getFileURL } from "@plane/utils";
 import type { TStatusPanggilan } from "./panggilan";
+import { tataPanggilan } from "./tata-panggilan";
 
 type Props = {
   status: TStatusPanggilan;
+  koneksi: string;
   namaLawan: string;
   avatarLawan?: string;
   pakaiVideo: boolean;
@@ -26,18 +28,43 @@ type Props = {
   onSetelKamera: (mati: boolean) => void;
 };
 
-/** Pasang MediaStream ke elemen video.
+/**
+ * Satu elemen media yang memegang streamnya sendiri.
  *
- * `srcObject` tidak bisa lewat atribut JSX, harus disetel dari kode. Memakai
- * `src` dengan object URL sudah lama tidak dianjurkan dan bocor memori. */
-function useStream(ref: React.RefObject<HTMLVideoElement | null>, stream: MediaStream | null) {
+ * KENAPA KOMPONEN SENDIRI, dan ini pernah salah sampai panggilan tidak
+ * mengeluarkan suara maupun gambar sama sekali:
+ *
+ * Versi sebelumnya memasang `srcObject` lewat useEffect di komponen induk,
+ * sementara elemen videonya dirender BERSYARAT (hanya saat status `tersambung`).
+ * Urutannya jadi mematikan. Saat stream kamera didapat, elemennya belum ada
+ * sehingga ref-nya null dan efeknya tidak berbuat apa-apa. Saat elemennya
+ * akhirnya dirender, efeknya tidak jalan lagi karena dependensinya tidak
+ * berubah. `srcObject` tidak pernah terpasang, dan tidak ada satu pun error
+ * yang muncul: panggilan terlihat tersambung, tapi sunyi dan gelap.
+ *
+ * Di sini elemennya selalu ikut siklus hidup komponen ini dan efeknya
+ * bergantung pada streamnya, jadi keduanya tidak bisa lagi saling mendahului.
+ */
+function Media({ stream, className, bisu = false }: { stream: MediaStream | null; className: string; bisu?: boolean }) {
+  const ref = useRef<HTMLVideoElement>(null);
+
   useEffect(() => {
-    if (ref.current) ref.current.srcObject = stream;
-  }, [ref, stream]);
+    const el = ref.current;
+    if (!el || el.srcObject === stream) return;
+    el.srcObject = stream;
+    // Kebijakan autoplay peramban bisa menolak pemutaran tanpa gestur.
+    // Panggilan selalu dimulai dari klik jadi normalnya lolos; ditangkap supaya
+    // penolakannya tidak jatuh sebagai unhandled rejection yang tak terlihat.
+    void el.play().catch(() => undefined);
+  }, [stream]);
+
+  // eslint-disable-next-line jsx-a11y/media-has-caption
+  return <video ref={ref} autoPlay playsInline muted={bisu} className={className} />;
 }
 
 export function PanggilanLayar({
   status,
+  koneksi,
   namaLawan,
   avatarLawan,
   pakaiVideo,
@@ -50,48 +77,53 @@ export function PanggilanLayar({
   onSetelMik,
   onSetelKamera,
 }: Props) {
-  const jauhRef = useRef<HTMLVideoElement>(null);
-  const lokalRef = useRef<HTMLVideoElement>(null);
-  useStream(jauhRef, streamJauh);
-  useStream(lokalRef, streamLokal);
-
-  if (status === "diam") return null;
+  // Keputusan apa yang tampil hidup di `tata-panggilan.ts` sebagai fungsi murni,
+  // supaya bisa diuji tanpa DOM. Aturan terpentingnya, elemen media lawan selalu
+  // terpasang, pernah dilanggar dan membuat panggilan sunyi total.
+  const tata = tataPanggilan(status, pakaiVideo, Boolean(streamLokal), Boolean(streamJauh));
+  if (!tata.tampil) return null;
 
   const keterangan =
     status === "berdering" ? "Memanggil Anda" : status === "memanggil" ? "Menunggu dijawab..." : "Tersambung";
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/85 p-6">
-      {/* Video hanya ditampilkan setelah tersambung. Sebelum itu belum ada
-          gambar dari lawan, dan kotak hitam kosong terlihat seperti kerusakan. */}
-      {status === "tersambung" && pakaiVideo ? (
-        <div className="relative flex min-h-0 w-full max-w-3xl flex-1 items-center justify-center">
-          {/* Tanpa <track>: ini aliran langsung dari kamera lawan bicara, dan
-              tidak ada berkas takarir yang bisa disediakan untuknya. Aturan
-              media-has-caption ditujukan untuk media rekaman. */}
-          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-          <video ref={jauhRef} autoPlay playsInline className="max-h-full w-full rounded-lg bg-black object-contain" />
-          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-          <video
-            ref={lokalRef}
-            autoPlay
-            playsInline
-            muted
+      <div className="relative flex min-h-0 w-full max-w-3xl flex-1 items-center justify-center">
+        {/* Media lawan SELALU terpasang, termasuk saat panggilan suara. Kalau ia
+            ikut dirender bersyarat, suaranya tidak keluar karena elemennya belum
+            ada saat aliran audio pertama tiba. */}
+        <Media
+          stream={streamJauh}
+          className={tata.gambarLawanTerlihat ? "max-h-full w-full rounded-lg bg-black object-contain" : "hidden"}
+        />
+
+        {!tata.gambarLawanTerlihat ? (
+          <Avatar name={namaLawan} src={getFileURL(avatarLawan ?? "")} size={80} shape="circle" />
+        ) : null}
+
+        {/* Pratinjau diri tampil SEJAK MEMANGGIL, bukan setelah tersambung.
+            Kalau kameranya bermasalah, orang tahu sejak detik pertama alih-alih
+            menunggu panggilan yang memang tidak akan menampilkan apa pun.
+            Selalu dibisukan supaya suara sendiri tidak menggema. */}
+        {tata.pratinjauDiriTerlihat ? (
+          <Media
+            stream={streamLokal}
+            bisu
             className="shadow-lg absolute right-3 bottom-3 w-32 rounded-md border border-white/20 bg-black object-cover"
           />
-        </div>
-      ) : (
-        <div className="flex flex-col items-center gap-3">
-          <Avatar name={namaLawan} src={getFileURL(avatarLawan ?? "")} size={80} shape="circle" />
-          {/* Audio lawan tetap harus dipasang walau tanpa video, kalau tidak
-              panggilan tersambung tapi tidak ada suara sama sekali. */}
-          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-          <video ref={jauhRef} autoPlay playsInline className="hidden" />
-        </div>
-      )}
+        ) : null}
+      </div>
 
       <p className="text-lg mt-5 font-medium text-white">{namaLawan}</p>
       <p className="text-sm mt-1 text-white/60">{keterangan}</p>
+      {/* Keadaan koneksi ditampilkan apa adanya. Tanpa ini, "tersambung tapi
+          sunyi" dan "tidak pernah tersambung" terlihat persis sama dari layar,
+          dan yang melapor tidak punya kata untuk membedakannya. */}
+      <p className="text-xs mt-1 text-white/35">
+        koneksi: {koneksi}
+        {streamLokal ? " · mik siap" : " · mik BELUM siap"}
+        {status === "tersambung" ? (streamJauh ? " · media lawan diterima" : " · media lawan BELUM tiba") : ""}
+      </p>
 
       <div className="mt-7 flex items-center gap-3">
         {status === "berdering" ? (
