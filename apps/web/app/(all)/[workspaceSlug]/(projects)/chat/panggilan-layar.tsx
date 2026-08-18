@@ -23,6 +23,7 @@ type Props = {
   streamLokal: MediaStream | null;
   streamJauh: MediaStream | null;
   adaVideoJauh: boolean;
+  byteMasuk: { audio: number; video: number };
   onAngkat: () => void;
   onTutup: () => void;
   onSetelMik: (mati: boolean) => void;
@@ -74,6 +75,7 @@ export function PanggilanLayar({
   streamLokal,
   streamJauh,
   adaVideoJauh,
+  byteMasuk,
   onAngkat,
   onTutup,
   onSetelMik,
@@ -127,17 +129,23 @@ export function PanggilanLayar({
       {/* Keadaan koneksi ditampilkan apa adanya. Tanpa ini, "tersambung tapi
           sunyi" dan "tidak pernah tersambung" terlihat persis sama dari layar,
           dan yang melapor tidak punya kata untuk membedakannya. */}
+      {/* Angka byte adalah SATU-SATUNYA bukti media benar-benar mengalir.
+          Status koneksi, track yang tiba, bahkan tulisan "Tersambung" semuanya
+          bisa terlihat benar sementara nol byte berpindah. */}
       <p className="text-xs mt-1 text-white/35">
-        koneksi: {koneksi}
+        {koneksi}
         {streamLokal ? " · mik siap" : " · mik BELUM siap"}
-        {status === "tersambung"
-          ? streamJauh
-            ? adaVideoJauh
-              ? " · video lawan diterima"
-              : " · hanya audio lawan yang tiba"
-            : " · media lawan BELUM tiba"
-          : ""}
+        {" · masuk "}
+        {Math.round(byteMasuk.audio / 1024)} KB audio
+        {" / "}
+        {Math.round(byteMasuk.video / 1024)} KB video
       </p>
+      {status === "tersambung" && byteMasuk.audio === 0 && byteMasuk.video === 0 ? (
+        <p className="text-xs text-amber-300/80 mt-2 max-w-md text-center">
+          Jalur terbentuk tapi belum ada data yang masuk. Kalau angka di atas tetap nol beberapa detik, lalu lintas
+          media sedang diblokir jaringan.
+        </p>
+      ) : null}
 
       <div className="mt-7 flex items-center gap-3">
         {status === "berdering" ? (

@@ -84,6 +84,9 @@ export function usePanggilan({ slug, kirimSinyal, onGagal }: Opsi) {
   // Apakah track video lawan benar-benar tiba. Dipisah dari `pakaiVideo`,
   // yang hanya menyatakan panggilan ini DIMULAI sebagai panggilan video.
   const [adaVideoJauh, setAdaVideoJauh] = useState(false);
+  // Byte yang BENAR-BENAR diterima. Nol artinya jalurnya tidak mengalir,
+  // seberapa pun meyakinkan tampilan status di atasnya.
+  const [byteMasuk, setByteMasuk] = useState({ audio: 0, video: 0 });
   const [lawan, setLawan] = useState<string | null>(null);
   const [pakaiVideo, setPakaiVideo] = useState(false);
   const [mikMati, setMikMati] = useState(false);
@@ -109,6 +112,8 @@ export function usePanggilan({ slug, kirimSinyal, onGagal }: Opsi) {
    * Kredensial TURN berlaku berjam-jam, jadi menariknya tiap panggilan cuma
    * menambah satu bolak-balik tepat saat orang sedang menunggu nada sambung. */
   const iceRef = useRef<RTCIceServer[] | null>(null);
+  const streamJauhRef = useRef<MediaStream | null>(null);
+  const statRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const bereskan = useCallback(() => {
     pcRef.current?.close();
@@ -120,9 +125,13 @@ export function usePanggilan({ slug, kirimSinyal, onGagal }: Opsi) {
     antreIceRef.current = [];
     tawaranMasukRef.current = null;
     lawanRef.current = null;
+    if (statRef.current) clearInterval(statRef.current);
+    statRef.current = null;
+    streamJauhRef.current = null;
     setStreamLokal(null);
     setStreamJauh(null);
     setAdaVideoJauh(false);
+    setByteMasuk({ audio: 0, video: 0 });
     setStatus("diam");
     setKoneksi("belum mulai");
     setLawan(null);
@@ -154,15 +163,42 @@ export function usePanggilan({ slug, kirimSinyal, onGagal }: Opsi) {
         if (ev.candidate) kirimSinyal(ke, { jenis: "ice", kandidat: ev.candidate.toJSON() });
       };
       pc.ontrack = (ev) => {
-        setStreamJauh(ev.streams[0] ?? null);
-        // Ditandai dari track yang BENAR-BENAR tiba, bukan dari bendera
-        // `pakaiVideo` yang cuma menyatakan niat saat panggilan dimulai.
-        // Kalau video gagal dinegosiasikan, bendera tetap menyala dan layar
-        // menampilkan kotak hitam yang terlihat seperti kerusakan.
+        // Stream jauh DIRAKIT SENDIRI, tidak mengandalkan `ev.streams[0]`.
+        //
+        // Track boleh datang tanpa stream sama sekali; itu sah menurut spesifikasi
+        // dan terjadi tergantung bagaimana sisi lain menegosiasikan. Versi
+        // sebelumnya menulis `ev.streams[0] ?? null`, sehingga track kedua yang
+        // datang tanpa stream MENIMPA stream yang sudah dipasang track pertama.
+        // Akibatnya audio yang tadinya ada bisa ikut hilang, dan videonya tidak
+        // pernah muncul sama sekali.
+        if (!streamJauhRef.current) streamJauhRef.current = new MediaStream();
+        const gabungan = streamJauhRef.current;
+        if (!gabungan.getTracks().some((t) => t.id === ev.track.id)) gabungan.addTrack(ev.track);
+
+        // Objek baru tiap kali supaya React benar-benar merender ulang; MediaStream
+        // yang sama persis tidak dianggap berubah dan elemennya tidak diperbarui.
+        setStreamJauh(new MediaStream(gabungan.getTracks()));
         if (ev.track.kind === "video") setAdaVideoJauh(true);
-        setKoneksi("media lawan diterima");
       };
       pc.oniceconnectionstatechange = () => setKoneksi("ice: " + pc.iceConnectionState);
+
+      // `ontrack` menyala saat SDP diterapkan, BUKAN saat media mengalir. Jadi
+      // "track sudah tiba" bukan bukti apa pun. Yang membuktikan cuma byte yang
+      // benar-benar masuk, dan itu hanya bisa dibaca dari getStats().
+      if (statRef.current) clearInterval(statRef.current);
+      statRef.current = setInterval(() => {
+        void pc.getStats().then((laporan) => {
+          let audio = 0;
+          let video = 0;
+          laporan.forEach((baris) => {
+            if (baris.type !== "inbound-rtp") return;
+            if (baris.kind === "audio") audio = baris.bytesReceived ?? 0;
+            if (baris.kind === "video") video = baris.bytesReceived ?? 0;
+          });
+          setByteMasuk({ audio, video });
+          return undefined;
+        });
+      }, 2000);
       pc.onconnectionstatechange = () => {
         setKoneksi(pc.connectionState);
         // SATU-SATUNYA tempat status naik jadi `tersambung`.
@@ -360,6 +396,7 @@ export function usePanggilan({ slug, kirimSinyal, onGagal }: Opsi) {
     streamLokal,
     streamJauh,
     adaVideoJauh,
+    byteMasuk,
     panggil,
     angkat,
     tutup,
