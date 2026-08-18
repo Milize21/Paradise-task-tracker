@@ -21,6 +21,10 @@ import {
   Volume2,
   VolumeX,
   X,
+  Hash,
+  Lock,
+  Plus,
+  Compass,
 } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
@@ -77,6 +81,10 @@ function ChatPage() {
   const { workspaceSlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const dengan = searchParams.get("dengan");
+  // Kanal memakai `?ruang=`, DM tetap `?dengan=`. Dua parameter, bukan satu,
+  // supaya tautan percakapan yang sudah beredar tidak berubah artinya.
+  const ruangParam = searchParams.get("ruang");
+  const adalahKanal = Boolean(ruangParam);
   // store hooks
   const { data: currentUser } = useUser();
   const {
@@ -100,11 +108,17 @@ function ChatPage() {
   const [memuatLama, setMemuatLama] = useState(false);
   const [habis, setHabis] = useState(false);
   const [mengunggah, setMengunggah] = useState(false);
+  const [buatTerbuka, setBuatTerbuka] = useState(false);
+  const [namaKanal, setNamaKanal] = useState("");
+  const [kanalPrivat, setKanalPrivat] = useState(false);
+  const [membuat, setMembuat] = useState(false);
+  const [jelajah, setJelajah] = useState(false);
   const berkasRef = useRef<HTMLInputElement>(null);
   const akhirRef = useRef<HTMLDivElement>(null);
   const { bunyikan, nyala: suaraNyala, setNyala: setSuaraNyala } = useSuaraNotifikasi();
   const pesanTerakhirRef = useRef<string | null>(null);
   const tulisRef = useRef<HTMLTextAreaElement>(null);
+  const namaKanalRef = useRef<HTMLInputElement>(null);
 
   const slug = workspaceSlug?.toString();
 
@@ -114,9 +128,21 @@ function ChatPage() {
     { refreshInterval: SELANG_DAFTAR }
   );
 
+  const { data: daftarKanal, mutate: muatKanal } = useSWR(
+    slug ? `CHAT_KANAL_${slug}` : null,
+    slug ? () => chatService.getDaftarRuang(slug) : null,
+    { refreshInterval: SELANG_DAFTAR }
+  );
+
+  // Satu SWR untuk dua jenis percakapan. Kuncinya dibedakan supaya berpindah
+  // dari kanal ke DM tidak menampilkan sisa pesan sebelumnya sekejap.
   const { data: pesan, mutate: muatPesan } = useSWR(
-    slug && dengan ? `CHAT_PESAN_${slug}_${dengan}` : null,
-    slug && dengan ? () => chatService.getPesan(slug, dengan) : null,
+    slug && (ruangParam || dengan) ? `CHAT_ISI_${slug}_${ruangParam ?? dengan}` : null,
+    slug && ruangParam
+      ? () => chatService.getPesanRuang(slug, ruangParam)
+      : slug && dengan
+        ? () => chatService.getPesan(slug, dengan)
+        : null,
     { refreshInterval: SELANG_PESAN }
   );
 
@@ -127,7 +153,7 @@ function ChatPage() {
     setHabis(false);
     setMembalas(null);
     setMenyunting(null);
-  }, [dengan]);
+  }, [dengan, ruangParam]);
 
   // Berbunyi saat pesan MASUK baru tiba di percakapan yang sedang terbuka.
   // Lencana sidebar tidak bisa mengurus ini: membuka percakapan menandainya
@@ -151,10 +177,16 @@ function ChatPage() {
     // sidebar sudah basi sejak detik itu. Disegarkan di sini supaya angkanya
     // turun seketika, bukan pada tarikan 30 detik berikutnya.
     void mutate(KUNCI_BELUM_DIBACA);
-  }, [pesan?.length, dengan]);
+  }, [pesan?.length, dengan, ruangParam]);
 
   const daftar: TBarisDaftar[] = useMemo(() => {
-    const peta = new Map((percakapan ?? []).map((baris) => [baris.lawan_bicara, baris]));
+    // Hanya baris DM yang masuk daftar orang. Sejak kanal ikut dikirim endpoint
+    // yang sama, `lawan_bicara` bisa kosong, dan kanal yang menyelinap ke sini
+    // akan tampil sebagai "Anggota" tanpa nama.
+    const barisDM = (percakapan ?? []).filter((baris): baris is TPercakapan & { lawan_bicara: string } =>
+      Boolean(baris.lawan_bicara)
+    );
+    const peta = new Map(barisDM.map((baris) => [baris.lawan_bicara, baris]));
     const kunciCari = cari.trim().toLowerCase();
     const kandidat = (workspaceMemberIds ?? []).filter((id) => {
       if (id === currentUser?.id) return false;
@@ -166,7 +198,7 @@ function ChatPage() {
     // terbaru lebih dulu, dan store sudah mengurutkan anggota menurut nama, jadi
     // menyambung dua daftar yang masing-masing sudah urut sudah cukup.
     const cocok = new Set(kandidat);
-    const adaPesan = (percakapan ?? []).map((baris) => baris.lawan_bicara).filter((id) => cocok.has(id));
+    const adaPesan = barisDM.map((baris) => baris.lawan_bicara).filter((id) => cocok.has(id));
     const belumPernah = kandidat.filter((id) => !peta.has(id));
     return [...adaPesan, ...belumPernah].map((id) => ({ id, terakhir: peta.get(id) }));
   }, [percakapan, workspaceMemberIds, currentUser?.id, cari, getWorkspaceMemberDetails]);
@@ -241,10 +273,12 @@ function ChatPage() {
 
   const muatLama = async () => {
     const tertua = semuaPesan[0];
-    if (!slug || !dengan || !tertua || memuatLama) return;
+    if (!slug || (!dengan && !ruangParam) || !tertua || memuatLama) return;
     setMemuatLama(true);
     try {
-      const hasil = await chatService.getPesanLama(slug, dengan, tertua.created_at);
+      const hasil = ruangParam
+        ? await chatService.getPesanLamaRuang(slug, ruangParam, tertua.created_at)
+        : await chatService.getPesanLama(slug, dengan as string, tertua.created_at);
       if (hasil.length === 0) setHabis(true);
       else setLama((sebelumnya) => [...hasil, ...sebelumnya]);
     } catch {
@@ -303,16 +337,12 @@ function ChatPage() {
   const kirim = async () => {
     const isi = draf.trim();
     // Boleh mengirim tanpa teks asal ada lampiran.
-    if ((!isi && lampiran.length === 0) || !slug || !dengan || mengirim || mengunggah) return;
+    if ((!isi && lampiran.length === 0) || !slug || (!dengan && !ruangParam) || mengirim || mengunggah) return;
     setMengirim(true);
     try {
-      await chatService.kirimPesan(
-        slug,
-        dengan,
-        isi,
-        lampiran.map((l) => l.id),
-        membalas?.id
-      );
+      const berkas = lampiran.map((l) => l.id);
+      if (ruangParam) await chatService.kirimPesanRuang(slug, ruangParam, isi, berkas, membalas?.id);
+      else await chatService.kirimPesan(slug, dengan as string, isi, berkas, membalas?.id);
       setDraf("");
       setLampiran([]);
       setMembalas(null);
@@ -326,6 +356,69 @@ function ChatPage() {
       });
     } finally {
       setMengirim(false);
+    }
+  };
+
+  // Fokus masuk ke dialog begitu ia terbuka. Tanpa ini, pembaca layar tetap
+  // berada di tombol pemanggil dan isi dialog seolah tidak pernah muncul.
+  useEffect(() => {
+    if (buatTerbuka) namaKanalRef.current?.focus();
+  }, [buatTerbuka]);
+
+  const kanalAktif = (daftarKanal ?? []).find((r) => r.id === ruangParam);
+  const kanalDiikuti = (daftarKanal ?? []).filter((r) => r.ikut);
+  const kanalBelumDiikuti = (daftarKanal ?? []).filter((r) => !r.ikut);
+
+  const buatKanal = async () => {
+    const nama = namaKanal.trim();
+    if (!slug || !nama || membuat) return;
+    setMembuat(true);
+    try {
+      const dibuat = await chatService.buatRuang(slug, nama, kanalPrivat ? "privat" : "kanal");
+      setNamaKanal("");
+      setKanalPrivat(false);
+      setBuatTerbuka(false);
+      await Promise.all([muatKanal(), muatPercakapan()]);
+      setSearchParams({ ruang: dibuat.id });
+    } catch (galat) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Kanal gagal dibuat",
+        message: (galat as { error?: string })?.error ?? "Coba lagi sebentar.",
+      });
+    } finally {
+      setMembuat(false);
+    }
+  };
+
+  const gabung = async (ruangId: string) => {
+    if (!slug) return;
+    try {
+      await chatService.gabungRuang(slug, ruangId);
+      await Promise.all([muatKanal(), muatPercakapan()]);
+      setJelajah(false);
+      setSearchParams({ ruang: ruangId });
+    } catch (galat) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Gagal bergabung",
+        message: (galat as { error?: string })?.error ?? "Coba lagi sebentar.",
+      });
+    }
+  };
+
+  const keluar = async (ruangId: string) => {
+    if (!slug) return;
+    try {
+      await chatService.keluarRuang(slug, ruangId);
+      await Promise.all([muatKanal(), muatPercakapan()]);
+      setSearchParams({});
+    } catch (galat) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Gagal keluar kanal",
+        message: (galat as { error?: string })?.error ?? "Coba lagi sebentar.",
+      });
     }
   };
 
@@ -384,6 +477,69 @@ function ChatPage() {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto">
+          {/* Kanal ditaruh di ATAS daftar orang. Kanal jumlahnya sedikit dan
+              dibuka berulang kali; daftar orang panjang dan sebagian besar
+              tidak pernah disentuh. */}
+          {!hasilCari ? (
+            <div className="border-b border-subtle pb-1">
+              <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
+                <p className="text-xs font-semibold tracking-wide text-tertiary uppercase">Kanal</p>
+                <div className="flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setJelajah(true)}
+                    title="Jelajahi kanal"
+                    className="flex size-6 items-center justify-center rounded text-tertiary hover:bg-layer-1 hover:text-secondary"
+                  >
+                    <Compass className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBuatTerbuka(true)}
+                    title="Buat kanal"
+                    className="flex size-6 items-center justify-center rounded text-tertiary hover:bg-layer-1 hover:text-secondary"
+                  >
+                    <Plus className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+              {kanalDiikuti.length === 0 ? (
+                <p className="text-xs px-3 pb-1.5 text-tertiary">Belum ikut kanal mana pun.</p>
+              ) : (
+                kanalDiikuti.map((r) => {
+                  const adaBaru = r.belum_dibaca > 0;
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setSearchParams({ ruang: r.id })}
+                      className={`flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-layer-1 ${
+                        r.id === ruangParam ? "bg-layer-1-selected" : ""
+                      }`}
+                    >
+                      {r.tipe === "privat" ? (
+                        <Lock className="size-3.5 shrink-0 text-tertiary" />
+                      ) : (
+                        <Hash className="size-3.5 shrink-0 text-tertiary" />
+                      )}
+                      <span
+                        className={`text-sm min-w-0 flex-1 truncate text-primary ${
+                          adaBaru ? "font-semibold" : "font-normal"
+                        }`}
+                      >
+                        {r.nama}
+                      </span>
+                      {adaBaru ? (
+                        <span className="text-xs shrink-0 rounded-full bg-accent-primary px-1.5 font-medium text-white">
+                          {r.belum_dibaca}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          ) : null}
           {hasilCari ? (
             <div>
               <div className="flex items-center justify-between px-3 py-2">
@@ -399,20 +555,24 @@ function ChatPage() {
                 </button>
               </div>
               {hasilCari.map((h) => {
-                const anggota = getWorkspaceMemberDetails(h.lawan_bicara)?.member;
+                // Pesan kanal tidak punya lawan bicara. Judulnya diambil dari
+                // nama kanal, dan membukanya lewat id ruang.
+                const anggota = h.lawan_bicara ? getWorkspaceMemberDetails(h.lawan_bicara)?.member : undefined;
+                const kanal = (daftarKanal ?? []).find((r) => r.id === h.ruang);
+                const judul = anggota?.display_name ?? kanal?.nama ?? "Percakapan";
                 return (
                   <button
                     key={h.id}
                     type="button"
                     onClick={() => {
-                      setSearchParams({ dengan: h.lawan_bicara });
+                      setSearchParams(h.lawan_bicara ? { dengan: h.lawan_bicara } : { ruang: h.ruang });
                       setHasilCari(null);
                       setCari("");
                     }}
                     className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left hover:bg-layer-1"
                   >
                     <span className="text-xs flex w-full items-center justify-between gap-2">
-                      <span className="truncate font-medium text-primary">{anggota?.display_name ?? "Anggota"}</span>
+                      <span className="truncate font-medium text-primary">{judul}</span>
                       <span className="shrink-0 text-tertiary">{waktuRingkas(h.created_at)}</span>
                     </span>
                     <span className="text-xs line-clamp-2 text-secondary">
@@ -480,7 +640,7 @@ function ChatPage() {
 
       {/* Percakapan */}
       <section className="flex min-w-0 flex-1 flex-col">
-        {!dengan ? (
+        {!dengan && !ruangParam ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-tertiary">
             <MessageSquare className="size-10" strokeWidth={1.25} />
             <div className="text-center">
@@ -491,13 +651,34 @@ function ChatPage() {
         ) : (
           <>
             <div className="flex items-center gap-2.5 border-b border-subtle px-4 py-2.5">
-              <Avatar
-                name={lawanBicara?.display_name}
-                src={getFileURL(lawanBicara?.avatar_url ?? "")}
-                size={32}
-                shape="circle"
-              />
-              <p className="text-sm font-medium text-primary">{lawanBicara?.display_name ?? "Anggota"}</p>
+              {adalahKanal ? (
+                <>
+                  {kanalAktif?.tipe === "privat" ? (
+                    <Lock className="size-4 text-tertiary" />
+                  ) : (
+                    <Hash className="size-4 text-tertiary" />
+                  )}
+                  <p className="text-sm font-medium text-primary">{kanalAktif?.nama ?? "Kanal"}</p>
+                  {kanalAktif?.topik ? <p className="text-xs truncate text-tertiary">{kanalAktif.topik}</p> : null}
+                  <button
+                    type="button"
+                    onClick={() => keluar(ruangParam as string)}
+                    className="text-xs ml-auto rounded-md px-2 py-1 text-tertiary hover:bg-layer-1 hover:text-secondary"
+                  >
+                    Keluar kanal
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Avatar
+                    name={lawanBicara?.display_name}
+                    src={getFileURL(lawanBicara?.avatar_url ?? "")}
+                    size={32}
+                    shape="circle"
+                  />
+                  <p className="text-sm font-medium text-primary">{lawanBicara?.display_name ?? "Anggota"}</p>
+                </>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-3">
@@ -718,6 +899,86 @@ function ChatPage() {
           </>
         )}
       </section>
+
+      {/* Buat kanal */}
+      {buatTerbuka ? (
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4">
+          <div className="shadow-lg w-full max-w-sm rounded-lg border border-subtle bg-layer-3 p-4">
+            <p className="text-sm font-semibold text-primary">Kanal baru</p>
+            <input
+              ref={namaKanalRef}
+              type="text"
+              value={namaKanal}
+              onChange={(e) => setNamaKanal(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void buatKanal();
+                if (e.key === "Escape") setBuatTerbuka(false);
+              }}
+              maxLength={80}
+              placeholder="nama-kanal"
+              className="text-sm focus:border-accent-primary mt-3 w-full rounded-md border border-subtle bg-layer-1 px-2.5 py-1.5 text-primary outline-none"
+            />
+            <label className="text-xs mt-3 flex cursor-pointer items-center gap-2 text-secondary">
+              <input type="checkbox" checked={kanalPrivat} onChange={(e) => setKanalPrivat(e.target.checked)} />
+              Kanal privat, hanya yang diundang bisa melihat
+            </label>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setBuatTerbuka(false)}
+                className="text-xs rounded-md px-3 py-1.5 text-secondary hover:bg-layer-1"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => void buatKanal()}
+                disabled={!namaKanal.trim() || membuat}
+                className="text-xs rounded-md bg-accent-primary px-3 py-1.5 font-medium text-white disabled:opacity-50"
+              >
+                {membuat ? "Membuat..." : "Buat"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Jelajahi kanal publik yang belum diikuti */}
+      {jelajah ? (
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4">
+          <div className="shadow-lg flex max-h-[70vh] w-full max-w-sm flex-col rounded-lg border border-subtle bg-layer-3 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-primary">Kanal yang bisa diikuti</p>
+              <button
+                type="button"
+                onClick={() => setJelajah(false)}
+                className="text-xs text-tertiary hover:text-primary"
+              >
+                Tutup
+              </button>
+            </div>
+            <div className="mt-3 flex-1 overflow-y-auto">
+              {kanalBelumDiikuti.length === 0 ? (
+                <p className="text-xs text-tertiary">Tidak ada kanal lain untuk saat ini.</p>
+              ) : (
+                kanalBelumDiikuti.map((r) => (
+                  <div key={r.id} className="flex items-center gap-2 py-1.5">
+                    <Hash className="size-3.5 shrink-0 text-tertiary" />
+                    <span className="text-sm min-w-0 flex-1 truncate text-primary">{r.nama}</span>
+                    <button
+                      type="button"
+                      onClick={() => void gabung(r.id)}
+                      className="text-xs shrink-0 rounded-md border border-subtle px-2 py-1 text-secondary hover:bg-layer-1"
+                    >
+                      Gabung
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

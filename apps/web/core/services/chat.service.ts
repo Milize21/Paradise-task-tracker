@@ -9,12 +9,29 @@ import { API_BASE_URL } from "@plane/constants";
 // services
 import { APIService } from "@/services/api.service";
 
-export type TPercakapan = {
-  lawan_bicara: string;
+export type TTipeRuang = "dm" | "kanal" | "privat";
+
+export type TRuang = {
+  id: string;
+  tipe: TTipeRuang;
+  /** Kosong untuk DM: namanya adalah lawan bicaranya, dan itu berbeda
+   * tergantung siapa yang melihat. */
+  nama: string | null;
+  topik: string;
+  /** Hanya terisi untuk DM. Dipertahankan supaya bagian UI yang sudah ada
+   * tidak perlu tahu apa pun tentang ruang untuk membuka percakapan. */
+  lawan_bicara: string | null;
+  pesan_terakhir_pada: string | null;
+  belum_dibaca: number;
+  /** Apakah saya berlangganan. Selalu true di daftar percakapan; berguna di
+   * daftar jelajah kanal, tempat kanal yang belum diikuti ikut ditampilkan. */
+  ikut: boolean;
+};
+
+export type TPercakapan = TRuang & {
   isi: string;
   dari_saya: boolean;
   created_at: string;
-  belum_dibaca: number;
 };
 
 export type TLampiran = {
@@ -65,7 +82,10 @@ export type THasilCari = {
   isi: string;
   created_at: string;
   dari_saya: boolean;
-  lawan_bicara: string;
+  /** Ruang tempat pesan ini berada. Selalu ada, termasuk untuk kanal. */
+  ruang: string;
+  /** Kosong untuk pesan kanal, karena tidak ada lawan tunggal. */
+  lawan_bicara: string | null;
 };
 
 export class ChatService extends APIService {
@@ -151,6 +171,96 @@ export class ChatService extends APIService {
     balasanKe?: string
   ): Promise<TPesan> {
     return this.post(`/api/workspaces/${workspaceSlug}/chat/${userId}/`, {
+      isi,
+      lampiran,
+      balasan_ke: balasanKe ?? null,
+    })
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  // ------------------------------------------------------------------
+  // Kanal
+  //
+  // Jalur `ruang/<id>/` melayani DM MAUPUN kanal, jadi begitu UI tahu id
+  // ruangnya ia tidak perlu lagi peduli jenisnya. Metode berbasis userId di
+  // atas tetap ada untuk percakapan yang ruangnya belum pernah dibuat.
+  // ------------------------------------------------------------------
+
+  async getDaftarRuang(workspaceSlug: string): Promise<TRuang[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/ruang/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async buatRuang(workspaceSlug: string, nama: string, tipe: TTipeRuang, topik = ""): Promise<TRuang> {
+    return this.post(`/api/workspaces/${workspaceSlug}/chat/ruang/`, { nama, tipe, topik })
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async gabungRuang(workspaceSlug: string, ruangId: string): Promise<{ ikut: boolean }> {
+    return this.post(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/gabung/`, {})
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async keluarRuang(workspaceSlug: string, ruangId: string): Promise<void> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/gabung/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async getAnggotaRuang(workspaceSlug: string, ruangId: string): Promise<string[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/anggota/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async tambahAnggotaRuang(workspaceSlug: string, ruangId: string, userId: string): Promise<void> {
+    return this.post(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/anggota/`, { user: userId })
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async getPesanRuang(workspaceSlug: string, ruangId: string): Promise<TPesan[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/`)
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async getPesanLamaRuang(workspaceSlug: string, ruangId: string, sebelum: string): Promise<TPesan[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/`, { params: { sebelum } })
+      .then((res) => res?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async kirimPesanRuang(
+    workspaceSlug: string,
+    ruangId: string,
+    isi: string,
+    lampiran: string[] = [],
+    balasanKe?: string
+  ): Promise<TPesan> {
+    return this.post(`/api/workspaces/${workspaceSlug}/chat/ruang/${ruangId}/`, {
       isi,
       lampiran,
       balasan_ke: balasanKe ?? null,
