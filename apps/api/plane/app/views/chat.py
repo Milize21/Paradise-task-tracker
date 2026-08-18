@@ -31,6 +31,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from plane.settings.storage import S3Storage
+from plane.utils.ice import daftar_ice
 from plane.utils.obrolan_siaran import siarkan
 
 # Module imports
@@ -723,6 +724,20 @@ class ChatThreadEndpoint(BaseAPIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
         return _kirim_ke_ruang(request, slug, ruang, penerima_id=user_id)
+
+
+class ChatIceEndpoint(BaseAPIView):
+    """Server ICE untuk panggilan, berikut kredensial TURN berumur pendek.
+
+    Disajikan dari server, BUKAN ditanam saat build. Kredensial TURN berumur
+    pendek dan alamatnya bisa berubah; kalau nilainya ikut dibundel ke berkas
+    JavaScript, setiap penggantian menuntut build ulang dan deploy penuh.
+    """
+
+    permission_classes = [WorkspaceEntityPermission]
+
+    def get(self, request, slug):
+        return Response({"iceServers": daftar_ice(request.user.id)}, status=status.HTTP_200_OK)
 
 
 class ChatRuangEndpoint(BaseAPIView):

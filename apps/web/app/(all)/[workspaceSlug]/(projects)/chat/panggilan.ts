@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ChatService } from "@/services/chat.service";
 
 /**
  * Panggilan satu lawan satu lewat WebRTC.
@@ -27,19 +28,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * dari luar. Jadi jangan mengira ini rusak kalau dicoba dari rumah.
  */
 
-/** Di satu LAN, kandidat host sudah cukup dan itu jalur yang dipakai.
+/** Dipakai kalau daftar dari server gagal diambil.
  *
- * STUN tetap dicantumkan sebagai CADANGAN, bukan jalur utama: ICE mencoba semua
- * kandidat berbarengan dan memilih pasangan tercepat, jadi kandidat host tetap
- * menang di dalam kantor. Gunanya kalau dua orang ternyata berada di segmen
- * jaringan berbeda, atau kalau peramban menyamarkan alamat lokalnya jadi nama
- * `.local` yang tidak bisa diresolusi lawan.
- *
- * Kalau internet kantor mati, ini tidak merusak apa-apa: kandidat host tetap
- * terkumpul dan panggilan di dalam LAN tetap tersambung. */
-const KONFIG: RTCConfiguration = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-};
+ * Asumsi awal fitur ini adalah "satu LAN, kandidat host sudah cukup", dan itu
+ * runtuh di jaringan nyata: banyak jaringan kantor mengisolasi klien satu sama
+ * lain, sehingga jalur langsung tidak pernah terbentuk dan panggilan diam total.
+ * Daftar sungguhannya kini datang dari API dan memuat TURN. Ini sekadar jaring
+ * pengaman supaya panggilan masih mungkin walau endpoint-nya sedang bermasalah. */
+const KONFIG_CADANGAN: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
 
 /** Tuang kandidat yang tertahan, sekaligus.
  *
@@ -63,6 +59,8 @@ async function tuangKandidat(pc: RTCPeerConnection, antre: RTCIceCandidateInit[]
  * Sekarang `tersambung` HANYA disetel dari `connectionState === "connected"`,
  * yaitu satu-satunya penanda bahwa jalur medianya benar-benar terbentuk.
  */
+const chatService = new ChatService();
+
 export type TStatusPanggilan = "diam" | "memanggil" | "berdering" | "menyambungkan" | "tersambung";
 
 type TSinyal =
@@ -72,12 +70,13 @@ type TSinyal =
   | { jenis: "tutup" };
 
 type Opsi = {
+  slug?: string;
   /** Mengembalikan false kalau soket sedang putus. */
   kirimSinyal: (ke: string, muatan: unknown) => boolean;
   onGagal?: (pesan: string) => void;
 };
 
-export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
+export function usePanggilan({ slug, kirimSinyal, onGagal }: Opsi) {
   const [status, setStatus] = useState<TStatusPanggilan>("diam");
   // Ditampilkan apa adanya di layar. Tanpa ini, "tersambung tapi sunyi" dan
   // "tidak pernah tersambung" tidak bisa dibedakan oleh yang melaporkannya.
@@ -105,6 +104,11 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
   const antreIceRef = useRef<RTCIceCandidateInit[]>([]);
   const gagalRef = useRef(onGagal);
   gagalRef.current = onGagal;
+  /** Daftar server ICE, diambil sekali lalu dipakai ulang.
+   *
+   * Kredensial TURN berlaku berjam-jam, jadi menariknya tiap panggilan cuma
+   * menambah satu bolak-balik tepat saat orang sedang menunggu nada sambung. */
+  const iceRef = useRef<RTCIceServer[] | null>(null);
 
   const bereskan = useCallback(() => {
     pcRef.current?.close();
@@ -126,9 +130,24 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
     setKameraMati(false);
   }, []);
 
+  /** Ambil daftar server ICE, dan jangan pernah menggagalkan panggilan karenanya. */
+  const ambilIce = useCallback(async () => {
+    if (iceRef.current) return iceRef.current;
+    if (!slug) return KONFIG_CADANGAN;
+    try {
+      const dari = await chatService.getIceServers(slug);
+      iceRef.current = dari.length > 0 ? dari : KONFIG_CADANGAN;
+    } catch {
+      // Sengaja ditelan. Panggilan tanpa TURN masih mungkin di jaringan yang
+      // ramah; panggilan yang dibatalkan karena satu permintaan gagal, tidak.
+      iceRef.current = KONFIG_CADANGAN;
+    }
+    return iceRef.current;
+  }, [slug]);
+
   const buatKoneksi = useCallback(
-    (ke: string) => {
-      const pc = new RTCPeerConnection(KONFIG);
+    (ke: string, iceServers: RTCIceServer[]) => {
+      const pc = new RTCPeerConnection({ iceServers });
       pcRef.current = pc;
 
       pc.onicecandidate = (ev) => {
@@ -197,7 +216,7 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
       setPakaiVideo(video);
       setStatus("memanggil");
 
-      const pc = buatKoneksi(ke);
+      const pc = buatKoneksi(ke, await ambilIce());
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
       const tawaran = await pc.createOffer();
@@ -207,7 +226,7 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
         bereskan();
       }
     },
-    [status, ambilMedia, buatKoneksi, kirimSinyal, onGagal, bereskan]
+    [status, ambilMedia, ambilIce, buatKoneksi, kirimSinyal, onGagal, bereskan]
   );
 
   /** Angkat panggilan yang sedang berdering. */
@@ -219,7 +238,7 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
     const stream = await ambilMedia(masuk.video);
     if (!stream) return;
 
-    const pc = buatKoneksi(ke);
+    const pc = buatKoneksi(ke, await ambilIce());
 
     // URUTAN INI TIDAK BOLEH DIBALIK, dan pernah terbalik sampai video tidak
     // pernah sampai ke penelepon.
@@ -247,7 +266,7 @@ export function usePanggilan({ kirimSinyal, onGagal }: Opsi) {
     // BUKAN `tersambung`. SDP sudah lengkap, tapi ICE baru mulai mencari jalur.
     // Naik ke `tersambung` ditangani `onconnectionstatechange`.
     setStatus("menyambungkan");
-  }, [ambilMedia, buatKoneksi, kirimSinyal]);
+  }, [ambilMedia, ambilIce, buatKoneksi, kirimSinyal]);
 
   /** Tutup panggilan, baik yang sedang berdering maupun yang sedang jalan. */
   const tutup = useCallback(() => {

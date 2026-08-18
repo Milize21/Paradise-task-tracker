@@ -199,6 +199,7 @@ from .chat import (
     ChatCariEndpoint,
     ChatConversationsEndpoint,
     ChatGabungEndpoint,
+    ChatIceEndpoint,
     ChatLampiranEndpoint,
     ChatPesanEndpoint,
     ChatReaksiEndpoint,

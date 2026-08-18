@@ -400,6 +400,7 @@ function ChatPage() {
   }, [buatTerbuka]);
 
   const panggilan = usePanggilan({
+    slug,
     kirimSinyal,
     onGagal: (pesanGalat) => setToast({ type: TOAST_TYPE.ERROR, title: "Panggilan gagal", message: pesanGalat }),
   });

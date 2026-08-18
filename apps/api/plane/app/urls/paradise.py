@@ -11,6 +11,7 @@ from plane.app.views import (
     ChatCariEndpoint,
     ChatConversationsEndpoint,
     ChatGabungEndpoint,
+    ChatIceEndpoint,
     ChatRuangEndpoint,
     ChatRuangThreadEndpoint,
     ChatLampiranEndpoint,
@@ -110,6 +111,11 @@ urlpatterns = [
     # Kanal. Ditaruh sebelum pola <uuid:user_id> mengikuti alasan yang sama
     # dengan "pesan" dan "belum-dibaca" di atas: "ruang" bukan UUID yang sah,
     # jadi tidak akan bentrok, tapi urutannya membuat niatnya terbaca.
+    path(
+        "workspaces/<str:slug>/chat/ice/",
+        ChatIceEndpoint.as_view(),
+        name="chat-ice",
+    ),
     path(
         "workspaces/<str:slug>/chat/ruang/",
         ChatRuangEndpoint.as_view(),

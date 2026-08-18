@@ -189,6 +189,19 @@ export class ChatService extends APIService {
   // atas tetap ada untuk percakapan yang ruangnya belum pernah dibuat.
   // ------------------------------------------------------------------
 
+  /** Server ICE untuk panggilan, berikut kredensial TURN berumur pendek.
+   *
+   * Diambil saat panggilan dimulai, BUKAN ditanam saat build: kredensialnya
+   * kedaluwarsa dan alamat TURN-nya bisa berubah tanpa perlu build ulang.
+   */
+  async getIceServers(workspaceSlug: string): Promise<RTCIceServer[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/chat/ice/`)
+      .then((res) => res?.data?.iceServers ?? [])
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
   async getDaftarRuang(workspaceSlug: string): Promise<TRuang[]> {
     return this.get(`/api/workspaces/${workspaceSlug}/chat/ruang/`)
       .then((res) => res?.data)

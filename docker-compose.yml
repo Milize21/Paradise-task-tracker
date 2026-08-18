@@ -137,6 +137,39 @@ services:
     volumes:
       - redisdata:/data
 
+  # Relai media untuk panggilan suara & video.
+  #
+  # Infrastruktur, bukan aplikasi tambahan: tanpa UI, tanpa akun, tanpa basis
+  # data. Ia hanya meneruskan paket saat dua peramban tidak bisa saling
+  # menjangkau langsung, yang persis terjadi di jaringan kantor dengan isolasi
+  # antar-klien. Tanpa ini, panggilan diam total tanpa error di mana pun.
+  #
+  # `network_mode: host` DISENGAJA. TURN mengalokasikan port relai dinamis, dan
+  # memetakannya lewat jaringan bridge Docker membuat alamat yang diiklankan
+  # tidak cocok dengan yang benar-benar bisa dihubungi. Ini jebakan TURN paling
+  # umum: prosesnya hidup, portnya terbuka, tapi relainya tidak pernah dipakai.
+  coturn:
+    container_name: coturn
+    image: coturn/coturn:4.6.2-alpine
+    restart: always
+    network_mode: host
+    command:
+      - --listening-port=3478
+      - --fingerprint
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SECRET}
+      - --realm=${TURN_REALM:-paradiseperkasa.com}
+      # Rentang port relai dibatasi supaya bisa dibuka di firewall kantor tanpa
+      # membuka seluruh rentang efemeral.
+      - --min-port=49160
+      - --max-port=49200
+      # Relai hanya untuk lalu lintas panggilan kita. Tanpa penolakan ini, TURN
+      # yang terbuka bisa dipakai orang lain untuk merelai apa pun.
+      - --no-multicast-peers
+      - --no-cli
+      - --no-tlsv1
+      - --no-tlsv1_1
+
   plane-mq:
     container_name: plane-mq
     image: rabbitmq:3.13.6-management-alpine
