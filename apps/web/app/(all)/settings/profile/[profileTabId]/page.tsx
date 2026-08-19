@@ -6,7 +6,7 @@
 
 import { observer } from "mobx-react";
 // plane imports
-import { PROFILE_SETTINGS_TABS } from "@plane/constants";
+import { PROFILE_SETTINGS, PROFILE_SETTINGS_TABS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import type { TProfileSettingsTabs } from "@plane/types";
 // components
@@ -40,7 +40,16 @@ function ProfileSettingsPage(props: Route.ComponentProps) {
 
   return (
     <>
-      <PageHead title={`${t("profile.label")} - ${t("general_settings")}`} />
+      {/* Judulnya mengikuti TAB yang sedang dibuka. Sebelumnya dipatok
+          "General settings" untuk keempat tab, jadi tiga di antaranya menulis
+          judul yang salah di tab peramban, bookmark, dan riwayat. Isinya sendiri
+          selalu benar; hanya judulnya yang tertinggal.
+          Memakai `i18n_label` dari PROFILE_SETTINGS, kunci yang SUDAH ADA dan
+          sudah dipakai sidebar di sebelahnya, jadi nol berkas locale disentuh
+          dan judulnya pasti sama dengan tulisan di menu. */}
+      <PageHead
+        title={`${t("profile.label")} - ${t(PROFILE_SETTINGS[profileTabId as TProfileSettingsTabs].i18n_label)}`}
+      />
       <div className="relative size-full">
         <div className="flex size-full">
           <ProfileSettingsSidebarRoot

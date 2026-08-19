@@ -67,7 +67,9 @@
       "apps/web/core/components/workspace/sidebar/sidebar-menu-items.tsx",
       "apps/web/core/components/workspace/sidebar/projects-list.tsx",
       "apps/api/bin/docker-entrypoint-api.sh",
-      "apps/web/nginx/nginx.conf"
+      "apps/web/nginx/nginx.conf",
+      "apps/web/core/components/core/page-title.tsx",
+      "apps/web/app/(all)/settings/profile/[profileTabId]/page.tsx"
     ],
     "folder_tanpa_penghapusan": ["apps/web/ce"]
   }
