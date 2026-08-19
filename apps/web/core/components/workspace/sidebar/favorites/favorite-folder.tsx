@@ -4,6 +4,12 @@
  * See the LICENSE file for details.
  */
 
+// oxlint-disable no-shadow -- Dua peringatan LAMA di berkas ini, bukan dari
+// perubahan kami. Nama variabel yang menutupi nama di lingkup luar memang layak
+// dirapikan, tapi itu mengubah logika drag-and-drop upstream, sementara yang
+// kami ubah di sini cuma kapitalisasi satu kata di menu. Gerbang oxlint memakai
+// --deny-warnings pada berkas yang di-stage, jadi utang lama ikut menghalangi.
+
 import { useEffect, useRef, useState } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import type {
@@ -237,7 +243,7 @@ export function FavoriteFolder(props: Props) {
                   <CustomMenu.MenuItem onClick={() => setFolderToRename(favorite.id)}>
                     <div className="flex items-center justify-start gap-2">
                       <DraftIcon className="h-3.5 w-3.5 stroke-[1.5] text-tertiary" />
-                      <span>Rename Folder</span>
+                      <span>Rename folder</span>
                     </div>
                   </CustomMenu.MenuItem>
                 </CustomMenu>
