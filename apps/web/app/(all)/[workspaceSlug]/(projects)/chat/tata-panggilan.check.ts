@@ -16,7 +16,7 @@
  */
 
 import assert from "node:assert/strict";
-import { tataPanggilan } from "./tata-panggilan";
+import { statusSesudahPeristiwa, tataPanggilan } from "./tata-panggilan";
 
 // Diam: tidak ada apa pun di layar.
 {
@@ -69,6 +69,48 @@ for (const status of ["memanggil", "berdering", "menyambungkan"] as const) {
 {
   const t = tataPanggilan("tersambung", false, true, 1);
   assert.equal(t.pratinjauDiriTerlihat, false, "panggilan suara tidak butuh pratinjau kamera");
+}
+
+// --- statusSesudahPeristiwa -------------------------------------------------
+
+// PERNAH SALAH, DAN INI YANG PALING MAHAL. Penelepon masuk ruangan duluan dan
+// SENDIRIAN, lalu layarnya macet di "Menunggu dijawab" selamanya walau lawannya
+// sudah menjawab dan medianya mengalir. Ia tidak melihat dan tidak mendengar
+// apa pun, karena kisi peserta hanya dirender saat "tersambung".
+{
+  assert.equal(
+    statusSesudahPeristiwa("memanggil", true),
+    "tersambung",
+    "lawan masuk ruangan: penelepon WAJIB pindah dari memanggil ke tersambung"
+  );
+}
+
+// Sendirian di ruangan bukan tersambung. Ini yang dulu keliru diambil dari
+// `RoomEvent.Connected`, yang cuma berarti "saya sampai ke server".
+{
+  assert.equal(statusSesudahPeristiwa("memanggil", false), "memanggil", "sendirian di ruangan belum tersambung");
+  assert.equal(
+    statusSesudahPeristiwa("menyambungkan", false),
+    "menyambungkan",
+    "menyambungkan tanpa lawan tetap apa adanya"
+  );
+}
+
+// Yang mengangkat: lawannya sudah ada sejak sebelum ia masuk.
+{
+  assert.equal(statusSesudahPeristiwa("menyambungkan", true), "tersambung", "yang mengangkat langsung tersambung");
+}
+
+// Peristiwa yang menyusul sesudah panggilan dibereskan tidak boleh
+// menghidupkannya lagi. Tanpa penjaga ini, layar panggilan bisa muncul sendiri
+// di halaman yang sudah ditutup penggunanya.
+{
+  assert.equal(statusSesudahPeristiwa("diam", true), "diam", "panggilan yang sudah dibereskan tidak boleh hidup lagi");
+}
+
+// Sudah tersambung tetap tersambung, tidak turun lagi.
+{
+  assert.equal(statusSesudahPeristiwa("tersambung", true), "tersambung", "tersambung bertahan");
 }
 
 // eslint-disable-next-line no-console

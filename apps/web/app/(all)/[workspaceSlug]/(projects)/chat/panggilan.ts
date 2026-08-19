@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ConnectionState, Room, RoomEvent, Track } from "livekit-client";
 import { ChatService } from "@/services/chat.service";
 import { pesanGalatMedia } from "./galat-media";
+import { statusSesudahPeristiwa } from "./tata-panggilan";
 
 const chatService = new ChatService();
 
@@ -156,12 +157,26 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
       const room = new Room({ adaptiveStream: true, dynacast: true });
       roomRef.current = room;
 
+      // Disambungkan ke TIGA peristiwa, dan ketiganya perlu. `Connected` melayani
+      // yang MENGANGKAT, karena lawannya sudah berada di ruangan sebelum ia masuk
+      // sehingga `ParticipantConnected` tidak akan pernah dipancarkan untuk orang
+      // itu. `ParticipantConnected` melayani yang MENELEPON, yang masuk duluan dan
+      // sendirian. `TrackSubscribed` jadi jaring terakhir kalau daftar peserta
+      // ternyata belum terisi saat `Connected` dipancarkan.
+      const perbaruiStatus = () => setStatus((s) => statusSesudahPeristiwa(s, room.remoteParticipants.size > 0));
+
       room
         .on(RoomEvent.ConnectionStateChanged, (s: ConnectionState) => setKoneksi(String(s)))
-        .on(RoomEvent.Connected, () => setStatus("tersambung"))
-        .on(RoomEvent.TrackSubscribed, () => susunPeserta(room))
+        .on(RoomEvent.Connected, perbaruiStatus)
+        .on(RoomEvent.TrackSubscribed, () => {
+          susunPeserta(room);
+          perbaruiStatus();
+        })
         .on(RoomEvent.TrackUnsubscribed, () => susunPeserta(room))
-        .on(RoomEvent.ParticipantConnected, () => susunPeserta(room))
+        .on(RoomEvent.ParticipantConnected, () => {
+          susunPeserta(room);
+          perbaruiStatus();
+        })
         .on(RoomEvent.ParticipantDisconnected, () => {
           susunPeserta(room);
           // Ruang yang tinggal berisi kita sendiri berarti panggilannya selesai.
@@ -232,7 +247,11 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
         bereskan();
         return;
       }
-      setStatus("memanggil");
+      // JANGAN menimpa "tersambung" di sini. Lawan yang sudah berada di ruangan
+      // sejak sebelum kita masuk, misalnya karena panggilan sebelumnya belum
+      // benar-benar ditutup, tidak akan memancarkan peristiwa apa pun lagi, jadi
+      // status yang tertimpa di baris ini tidak akan pernah pulih.
+      setStatus((s) => (s === "tersambung" ? s : "memanggil"));
     },
     [status, masukRuang, kirimSinyal, bereskan]
   );

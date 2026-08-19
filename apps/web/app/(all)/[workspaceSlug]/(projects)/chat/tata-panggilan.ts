@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
- * Kustomisasi Paradise Task Tracker: tata letak layar panggilan (Yorukaze Production)
+ * Kustomisasi Paradise Task Tracker: tata letak & status layar panggilan (Yorukaze Production)
  * SPDX-License-Identifier: AGPL-3.0-only
  * See the LICENSE file for details.
  */
@@ -52,4 +52,31 @@ export function tataPanggilan(
     // orang tahu sejak detik pertama.
     pratinjauDiriTerlihat: pakaiVideo && adaStreamLokal,
   };
+}
+
+/**
+ * Status panggilan sesudah sebuah peristiwa ruang, sebagai fungsi murni.
+ *
+ * PERNAH SALAH, DAN INI YANG PALING MAHAL. `"tersambung"` dulu diturunkan dari
+ * `RoomEvent.Connected`, padahal peristiwa itu berarti "SAYA sampai ke server",
+ * bukan "lawan bicara sudah ada di ruangan". Untuk yang MENGANGKAT dua hal itu
+ * terjadi bersamaan, jadi layarnya benar. Untuk yang MENELEPON tidak: ia masuk
+ * ruangan lebih dulu, sendirian, dan `Connected` dipancarkan DI DALAM
+ * `room.connect()` sebelum promise-nya selesai. Baris `setStatus("memanggil")`
+ * sesudah `await` lalu menimpanya, dan `Connected` tidak pernah datang dua kali.
+ *
+ * Akibatnya penelepon macet di "Menunggu dijawab" selamanya walau lawannya
+ * sudah menjawab: kisi peserta tidak dirender, jadi ia tidak melihat DAN tidak
+ * mendengar apa pun, sementara pengukur byte ikut mati karena hanya berjalan
+ * saat `"tersambung"`. Di sisi lawan semuanya tampak normal. Dua tangkapan
+ * layar dari HP dan PC pada panggilan yang SAMA yang akhirnya membongkarnya:
+ * satu menulis "Tersambung, masuk 225 KB audio", satu menulis "Menunggu
+ * dijawab, masuk 0 KB", pada detik yang sama.
+ *
+ * `diam` sengaja tidak bisa dinaikkan lagi: peristiwa yang menyusul sesudah
+ * panggilan dibereskan tidak boleh menghidupkannya kembali.
+ */
+export function statusSesudahPeristiwa(sekarang: TStatusPanggilan, adaPesertaJauh: boolean): TStatusPanggilan {
+  if (sekarang === "diam") return "diam";
+  return adaPesertaJauh ? "tersambung" : sekarang;
 }
