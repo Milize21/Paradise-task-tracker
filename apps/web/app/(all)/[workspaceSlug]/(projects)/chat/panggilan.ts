@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConnectionState, Room, RoomEvent, Track } from "livekit-client";
 import { ChatService } from "@/services/chat.service";
+import { pesanGalatMedia } from "./galat-media";
 
 const chatService = new ChatService();
 
@@ -172,13 +173,37 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
 
       try {
         await room.connect(izin.url, izin.token);
-        await room.localParticipant.setMicrophoneEnabled(true);
-        if (video) await room.localParticipant.setCameraEnabled(true);
       } catch {
         gagalRef.current?.("Gagal menyambung ke server panggilan. Periksa jaringan kantor.");
         bereskan();
         return null;
       }
+
+      // Menyambung dan mengambil mikrofon adalah DUA kegagalan yang berbeda, dan
+      // menyatukannya dalam satu catch sempat menyembunyikan sebab yang sebenarnya:
+      // sambungan berhasil, mikrofonnya yang ditolak, sementara layar menuduh
+      // jaringan. Log LiveKit memperlihatkannya sebagai peserta yang masuk lalu
+      // keluar sendiri dalam 40 milidetik tanpa menerbitkan satu track pun.
+      try {
+        await room.localParticipant.setMicrophoneEnabled(true);
+      } catch (e) {
+        gagalRef.current?.(pesanGalatMedia(e, typeof window !== "undefined" && window.isSecureContext));
+        bereskan();
+        return null;
+      }
+
+      // Kamera boleh gagal tanpa membatalkan panggilan: suaranya sudah jalan, dan
+      // memutus panggilan yang berfungsi karena webcam-nya rusak itu lebih buruk
+      // daripada meneruskannya sebagai panggilan suara.
+      if (video)
+        try {
+          await room.localParticipant.setCameraEnabled(true);
+        } catch (e) {
+          gagalRef.current?.(
+            `Kamera tidak bisa dipakai, panggilan diteruskan dengan suara saja. ${pesanGalatMedia(e, typeof window !== "undefined" && window.isSecureContext)}`
+          );
+          setKameraMati(true);
+        }
 
       const lokal: MediaStreamTrack[] = [];
       room.localParticipant.trackPublications.forEach((pub) => {
@@ -239,10 +264,15 @@ export function usePanggilan({ slug, ruangId, kirimSinyal, onGagal }: Opsi) {
   );
 
   const angkat = useCallback(async () => {
-    if (!lawanRef.current || status !== "berdering") return;
+    const ke = lawanRef.current;
+    if (!ke || status !== "berdering") return;
     setStatus("menyambungkan");
-    await masukRuang(pakaiVideo);
-  }, [status, pakaiVideo, masukRuang]);
+    // Gagal mengangkat harus dikabarkan. Tanpa ini penelepon menunggu di layar
+    // "Memanggil" sampai ia menyerah sendiri, sementara yang dipanggil sudah
+    // melihat pesan galat dan mengira panggilannya sudah putus untuk keduanya.
+    // `lawanRef` disalin lebih dulu karena pembersihan di dalam mengosongkannya.
+    if (!(await masukRuang(pakaiVideo))) kirimSinyal(ke, { jenis: "tolak" });
+  }, [status, pakaiVideo, masukRuang, kirimSinyal]);
 
   const tutup = useCallback(() => {
     const ke = lawanRef.current;
