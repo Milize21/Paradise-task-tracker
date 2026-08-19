@@ -65,7 +65,9 @@
       "packages/propel/src/dialog/root.tsx",
       "packages/constants/src/workspace.ts",
       "apps/web/core/components/workspace/sidebar/sidebar-menu-items.tsx",
-      "apps/web/core/components/workspace/sidebar/projects-list.tsx"
+      "apps/web/core/components/workspace/sidebar/projects-list.tsx",
+      "apps/api/bin/docker-entrypoint-api.sh",
+      "apps/web/nginx/nginx.conf"
     ],
     "folder_tanpa_penghapusan": ["apps/web/ce"]
   }
