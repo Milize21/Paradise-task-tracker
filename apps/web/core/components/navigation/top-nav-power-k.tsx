@@ -101,6 +101,7 @@ export const TopNavPowerK = observer(() => {
     return () => {
       setTopNavInputRef(null);
     };
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [setTopNavInputRef]);
 
   const handleClear = () => {
@@ -203,25 +204,41 @@ export const TopNavPowerK = observer(() => {
         return;
       }
     },
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     [searchTerm, activePage, context, shouldShowContextBasedActions, setActivePage, closePanel]
   );
 
+  // Lebarnya dibatasi `min(..., 100vw - 2rem)`, BUKAN dipatok. Palet ini muncul
+  // di SEMUA halaman, dan angka 554/574px membuatnya menjuntai 200px keluar
+  // layar di HP 375px; karena ia dipusatkan dengan `-translate-x-1/2`,
+  // menjuntainya ke dua arah sekaligus. `min()` dipilih ketimbang breakpoint
+  // supaya di layar lebar ukurannya persis seperti semula dan tidak ada titik
+  // patah baru yang harus dijaga. `80vh` juga dinaikkan ke `80dvh` supaya
+  // tingginya mengikuti ruang yang benar-benar terlihat di peramban HP.
   return (
     <div ref={containerRef} className="relative">
       <div
-        className={cn("relative z-30 flex w-[364px] items-center transition-all duration-300 ease-in-out", {
-          "w-[554px]": isOpen,
-        })}
+        className={cn(
+          "relative z-30 flex w-[min(364px,calc(100vw-2rem))] items-center transition-all duration-300 ease-in-out",
+          {
+            "w-[min(554px,calc(100vw-2rem))]": isOpen,
+          }
+        )}
       >
-        <div
+        {/* `<label>`, bukan `<div role="button" onClick={fokuskan}>`.
+            Mengklik label MEMANG memfokuskan input di dalamnya, itu perilaku
+            bawaan HTML, jadi penangan klik dan atribut peran ikut terhapus
+            bersamanya. Versi lama juga melanggar aksesibilitas dengan dua cara:
+            elemen yang bisa diklik tanpa penangan papan ketik, dan `role`
+            menirukan tombol padahal tag aslinya tersedia. Peramban sudah
+            menyediakan yang benar; kita tinggal berhenti menulis ulang. */}
+        <label
           className={cn(
             "flex h-7 w-full items-center rounded-lg border border-subtle-1 bg-layer-2 p-2 transition-colors duration-200",
             {
               "bg-layer-1": isOpen,
             }
           )}
-          onClick={() => inputRef.current?.focus()}
-          role="button"
         >
           <SearchIcon className="mr-2 size-3.5 shrink-0 text-placeholder" />
           <input
@@ -243,13 +260,13 @@ export const TopNavPowerK = observer(() => {
               <CloseIcon className="size-3.5 text-placeholder hover:text-primary" />
             </button>
           )}
-        </div>
+        </label>
       </div>
       <div
         className={cn(
           "shadow-lg absolute -top-[6px] left-1/2 z-20 flex -translate-x-1/2 flex-col overflow-hidden rounded-md border border-subtle bg-surface-1 px-0 pt-10 transition-all duration-300 ease-in-out",
           {
-            "max-h-[80vh] w-[574px] opacity-100": isOpen,
+            "max-h-[80dvh] w-[min(574px,calc(100vw-2rem))] opacity-100": isOpen,
             "h-0 w-0 opacity-0": !isOpen,
           }
         )}
