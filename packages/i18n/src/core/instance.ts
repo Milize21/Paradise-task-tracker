@@ -23,8 +23,34 @@ i18nInstance
   .use(initReactI18next)
   .use(resourcesToBackend((language: string, namespace: string) => import(`../locales/${language}/${namespace}.json`)));
 
-const initialLng =
-  typeof window !== "undefined" ? localStorage.getItem(LANGUAGE_STORAGE_KEY) || FALLBACK_LANGUAGE : FALLBACK_LANGUAGE;
+const bahasaTersimpan = typeof window !== "undefined" ? localStorage.getItem(LANGUAGE_STORAGE_KEY) : null;
+
+// Nilai dari localStorage DIPERIKSA dulu, tidak dipakai mentah. Isinya bisa apa
+// saja: sisa versi lama, atau hasil orang menyuntingnya sendiri. i18next memang
+// sudah dijaga `supportedLngs`, tapi atribut `lang` di bawah tidak punya jaring
+// pengaman seperti itu, jadi pemeriksaannya dikerjakan di sini sekalian.
+const initialLng: string =
+  bahasaTersimpan && SUPPORTED_LANGUAGES.some((l) => l.value === bahasaTersimpan) ? bahasaTersimpan : FALLBACK_LANGUAGE;
+
+// `<html lang>` disetel DI SINI, bukan hanya saat orang mengganti bahasa.
+//
+// MASALAHNYA. Dua tempat yang menyetel atribut ini (`setLanguage` dan
+// `changeLanguage`) sama-sama hanya jalan saat bahasa DIGANTI. Tidak ada yang
+// menyetelnya saat halaman dimuat. Akibatnya orang yang sudah memilih bahasa
+// Indonesia tetap mendapat `<html lang="en">` di setiap muat ulang berikutnya,
+// karena i18next memang membaca pilihannya dari localStorage, tapi atribut di
+// dokumennya tertinggal di nilai statis dari `root.tsx`.
+//
+// KENAPA PENTING, bukan sekadar rapi: pembaca layar memilih mesin pengucapan
+// dari atribut ini. Teks Indonesia yang dibacakan dengan pelafalan Inggris
+// nyaris tidak bisa dimengerti. Ini WCAG 3.1.1, tingkat A.
+//
+// Ditaruh di modul ini, bukan di `root.tsx`, karena di sinilah bahasa awal
+// ditentukan. Menyetelnya di tempat lain berarti logika yang sama ditulis dua
+// kali dan bisa berbeda diam-diam.
+if (typeof window !== "undefined") {
+  document.documentElement.lang = initialLng;
+}
 
 export const initPromise = i18nInstance
   .init({
