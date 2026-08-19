@@ -3,6 +3,32 @@
 		max_size {$FILE_SIZE_LIMIT}
 	}
 
+	# ------------------------------------------------------------------------
+	# MAMPATKAN JAWABAN. Sebelum ini TIDAK ADA kompresi di lapisan mana pun:
+	# tidak di Caddy, tidak di nginx `web`, tidak di Django. Diukur langsung ke
+	# produksi, `Content-Length` sebuah bundel JS tetap 322.538 byte baik saat
+	# klien meminta gzip maupun brotli, dan header `Content-Encoding` tidak
+	# pernah muncul.
+	#
+	# Akibatnya membuka aplikasi menuntut unduhan sekitar 2,4 MB mentah. Di
+	# kantor dengan kabel itu tidak terasa; di HP lewat 4G itu bedanya beberapa
+	# detik menatap layar kosong.
+	#
+	# Ditaruh DI SINI, bukan di nginx `web`, karena Caddy satu-satunya lapisan
+	# yang dilewati SEMUA: web, api, space, admin, live. Satu baris di sini
+	# menutupi semuanya, termasuk jawaban JSON API yang juga tidak dimampatkan.
+	#
+	# `zstd` lebih dulu, `gzip` sebagai cadangan. Caddy memilih berdasarkan
+	# `Accept-Encoding` klien, jadi peramban lama tetap dapat gzip. Brotli tidak
+	# dipakai karena Caddy v2 memang tidak menyediakan encoder-nya.
+	#
+	# TIDAK PERLU menyaring tipe berkas sendiri. `encode` bawaan Caddy sudah
+	# hanya memampatkan tipe yang layak (text/*, json, javascript, wasm, svg)
+	# dan melewati yang sudah termampat seperti PNG dan woff2. Memampatkan ulang
+	# gambar cuma membakar CPU dan justru bisa memperbesar hasilnya.
+	# ------------------------------------------------------------------------
+	encode zstd gzip
+
   redir /spaces /spaces/ permanent
 	reverse_proxy /spaces/* space:3000
 
