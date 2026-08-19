@@ -112,7 +112,7 @@ function DivisionDashboardPage() {
           </div>
 
           {/* Tabel per divisi */}
-          <div className="overflow-x-auto rounded-md border border-subtle">
+          <div className="overflow-x-auto rounded-md border border-subtle gulir-berpenanda">
             <table className="text-sm w-full min-w-[640px] text-left">
               <thead>
                 <tr className="text-xs border-b border-subtle bg-layer-2 text-tertiary">

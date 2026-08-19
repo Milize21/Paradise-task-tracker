@@ -12,8 +12,6 @@ export type TTataPanggilan = {
   tampil: boolean;
   /** Ada peserta lain yang medianya sudah tiba. */
   adaPeserta: boolean;
-  /** Jumlah kolom kisi peserta. */
-  kolom: number;
   pratinjauDiriTerlihat: boolean;
 };
 
@@ -33,7 +31,7 @@ export function tataPanggilan(
   jumlahPeserta: number
 ): TTataPanggilan {
   if (status === "diam") {
-    return { tampil: false, adaPeserta: false, kolom: 1, pratinjauDiriTerlihat: false };
+    return { tampil: false, adaPeserta: false, pratinjauDiriTerlihat: false };
   }
 
   // Peserta hanya dianggap ada kalau medianya sudah tiba, bukan kalau kita
@@ -44,10 +42,6 @@ export function tataPanggilan(
   return {
     tampil: true,
     adaPeserta,
-    // Satu lawan bicara tampil besar; mulai tiga orang barulah dibagi dua kolom.
-    // Kisi yang selalu dipaksakan membuat panggilan berdua terlihat sempit
-    // tanpa alasan.
-    kolom: jumlahPeserta <= 1 ? 1 : jumlahPeserta <= 4 ? 2 : 3,
     // Sejak memanggil, bukan setelah tersambung: kalau kameranya bermasalah,
     // orang tahu sejak detik pertama.
     pratinjauDiriTerlihat: pakaiVideo && adaStreamLokal,

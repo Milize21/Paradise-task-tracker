@@ -102,13 +102,18 @@ export function PanggilanLayar({
             : "Tersambung";
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/85 p-6">
+    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/85 p-3 sm:p-6">
       <div className="relative flex min-h-0 w-full max-w-5xl flex-1 items-center justify-center">
         {tata.adaPeserta ? (
-          <div
-            className="grid h-full w-full gap-2"
-            style={{ gridTemplateColumns: `repeat(${tata.kolom}, minmax(0, 1fr))` }}
-          >
+          // Kisi mengikuti RUANG YANG ADA, bukan jumlah peserta. `auto-fit`
+          // memuat sebanyak yang muat dengan lebar minimum 240px, lalu
+          // MENGEMPISKAN jalur kosong sehingga yang tersisa melar memenuhi
+          // lebar. Hasilnya benar di tiap ukuran tanpa satu baris JS: dua
+          // peserta di laptop jadi dua kolom lebar, dua peserta yang sama di
+          // HP 375px jadi satu kolom bertumpuk. Sebelumnya jumlah kolom
+          // dihitung dari cacah peserta, jadi di HP dua orang dipaksa berbagi
+          // layar 375px, masing-masing 160px.
+          <div className="grid h-full w-full grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-2">
             {pesertaJauh.map((p) => (
               <Peserta key={p.id} peserta={p} />
             ))}
@@ -125,7 +130,7 @@ export function PanggilanLayar({
           <Media
             stream={streamLokal}
             bisu
-            className="shadow-lg absolute right-3 bottom-3 w-32 rounded-md border border-white/20 bg-black object-cover"
+            className="shadow-lg absolute right-2 bottom-2 w-24 rounded-md border border-white/20 bg-black object-cover sm:right-3 sm:bottom-3 sm:w-32"
           />
         ) : null}
       </div>
@@ -148,7 +153,7 @@ export function PanggilanLayar({
         </p>
       ) : null}
 
-      <div className="mt-7 flex items-center gap-3">
+      <div className="mt-4 flex items-center gap-3 sm:mt-7">
         {status === "berdering" ? (
           <>
             <button

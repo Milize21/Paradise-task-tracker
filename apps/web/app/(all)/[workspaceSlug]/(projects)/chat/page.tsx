@@ -10,6 +10,7 @@ import { observer } from "mobx-react";
 import { useParams, useSearchParams } from "react-router";
 import useSWR, { mutate } from "swr";
 import {
+  ChevronLeft,
   ChevronUp,
   CornerUpLeft,
   MessageSquare,
@@ -34,7 +35,7 @@ import { stringToEmoji } from "@plane/propel/emoji-icon-picker";
 import { EmojiReactionPicker } from "@plane/propel/emoji-reaction";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Avatar } from "@plane/ui";
-import { getFileURL, renderFormattedDate, renderFormattedTime } from "@plane/utils";
+import { cn, getFileURL, renderFormattedDate, renderFormattedTime } from "@plane/utils";
 // components
 import { PageHead } from "@/components/core/page-title";
 // hooks
@@ -148,6 +149,16 @@ function ChatPage() {
   // dari daftar percakapan. DM yang belum pernah berisi pesan belum punya
   // ruang, dan itu wajar: soketnya menyusul begitu pesan pertama terkirim.
   const ruangSaatIni = ruangParam ?? (percakapan ?? []).find((p) => p.lawan_bicara === dengan)?.id ?? null;
+  /** Ada percakapan yang sedang dibuka.
+   *
+   * Di layar sempit ini yang menentukan panel mana yang tampil: daftar ATAU
+   * percakapan, tidak pernah keduanya. Sebelumnya keduanya dipaksa berdampingan,
+   * dan karena daftarnya dipatok `w-80 shrink-0` alias 320px yang menolak
+   * menyusut, di HP 375px sisa untuk percakapan tinggal 55px. Tangkapan layar
+   * HP dari user 19 Agt memperlihatkannya: potongan teks terjepit di pinggir
+   * kanan layar itu adalah seluruh kolom percakapan. */
+  const adaPercakapanTerbuka = Boolean(dengan || ruangParam);
+
   const kunciIsi = slug && (ruangParam || dengan) ? `CHAT_ISI_${slug}_${ruangParam ?? dengan}` : null;
 
   // Sengaja memakai `mutate` global, bukan handle dari useSWR di bawah: hook ini
@@ -473,7 +484,15 @@ function ChatPage() {
       <PageHead title={t("chat_nav")} />
 
       {/* Daftar orang */}
-      <aside className="flex w-80 shrink-0 flex-col border-r border-subtle">
+      {/* Lebar penuh di layar sempit, 320px sejak lg. `lg` (1024px) sengaja sama
+          dengan ambang `isLayarSempit` di usePlatformOS, supaya sidebar aplikasi
+          dan panel obrolan berpindah mode pada titik yang sama persis. */}
+      <aside
+        className={cn(
+          "flex w-full shrink-0 flex-col border-r border-subtle lg:w-80",
+          adaPercakapanTerbuka && "hidden lg:flex"
+        )}
+      >
         <div className="flex items-center gap-2 border-b border-subtle p-3">
           <div className="focus-within:border-accent-primary flex flex-1 items-center gap-2 rounded-md border border-subtle px-2.5 py-1.5">
             <Search className="size-3.5 shrink-0 text-tertiary" />
@@ -683,7 +702,10 @@ function ChatPage() {
       </aside>
 
       {/* Percakapan */}
-      <section className="flex min-w-0 flex-1 flex-col">
+      {/* Kebalikannya: di layar sempit, panel ini hanya muncul kalau ada yang
+          dibuka. Keadaan kosong "Pilih orang di sebelah kiri" tidak masuk akal
+          di HP, karena di situ tidak ada "sebelah kiri". */}
+      <section className={cn("flex min-w-0 flex-1 flex-col", !adaPercakapanTerbuka && "hidden lg:flex")}>
         {!dengan && !ruangParam ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-tertiary">
             <MessageSquare className="size-10" strokeWidth={1.25} />
@@ -695,6 +717,18 @@ function ChatPage() {
         ) : (
           <>
             <div className="flex items-center gap-2.5 border-b border-subtle px-4 py-2.5">
+              {/* Satu-satunya jalan kembali ke daftar di layar sempit, karena di
+                  situ daftarnya memang tidak terlihat. Disembunyikan sejak lg,
+                  di mana kedua panel tampil berdampingan dan tombol ini justru
+                  membingungkan. `size-9` supaya nyaman disentuh jari. */}
+              <button
+                type="button"
+                onClick={() => setSearchParams({})}
+                className="-ml-1.5 grid size-9 shrink-0 place-items-center rounded-sm text-secondary hover:bg-layer-1 hover:text-primary lg:hidden"
+                aria-label="Kembali ke daftar percakapan"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
               {adalahKanal ? (
                 <>
                   {kanalAktif?.tipe === "privat" ? (

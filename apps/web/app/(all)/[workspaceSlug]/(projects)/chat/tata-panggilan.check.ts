@@ -39,19 +39,17 @@ for (const status of ["memanggil", "berdering", "menyambungkan"] as const) {
   assert.equal(t.adaPeserta, false, `belum tersambung (${status}), peserta belum ditampilkan`);
 }
 
-// Satu lawan bicara tampil besar, bukan dipaksa masuk kisi.
 {
   const t = tataPanggilan("tersambung", true, true, 1);
   assert.equal(t.adaPeserta, true, "satu peserta sudah cukup untuk menampilkan");
-  assert.equal(t.kolom, 1, "panggilan berdua tampil penuh, bukan setengah layar");
 }
 
-// Konferensi: kisi tumbuh mengikuti jumlah peserta.
-{
-  assert.equal(tataPanggilan("tersambung", true, true, 2).kolom, 2, "tiga orang: dua kolom");
-  assert.equal(tataPanggilan("tersambung", true, true, 4).kolom, 2, "lima orang: masih dua kolom");
-  assert.equal(tataPanggilan("tersambung", true, true, 5).kolom, 3, "enam orang ke atas: tiga kolom");
-}
+// Cacah jalur kisi TIDAK lagi dihitung di sini, dan pemeriksaannya sengaja
+// dihapus bersama kodenya. Sejak 19 Agt 2026 kisinya diserahkan ke CSS
+// `auto-fit minmax(240px, 1fr)`, yang mengikuti ruang yang benar-benar ada.
+// Menghitungnya di JS memaksa dua peserta di HP 375px berbagi dua jalur selebar
+// 160px, dan tidak ada nilai `jumlahPeserta` yang bisa membedakan HP dari
+// laptop. Aturan yang tidak bisa dijawab dengan benar lebih baik tidak ada.
 
 // Pratinjau diri tampil SEJAK MEMANGGIL, bukan menunggu tersambung.
 {

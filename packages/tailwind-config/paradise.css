@@ -95,6 +95,31 @@
 }
 
 /* ==========================================================================
+   3b. Penanda bahwa sebuah panel masih bisa digulir ke samping
+   ==========================================================================
+
+   Tabel lebar di layar sempit memang bisa digulir mendatar, tapi tanpa tanda
+   apa pun orang tidak tahu masih ada kolom di kanan. Ia menyimpulkan datanya
+   memang cuma segitu, dan itu kesimpulan yang salah tanpa gejala.
+
+   Bayangannya muncul HANYA di sisi yang masih menyimpan isi, dan hilang sendiri
+   begitu mentok. Triknya `background-attachment`: dua lapis `local` ikut
+   bergulir bersama isi dan menutupi dua lapis `scroll` yang diam di tepi. Tidak
+   ada JavaScript, tidak ada pendengar peristiwa gulir, dan tetap benar walau
+   digulir dengan roda tetikus, jari, atau papan ketik.
+
+   `--warna-dasar-gulir` boleh ditimpa pemakainya kalau permukaannya bukan
+   `layer-1`, misalnya kartu di atas `layer-3`. */
+@utility gulir-berpenanda {
+  --warna-dasar-gulir: var(--background-color-layer-1);
+  background:
+    linear-gradient(to right, var(--warna-dasar-gulir) 30%, transparent) left center / 36px 100% no-repeat local,
+    linear-gradient(to left, var(--warna-dasar-gulir) 30%, transparent) right center / 36px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgb(0 0 0 / 16%), transparent) left center / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 16%), transparent) right center / 12px 100% no-repeat scroll;
+}
+
+/* ==========================================================================
    4. Gerak yang menghormati permintaan pengguna
    ==========================================================================
 
