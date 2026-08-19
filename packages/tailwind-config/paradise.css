@@ -161,8 +161,21 @@ th,
 
    `:focus-visible` hanya menyala saat orang benar-benar bernavigasi dengan
    papan ketik, jadi pemakai tetikus tidak akan melihat cincin ini sama sekali.
-   Tanpa ini, orang yang berpindah dengan Tab tidak tahu sedang berada di mana. */
-:focus-visible {
+   Tanpa ini, orang yang berpindah dengan Tab tidak tahu sedang berada di mana.
+
+   KENAPA ADA PENGECUALIAN. Di aplikasi ini ada 170 elemen ber-`outline-none`.
+   Sebanyak 43 di antaranya TIDAK punya pengganti apa pun, jadi fokus papan
+   ketiknya memang tidak terlihat sama sekali sebelum aturan ini ada, dan mereka
+   justru alasan utama aturan ini dibuat. Tapi sekitar delapan sudah menggambar
+   cincinnya sendiri lewat `focus:ring-*`; buat mereka, aturan ini cuma menambah
+   cincin KEDUA di luar cincin yang sudah ada.
+
+   `:where()` dipakai supaya pengecualian ini tidak menaikkan specificity, jadi
+   komponen mana pun tetap bisa menimpanya dengan kelasnya sendiri.
+
+   Permukaan editor tidak perlu disebut di sini: `editor.css` memakai
+   `outline: none !important`, yang tetap menang atas aturan ini. */
+:focus-visible:not(:where([class*="focus:ring-"], [class*="focus-visible:ring-"], [class*="ring-offset"])) {
   outline: 2px solid var(--border-color-accent-strong, currentColor);
   outline-offset: 2px;
 }

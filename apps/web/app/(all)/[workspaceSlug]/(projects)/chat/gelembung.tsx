@@ -124,7 +124,7 @@ export function Gelembung(props: Props) {
                 type="button"
                 onClick={() => props.onHapus?.(pesan)}
                 aria-label="Hapus pesan"
-                className="hover:text-red-500 rounded p-1 text-tertiary hover:bg-layer-1"
+                className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-danger-primary"
               >
                 <Trash2 className="size-3.5" />
               </button>

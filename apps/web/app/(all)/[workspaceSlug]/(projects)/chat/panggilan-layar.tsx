@@ -153,6 +153,12 @@ export function PanggilanLayar({
         </p>
       ) : null}
 
+      {/* Merah dan hijau di sini SENGAJA dipatok, bukan memakai token semantik.
+          Layar panggilan selalu berlatar hitam apa pun tema aplikasinya,
+          sementara `--bg-danger-primary` berbalik antar tema: `red-700` di tema
+          terang, `red-300` di gelap. Memakainya di sini membuat tombol tutup
+          jadi merah gelap di atas latar hitam ketika temanya terang. Token yang
+          benar untuk permukaan bertema, bukan untuk lapisan yang temanya tetap. */}
       <div className="mt-4 flex items-center gap-3 sm:mt-7">
         {status === "berdering" ? (
           <>
