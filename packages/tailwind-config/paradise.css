@@ -182,3 +182,38 @@ th,
   outline: 2px solid var(--border-color-accent-strong, currentColor);
   outline-offset: 2px;
 }
+
+/* ==========================================================================
+   7. Tema "kontras tinggi" yang sebenarnya menaikkan kontras TEKS
+   ==========================================================================
+
+   Aplikasi ini punya empat tema, dan dua di antaranya bernama `light-contrast`
+   dan `dark-contrast`. Namanya menjanjikan kontras tinggi, tapi blok definisinya
+   di variables.css HANYA berisi warna border: 17 token di versi terang, 14 di
+   versi gelap, dan NOL token teks di keduanya. Jadi buat pembaca, tema kontras
+   tinggi sama persis dengan tema biasa. Itu terbukti dua kali: dari membaca
+   sumbernya, dan dari mengukur halaman yang sama di keempat tema (terang dan
+   terang-kontras menghasilkan 42 kegagalan yang identik).
+
+   Sementara itu teks tersier dan placeholder di tema terang cuma 3,69:1 terhadap
+   latar putih, di bawah ambang WCAG AA 4,5:1 untuk teks 13px. Yang kena bukan
+   teks hiasan: label bagian "Workspace" dan seluruh item navigasi sidebar yang
+   tidak sedang aktif, plus semua cap waktu "19 days ago".
+
+   Diperbaiki dengan menggeser dua token itu SATU ANAK TANGGA menjauh dari latar
+   pada skala neutral yang memang sudah ada. Tidak ada warna baru yang dikarang,
+   dan hanya berlaku bagi orang yang SENGAJA memilih tema kontras tinggi, jadi
+   tampilan mayoritas karyawan tidak berubah sama sekali.
+
+   Tema biasa sengaja TIDAK disentuh: menggelapkan teks tersier di sana mengubah
+   tampilan semua orang, dan itu keputusan desain milik pemilik produk, bukan
+   perbaikan aksesibilitas yang bisa saya ambil sendiri. */
+[data-theme="light-contrast"] {
+  --txt-tertiary: var(--neutral-1100);
+  --txt-placeholder: var(--neutral-1000);
+}
+
+[data-theme="dark-contrast"] {
+  --txt-tertiary: var(--neutral-1100);
+  --txt-placeholder: var(--neutral-1000);
+}
