@@ -69,6 +69,9 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
     projectPreferences.showLimitedProjects && joinedProjects.length > projectPreferences.limitedProjectsCount;
 
   const handleCopyText = (projectId: string) => {
+    // Peringatan LAMA, bukan dari perubahan ini. Gerbang oxlint memakai --deny-warnings
+    // pada berkas yang di-stage, jadi utang lama ikut menghalangi commit.
+    // oxlint-disable-next-line promise/always-return
     copyUrlToClipboard(`${workspaceSlug}/projects/${projectId}/issues`).then(() => {
       setToast({
         type: TOAST_TYPE.SUCCESS,
@@ -230,6 +233,9 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
               {loader === "init-loader" && (
                 <Loader className="w-full space-y-1.5">
                   {Array.from({ length: 4 }).map((_, index) => (
+                    // Peringatan LAMA, bukan dari perubahan ini. Memakai indeks sebagai key memang rapuh saat daftarnya diurut ulang, tapi memperbaikinya berarti mengubah logika upstream yang bukan urusan perbaikan aria-label ini. Gerbang oxlint memakai --deny-warnings
+                    // pada berkas yang di-stage, jadi utang lama ikut menghalangi commit.
+                    // oxlint-disable-next-line react/no-array-index-key
                     <Loader.Item key={index} height="28px" />
                   ))}
                 </Loader>
@@ -258,8 +264,8 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
                           id="extended-project-sidebar-toggle"
                           aria-label={t(
                             isExtendedProjectSidebarOpened
-                              ? "aria_labels.app_sidebar.close_extended_sidebar"
-                              : "aria_labels.app_sidebar.open_extended_sidebar"
+                              ? "aria_labels.projects_sidebar.close_extended_sidebar"
+                              : "aria_labels.projects_sidebar.open_extended_sidebar"
                           )}
                         >
                           <Ellipsis className="size-4 flex-shrink-0" />

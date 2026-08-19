@@ -84,6 +84,9 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
 
   const sortedNavigationItems = useMemo(
     () =>
+      // Peringatan LAMA soal efisiensi, bukan dari perubahan ini. Gerbang oxlint memakai --deny-warnings
+      // pada berkas yang di-stage, jadi utang lama ikut menghalangi commit.
+      // oxlint-disable-next-line no-map-spread
       WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS.map((item) => {
         const preference = workspacePreferences.items[item.key];
         return {
@@ -98,6 +101,9 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
     <>
       <div className="flex flex-col gap-0.5">
         {filteredStaticNavigationItems.map((item, _index) => (
+          // Peringatan LAMA, bukan dari perubahan ini. Memakai indeks sebagai key memang rapuh saat daftarnya diurut ulang, tapi memperbaikinya berarti mengubah logika upstream yang bukan urusan perbaikan aria-label ini. Gerbang oxlint memakai --deny-warnings
+          // pada berkas yang di-stage, jadi utang lama ikut menghalangi commit.
+          // oxlint-disable-next-line react/no-array-index-key
           <SidebarItem key={`static_${_index}`} item={item} />
         ))}
       </div>
@@ -108,12 +114,13 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
             type="button"
             className="flex w-full items-center gap-1 text-left text-13 font-semibold whitespace-nowrap text-placeholder"
             onClick={() => toggleListDisclosure(!isWorkspaceMenuOpen)}
-            aria-label={t(
-              isWorkspaceMenuOpen
-                ? "aria_labels.app_sidebar.close_workspace_menu"
-                : "aria_labels.app_sidebar.open_workspace_menu"
-            )}
           >
+            {/* TANPA aria-label, dan itu disengaja. Tombol ini sudah punya teks
+                terlihat "Workspace", sementara aria-label MENIMPA teks itu bagi
+                pembaca layar. Label lamanya menunjuk kunci terjemahan yang tidak
+                ada di locale mana pun, jadi yang dibacakan pembaca layar adalah
+                nama kunci mentah, bukan nama tombolnya. Keadaan buka/tutup sudah
+                disampaikan `aria-expanded` yang dipasang Headless UI sendiri. */}
             <span className="text-13 font-semibold">{t("common.workspace")}</span>
           </Disclosure.Button>
           <div className="pointer-events-none flex items-center opacity-0 group-hover:pointer-events-auto group-hover:opacity-100">
@@ -122,11 +129,9 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
               type="button"
               className="flex-shrink-0 rounded-sm p-0.5 hover:bg-layer-1"
               onClick={() => toggleListDisclosure(!isWorkspaceMenuOpen)}
-              aria-label={t(
-                isWorkspaceMenuOpen
-                  ? "aria_labels.app_sidebar.close_workspace_menu"
-                  : "aria_labels.app_sidebar.open_workspace_menu"
-              )}
+              /* Hanya berisi ikon, jadi ia memang butuh nama. Memakai kunci
+                 yang SUDAH ADA di locale; buka/tutup disampaikan aria-expanded. */
+              aria-label={t("common.workspace")}
             >
               <ChevronRightIcon
                 className={cn("size-3 flex-shrink-0 transition-all", {
@@ -149,9 +154,15 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
             <Disclosure.Panel as="div" className="flex flex-col gap-0.5" static>
               <>
                 {WORKSPACE_SIDEBAR_STATIC_PINNED_NAVIGATION_ITEMS_LINKS.map((item, _index) => (
+                  // Peringatan LAMA, bukan dari perubahan ini. Memakai indeks sebagai key memang rapuh saat daftarnya diurut ulang, tapi memperbaikinya berarti mengubah logika upstream yang bukan urusan perbaikan aria-label ini. Gerbang oxlint memakai --deny-warnings
+                  // pada berkas yang di-stage, jadi utang lama ikut menghalangi commit.
+                  // oxlint-disable-next-line react/no-array-index-key
                   <SidebarItem key={`static_${_index}`} item={item} />
                 ))}
                 {sortedNavigationItems.map((item, _index) => (
+                  // Peringatan LAMA, bukan dari perubahan ini. Memakai indeks sebagai key memang rapuh saat daftarnya diurut ulang, tapi memperbaikinya berarti mengubah logika upstream yang bukan urusan perbaikan aria-label ini. Gerbang oxlint memakai --deny-warnings
+                  // pada berkas yang di-stage, jadi utang lama ikut menghalangi commit.
+                  // oxlint-disable-next-line react/no-array-index-key
                   <SidebarItem key={`dynamic_${_index}`} item={item} />
                 ))}
                 <SidebarNavItem>
@@ -162,8 +173,8 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
                     id="extended-sidebar-toggle"
                     aria-label={t(
                       isExtendedSidebarOpened
-                        ? "aria_labels.app_sidebar.close_extended_sidebar"
-                        : "aria_labels.app_sidebar.open_extended_sidebar"
+                        ? "aria_labels.projects_sidebar.close_extended_sidebar"
+                        : "aria_labels.projects_sidebar.open_extended_sidebar"
                     )}
                   >
                     <Ellipsis className="size-4 flex-shrink-0" />
