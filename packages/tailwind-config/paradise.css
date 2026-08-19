@@ -81,18 +81,21 @@
 }
 
 /* ==========================================================================
-   3. Aman dari poni layar dan bilah gestur
+   3. Area aman poni layar: TIDAK ADA, dan itu disengaja
    ==========================================================================
 
-   Dipakai oleh permukaan yang menempel di tepi layar. Tanpa ini, baris paling
-   bawah bisa berada persis di bawah bilah gestur HP dan tidak bisa disentuh. */
-@utility pad-aman-bawah {
-  padding-bottom: max(var(--pad-aman-dasar, 0px), env(safe-area-inset-bottom));
-}
+   Utilitas `pad-aman-*` sempat ditulis di sini lalu DIHAPUS lagi tanpa pernah
+   dipakai. Alasannya: `env(safe-area-inset-*)` hanya berisi nilai bukan-nol
+   kalau meta viewport memakai `viewport-fit=cover`, dan aplikasi ini tidak
+   memakainya (`app/root.tsx` cuma `width=device-width, initial-scale=1`).
+   Tanpa itu peramban sudah menahan isi halaman di dalam area aman sendiri,
+   jadi utilitasnya selalu menghitung nol dan tidak berbuat apa pun.
 
-@utility pad-aman-atas {
-  padding-top: max(var(--pad-aman-dasar, 0px), env(safe-area-inset-top));
-}
+   Menyalakan `viewport-fit=cover` bukan pekerjaan satu baris: ia melebarkan
+   halaman sampai ke bawah poni dan bilah gestur, lalu SETIAP permukaan yang
+   menempel di tepi harus diberi padding aman satu per satu. Kalau nanti memang
+   diputuskan, itu pekerjaan tersendiri, bukan utilitas yang menganggur di sini
+   menunggu dipakai. */
 
 /* ==========================================================================
    3b. Penanda bahwa sebuah panel masih bisa digulir ke samping
