@@ -58,7 +58,9 @@
       "packages/services/src/instance/activity.service.ts",
       "packages/hooks/src/use-platform-os.tsx",
       "packages/tailwind-config/paradise.css",
-      "apps/web/core/components/sidebar/resizable-sidebar.tsx"
+      "apps/web/core/components/sidebar/resizable-sidebar.tsx",
+      "apps/web/core/components/navigation/top-nav-power-k.tsx",
+      "apps/web/core/components/core/sidebar/sidebar-menu-hamburger-toggle.tsx"
     ],
     "folder_tanpa_penghapusan": ["apps/web/ce"]
   }
