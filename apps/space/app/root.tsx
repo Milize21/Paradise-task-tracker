@@ -22,7 +22,22 @@ import { AppProviders } from "./providers";
 // oxlint-disable no-unassigned-import
 import "@fontsource-variable/inter";
 import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
-import "@fontsource/material-symbols-rounded";
+// Berat 400 SAJA, bukan seluruh paket.
+//
+// `@fontsource/material-symbols-rounded` polos menarik EMPAT berat (100, 200,
+// 300, 400), masing-masing sekitar 340 sampai 380 KB dalam woff2, plus woff
+// cadangannya. Totalnya sekitar 1,45 MB woff2 dan 1,9 MB woff.
+//
+// Tiga di antaranya TIDAK PERNAH BISA terpakai. Utility `.material-symbols-rounded`
+// di `packages/tailwind-config/variables.css` menyetel `font-weight: normal`
+// secara eksplisit, dan itu berarti 400. Tidak ada satu pun tempat di aplikasi
+// yang merender ikon ini pada berat lain.
+//
+// Aman kalaupun suatu saat ada yang merendernya di dalam teks tebal: peramban
+// memilih @font-face terdekat yang tersedia, jadi ikonnya tetap tampil pada
+// ketebalan 400. Untuk huruf IKON itu justru yang diinginkan, karena ketebalan
+// goresnya jadi seragam di seluruh aplikasi.
+import "@fontsource/material-symbols-rounded/400.css";
 import "@fontsource/ibm-plex-mono";
 // oxlint-enable no-unassigned-import
 
