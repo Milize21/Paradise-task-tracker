@@ -1,0 +1,143 @@
+/**
+ * Copyright (c) 2023-present Plane Software, Inc. and contributors
+ * Kustomisasi Paradise Task Tracker: lapisan adaptif (Yorukaze Production)
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * See the LICENSE file for details.
+ *
+ * KENAPA BERKAS TERPISAH, BUKAN DITULIS DI index.css
+ *
+ * Repo ini di-vendor dari makeplane/plane dan masih disinkronkan. Tiap baris
+ * yang kita selipkan ke berkas upstream jadi tagihan yang dibayar berulang di
+ * SETIAP sync. Dengan berkas sendiri, jejak kita di upstream tinggal SATU baris
+ * `@import` di index.css, dan seluruh isinya di sini tidak akan pernah
+ * bertabrakan dengan perubahan mereka.
+ *
+ * Aturan di sini sengaja TIDAK dibungkus `@layer`. CSS tanpa layer selalu
+ * mengalahkan CSS berlayer, berapa pun specificity-nya, dan utilitas Tailwind
+ * hidup di dalam `@layer utilities`. Jadi timpaan di bawah ini pasti menang
+ * tanpa perlu satu pun `!important`.
+ */
+
+/* ==========================================================================
+   1. Tinggi layar yang mengikuti ruang yang BENAR-BENAR terlihat
+   ==========================================================================
+
+   `100vh` di peramban HP ikut menghitung bilah alamat yang menyusut saat
+   digulir. Akibatnya isi halaman selalu lebih tinggi dari yang terlihat, dan
+   baris paling bawah terdorong keluar layar. Di halaman yang menaruh tombol
+   aksi di bawah, tombol itu tidak bisa disentuh sama sekali.
+
+   `100dvh` mengikuti tinggi yang sungguh terlihat saat itu juga.
+
+   Ditimpa dari sini, bukan disapu satu per satu, karena `h-screen` dan
+   `min-h-screen` dipakai 45 kali dan hampir semuanya di berkas upstream.
+   Satu aturan di sini menyelesaikan semuanya sekaligus, dengan nol biaya sync.
+
+   Di desktop `dvh` sama persis dengan `vh` karena tidak ada bilah yang
+   menyusut, jadi tidak ada yang berubah di sana. */
+@supports (height: 100dvh) {
+  .h-screen {
+    height: 100dvh;
+  }
+
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+
+  .max-h-screen {
+    max-height: 100dvh;
+  }
+}
+
+/* ==========================================================================
+   2. Target sentuh yang bisa kena jari
+   ==========================================================================
+
+   Ambang 44px berasal dari panduan Apple dan WCAG 2.2 (SC 2.5.8 meminta 24px
+   sebagai batas minimum mutlak, 44px adalah angka yang benar-benar nyaman).
+   Tombol pembuka sidebar di aplikasi ini `size-7`, yaitu 28px.
+
+   Yang diperbesar HANYA area sentuhnya lewat pseudo-element, BUKAN ukuran
+   tombolnya. Membesarkan tombolnya akan mengubah tata letak di desktop, dan
+   yang kita mau justru sebaliknya: tampilan tetap sama persis, jarinya saja
+   yang lebih mudah kena.
+
+   Hanya berlaku di perangkat berpenunjuk kasar. Pemakai tetikus tidak butuh
+   ini dan area tak terlihat yang melebar bisa mencuri klik dari tetangganya. */
+@media (pointer: coarse) {
+  [data-sentuh-lega] {
+    position: relative;
+  }
+
+  [data-sentuh-lega]::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* ==========================================================================
+   3. Aman dari poni layar dan bilah gestur
+   ==========================================================================
+
+   Dipakai oleh permukaan yang menempel di tepi layar. Tanpa ini, baris paling
+   bawah bisa berada persis di bawah bilah gestur HP dan tidak bisa disentuh. */
+@utility pad-aman-bawah {
+  padding-bottom: max(var(--pad-aman-dasar, 0px), env(safe-area-inset-bottom));
+}
+
+@utility pad-aman-atas {
+  padding-top: max(var(--pad-aman-dasar, 0px), env(safe-area-inset-top));
+}
+
+/* ==========================================================================
+   4. Gerak yang menghormati permintaan pengguna
+   ==========================================================================
+
+   Bukan sekadar sopan santun: gerak yang tidak diminta bisa memicu pusing dan
+   mual pada sebagian orang (vestibular disorder). Sistem operasi sudah punya
+   saklarnya, aplikasi tinggal mendengarkan.
+
+   Transisi tidak dimatikan total melainkan dipangkas jadi hampir seketika,
+   karena mematikannya sepenuhnya membuat sebagian komponen yang menunggu
+   peristiwa `transitionend` menggantung selamanya. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   5. Angka yang berbaris lurus
+   ==========================================================================
+
+   Di huruf proporsional, angka 1 lebih sempit dari 8, jadi kolom angka terlihat
+   bergoyang dan sulit dibandingkan sekilas. `tabular-nums` menyamakan lebarnya.
+   Ditempelkan ke sel tabel dan ke apa pun yang ditandai, bukan ke seluruh
+   halaman, karena teks biasa justru lebih enak dibaca dengan angka proporsional. */
+td,
+th,
+[data-angka] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   6. Fokus papan ketik yang terlihat
+   ==========================================================================
+
+   `:focus-visible` hanya menyala saat orang benar-benar bernavigasi dengan
+   papan ketik, jadi pemakai tetikus tidak akan melihat cincin ini sama sekali.
+   Tanpa ini, orang yang berpindah dengan Tab tidak tahu sedang berada di mana. */
+:focus-visible {
+  outline: 2px solid var(--border-color-accent-strong, currentColor);
+  outline-offset: 2px;
+}

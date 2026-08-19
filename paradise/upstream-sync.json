@@ -55,7 +55,10 @@
       "apps/admin/app/(all)/(dashboard)/activity/grafik-harian.tsx",
       "apps/admin/app/(all)/(dashboard)/activity/constants.ts",
       "apps/admin/app/(all)/(dashboard)/members/session-cell.tsx",
-      "packages/services/src/instance/activity.service.ts"
+      "packages/services/src/instance/activity.service.ts",
+      "packages/hooks/src/use-platform-os.tsx",
+      "packages/tailwind-config/paradise.css",
+      "apps/web/core/components/sidebar/resizable-sidebar.tsx"
     ],
     "folder_tanpa_penghapusan": ["apps/web/ce"]
   }

@@ -57,7 +57,12 @@ export function ResizableSidebar({
   const initialWidthRef = useRef<number>(0);
   const initialMouseXRef = useRef<number>(0);
   // hooks
-  const { isMobile } = usePlatformOS();
+  // `isLayarSempit`, BUKAN `isMobile`. Keduanya beda pertanyaan: `isMobile`
+  // menjawab "hover bisa diandalkan atau tidak", sidebar menanyakan "ruangnya
+  // cukup atau tidak". Memakai yang keliru di sini membuat iPad mendatar 1024px
+  // diberi sidebar melayang padahal muat menempel, sementara jendela desktop
+  // yang dikecilkan jadi 700px tetap dipaksa menempel lalu menggencet isinya.
+  const { isLayarSempit } = usePlatformOS();
   // handlers
   const setShowPeek = useCallback(
     (value: boolean) => {
@@ -146,12 +151,26 @@ export function ResizableSidebar({
     if (!isAnySidebarDropdownOpen && isCollapsed && isHoveringTrigger) {
       handlePeekLeave();
     }
+    // Dibungkam, BUKAN diperbaiki. `isCollapsed` dan `isHoveringTrigger` di sini
+    // dibaca sebagai SYARAT, bukan sebagai pemicu; memasukkannya ke dependency
+    // array membuat efek ini ikut berjalan saat tetikus bergerak di atas pemicu
+    // peek, dan itu perilaku yang berbeda. Perilaku upstream sengaja dibiarkan
+    // apa adanya. Komentar ini ada karena gerbang oxlint memakai --deny-warnings,
+    // jadi peringatan lama ikut menghalangi commit yang menyentuh berkas ini.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [isAnySidebarDropdownOpen]);
 
   useEffect(() => {
     if (!isAnyExtendedSidebarExpanded && isCollapsed && isHoveringTrigger) {
       handlePeekLeave();
     }
+    // Dibungkam, BUKAN diperbaiki. `isCollapsed` dan `isHoveringTrigger` di sini
+    // dibaca sebagai SYARAT, bukan sebagai pemicu; memasukkannya ke dependency
+    // array membuat efek ini ikut berjalan saat tetikus bergerak di atas pemicu
+    // peek, dan itu perilaku yang berbeda. Perilaku upstream sengaja dibiarkan
+    // apa adanya. Komentar ini ada karena gerbang oxlint memakai --deny-warnings,
+    // jadi peringatan lama ikut menghalangi commit yang menyentuh berkas ini.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [isAnyExtendedSidebarExpanded]);
 
   // Reset peek when sidebar is expanded
@@ -183,7 +202,7 @@ export function ResizableSidebar({
           "z-20 h-full border-r border-subtle bg-surface-1",
           !isResizing && "transition-all duration-300 ease-in-out",
           isCollapsed ? "w-0 translate-x-[-100%] opacity-0" : "translate-x-0 opacity-100",
-          isMobile && "absolute",
+          isLayarSempit && "absolute",
           className
         )}
         style={{
@@ -193,7 +212,7 @@ export function ResizableSidebar({
         }}
         role="complementary"
         aria-label="Main sidebar"
-        data-prevent-outside-click={isMobile}
+        data-prevent-outside-click={isLayarSempit}
       >
         <aside
           className={cn(
@@ -263,7 +282,7 @@ export function ResizableSidebar({
       </div>
 
       {/* Extended Sidebar */}
-      {extendedSidebar && extendedSidebar}
+      {extendedSidebar}
     </>
   );
 }

@@ -65,7 +65,11 @@ export function Layout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#fff" />
+        {/* Dua baris, bukan satu warna mati. Bilah atas peramban HP mengambil
+            warnanya dari sini; dipatok putih, ia tetap menyala terang di atas
+            aplikasi bertema gelap. Peramban memilih sendiri yang cocok. */}
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1a1a" />
         {/* Paradise Task Tracker: dibangun & dikustomisasi oleh Yorukaze Production (Bintang Eko Ramadhan) */}
         <meta name="author" content="Yorukaze Production" />
         <meta name="generator" content="Yorukaze Production" />
