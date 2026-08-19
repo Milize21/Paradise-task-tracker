@@ -222,7 +222,14 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
   },
   initiatives: {
     key: "initiatives",
-    labelTranslationKey: "initiatives",
+    // `common.initiatives`, BUKAN `initiatives` polos. Kunci ini HANYA ada di
+    // bawah `common.` di berkas locale, tidak di top-level seperti `projects`
+    // dan `views` yang kebetulan ada di dua tempat. Tanpa awalannya i18next
+    // tidak menemukan apa pun lalu menampilkan nama kuncinya mentah-mentah,
+    // dan itulah kenapa sidebar menulis "initiatives" huruf kecil di antara
+    // item lain yang Title Case. Diperbaiki di sisi pemanggil, bukan dengan
+    // menambah kunci ke 19 berkas locale.
+    labelTranslationKey: "common.initiatives",
     href: `/initiatives/`,
     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     highlight: (pathname: string, url: string) => pathname.includes(url),
