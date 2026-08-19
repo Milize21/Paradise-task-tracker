@@ -42,7 +42,20 @@ export interface DialogTitleProps extends React.ComponentProps<typeof BaseDialog
 
 // Constants
 const OVERLAY_CLASSNAME = cn("fixed inset-0 z-90 bg-backdrop");
-const BASE_CLASSNAME = "relative text-left bg-surface-1 rounded-lg shadow-md w-full z-100 border border-subtle";
+// `max-h` + gulir WAJIB ada di sini, dan ketiadaannya adalah bug yang menimpa
+// SETIAP dialog di aplikasi. Panel ini `fixed top-1/2 -translate-y-1/2`, jadi
+// begitu isinya lebih tinggi dari layar, kelebihannya menjulur ke ATAS viewport
+// dan tidak bisa dijangkau dengan cara apa pun: elemen `fixed` tidak ikut
+// bergulir bersama halaman. Di HP, formulir buat work item dengan editor dan
+// enam properti hampir pasti melewati tinggi layar.
+//
+// `dvh`, bukan `vh`, supaya batasnya mengikuti ruang yang benar-benar terlihat
+// saat bilah alamat peramban HP sedang muncul.
+//
+// `overflow-y-auto` aman di sini karena popover dan menu di propel semuanya
+// dirender lewat Portal, jadi tidak ada yang terpotong oleh gulir ini.
+const BASE_CLASSNAME =
+  "relative text-left bg-surface-1 rounded-lg shadow-md w-full z-100 border border-subtle max-h-[90dvh] overflow-y-auto";
 
 // Utility functions
 const getPositionClassNames = (position: DialogPosition) =>

@@ -60,7 +60,9 @@
       "packages/tailwind-config/paradise.css",
       "apps/web/core/components/sidebar/resizable-sidebar.tsx",
       "apps/web/core/components/navigation/top-nav-power-k.tsx",
-      "apps/web/core/components/core/sidebar/sidebar-menu-hamburger-toggle.tsx"
+      "apps/web/core/components/core/sidebar/sidebar-menu-hamburger-toggle.tsx",
+      "apps/web/core/components/issues/peek-overview/view.tsx",
+      "packages/propel/src/dialog/root.tsx"
     ],
     "folder_tanpa_penghapusan": ["apps/web/ce"]
   }

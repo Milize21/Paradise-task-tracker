@@ -213,7 +213,10 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                     />
                   </div>
                 ) : (
-                  <div className="vertical-scrollbar flex h-full w-full overflow-auto">
+                  <div className="vertical-scrollbar flex h-full w-full flex-col overflow-auto lg:flex-row">
+                    {/* Menumpuk di layar sempit, berdampingan sejak lg. Sebelumnya SELALU
+                        berdampingan, dan karena panel properti dipatok 400px yang tak boleh
+                        menyusut, di HP 375px isi work item-nya tergencet habis. */}
                     <div className="relative h-full w-full space-y-6 overflow-auto p-4 py-5">
                       <div className="space-y-3">
                         <PeekOverviewIssueDetails
@@ -247,7 +250,7 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                       </div>
                     </div>
                     <div
-                      className={`vertical-scrollbar scrollbar-sm h-full !w-[400px] flex-shrink-0 overflow-hidden border-l border-subtle p-4 py-5 ${
+                      className={`vertical-scrollbar scrollbar-sm w-full shrink-0 overflow-hidden border-t border-subtle p-4 py-5 lg:h-full lg:!w-[400px] lg:border-t-0 lg:border-l ${
                         is_archived ? "pointer-events-none" : ""
                       }`}
                     >
