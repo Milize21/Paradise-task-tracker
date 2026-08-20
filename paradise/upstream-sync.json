@@ -73,7 +73,12 @@
       "apps/web/nginx/nginx.conf",
       "apps/web/core/components/core/page-title.tsx",
       "apps/web/app/(all)/settings/profile/[profileTabId]/page.tsx",
-      "apps/proxy/Caddyfile.ce"
+      "apps/proxy/Caddyfile.ce",
+      "apps/api/plane/app/views/external/base.py",
+      "apps/api/plane/app/views/project/base.py",
+      "apps/api/tests/test_unsplash_endpoint.py",
+      "apps/web/core/services/api.service.ts",
+      "apps/web/core/components/core/image-picker-popover.tsx"
     ],
     "folder_tanpa_penghapusan": ["apps/web/ce"]
   }
