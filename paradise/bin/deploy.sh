@@ -5,6 +5,7 @@
 #   ./paradise/bin/deploy.sh                       # rilis terbaru (tag latest)
 #   APP_RELEASE=<git-sha> ./paradise/bin/deploy.sh # pin / rollback ke commit tertentu
 #   DEPLOY_RECREATE_PROXY=1 ./paradise/bin/deploy.sh   # paksa buat ulang proxy
+#   DEPLOY_SKIP_PRUNE=1 ./paradise/bin/deploy.sh       # simpan image lama
 #
 # Exit != 0 kalau healthcheck gagal, jadi aman dipanggil dari cron kalau nanti
 # mau diotomatiskan.
@@ -83,9 +84,19 @@ paradise/bin/healthcheck.sh
 #
 # Yang dibuang HANYA image dangling (tanpa tag). Image bertag tidak disentuh,
 # dan image yang masih dirujuk container mana pun dilewati docker sendiri,
-# termasuk container yang tagnya sudah bergeser karena pull. Rollback tidak
-# dirugikan: `APP_RELEASE=<sha>` menarik tag lain dari GHCR, sedangkan image
-# tanpa tag memang tidak bisa dirujuk namanya oleh siapa pun.
+# termasuk container yang tagnya sudah bergeser karena pull.
+#
+# ⚠️ ADA HARGANYA, DAN BUKAN NOL. Rollback tetap BISA: `APP_RELEASE=<sha>`
+# menarik tag SHA dari GHCR, dan GHCR menyimpannya. Tapi versi sebelumnya di
+# mesin ini tidak bertag (server hanya pernah menarik `latest`), jadi ia ikut
+# terbuang, dan bersamanya hilang pula lapisan yang tadinya membuat penarikan
+# ulang hampir seketika. Rollback sesudah prune berarti mengunduh penuh sekitar
+# 600 MB, 10 sampai 14 menit, persis saat orang paling butuh cepat.
+#
+# Tetap dipilih karena bandingannya berat sebelah: rollback jarang dan masih
+# mungkin, sedangkan disk penuh menghentikan PostgreSQL menulis dan mematikan
+# aplikasi untuk 90 orang. Kalau sedang deploy yang berisiko dan ingin jalan
+# pulang tetap hangat, lewati sekali dengan `DEPLOY_SKIP_PRUNE=1`.
 #
 # Dijalankan SESUDAH healthcheck lulus. `set -e` di atas menghentikan skrip
 # kalau healthcheck gagal, jadi deploy yang gagal tetap meninggalkan lapisan
@@ -94,6 +105,10 @@ paradise/bin/healthcheck.sh
 # Kegagalan pembersihan TIDAK boleh menggagalkan deploy yang aplikasinya sudah
 # sehat, jadi galatnya dilaporkan lalu ditelan di sini saja.
 # ---------------------------------------------------------------------------
-echo "== Membersihkan image lama =="
-docker image prune -f | tail -1 ||
-  echo "peringatan: pembersihan image gagal; deploy TETAP dianggap berhasil"
+if [ "${DEPLOY_SKIP_PRUNE:-0}" = "1" ]; then
+  echo "== DEPLOY_SKIP_PRUNE=1: image lama DIBIARKAN, jalan pulang tetap hangat =="
+else
+  echo "== Membersihkan image lama =="
+  docker image prune -f | tail -1 ||
+    echo "peringatan: pembersihan image gagal; deploy TETAP dianggap berhasil"
+fi
