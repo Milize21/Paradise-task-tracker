@@ -61,6 +61,10 @@ export const ForgotPasswordForm = observer(function ForgotPasswordForm() {
       .sendResetPasswordLink({
         email: formData.email,
       })
+      // Kaidah ini menjaga rantai promise yang nilainya diam-diam terbuang.
+      // Di sini tidak ada yang terbuang: rantainya berhenti di sini dan sudah
+      // di-`await`, jadi tidak ada pemanggil berikutnya yang menunggu nilai.
+      // oxlint-disable-next-line promise/always-return
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
@@ -80,7 +84,7 @@ export const ForgotPasswordForm = observer(function ForgotPasswordForm() {
 
   return (
     <FormContainer>
-      <AuthFormHeader title="Reset password" description="Regain access to your account." />
+      <AuthFormHeader title={t("auth.forgot_password.title")} description={t("auth.forgot_password.description")} />
       <form onSubmit={handleSubmit(handleForgotPassword)} className="space-y-4">
         <div className="space-y-1">
           <label className="text-13 font-medium text-tertiary" htmlFor="email">

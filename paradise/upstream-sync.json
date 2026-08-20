@@ -36,6 +36,9 @@
     "_catatan": "Diperiksa oleh `upstream-sync.sh verify`. Kalau salah satu hilang setelah sync, patch memakan kustomisasi kita.",
     "berkas": [
       "apps/api/plane/db/superadmin.py",
+      "apps/web/core/components/account/auth-forms/forgot-password.tsx",
+      "apps/web/core/components/account/auth-forms/reset-password.tsx",
+      "apps/web/core/components/account/auth-forms/set-password.tsx",
       "apps/api/plane/utils/trash.py",
       "apps/api/plane/app/views/paradise_trash.py",
       "apps/api/plane/license/api/views/audit_log.py",
