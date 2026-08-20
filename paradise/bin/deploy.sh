@@ -65,4 +65,35 @@ else
   "${compose[@]}" up -d
 fi
 
-exec paradise/bin/healthcheck.sh
+paradise/bin/healthcheck.sh
+
+# ---------------------------------------------------------------------------
+# Buang image versi lama yang tertinggal di mesin.
+#
+# Tiap `docker compose pull` melepas tag dari image versi sebelumnya, dan tidak
+# ada satu pun langkah yang pernah mengambilnya kembali. Terukur 20 Agt 2026:
+# 96 image tanpa tag menahan 55,89 GB, dan disk naik 36% -> 73% dalam satu hari
+# berisi 13 deploy. Disk penuh menghentikan PostgreSQL menulis, jadi ini bukan
+# soal kerapian.
+#
+# 🔴 Baris ringkasan `docker system df` menyebut angka yang sama "1.925GB (3%)"
+# dan itu MENYESATKAN. Yang benar ada di rincian `docker system df -v`, kolom
+# UNIQUE SIZE, yaitu data yang tidak dipakai bersama image lain. Jangan
+# menyimpulkan "tidak ada masalah" dari baris ringkasannya.
+#
+# Yang dibuang HANYA image dangling (tanpa tag). Image bertag tidak disentuh,
+# dan image yang masih dirujuk container mana pun dilewati docker sendiri,
+# termasuk container yang tagnya sudah bergeser karena pull. Rollback tidak
+# dirugikan: `APP_RELEASE=<sha>` menarik tag lain dari GHCR, sedangkan image
+# tanpa tag memang tidak bisa dirujuk namanya oleh siapa pun.
+#
+# Dijalankan SESUDAH healthcheck lulus. `set -e` di atas menghentikan skrip
+# kalau healthcheck gagal, jadi deploy yang gagal tetap meninggalkan lapisan
+# lamanya utuh di mesin.
+#
+# Kegagalan pembersihan TIDAK boleh menggagalkan deploy yang aplikasinya sudah
+# sehat, jadi galatnya dilaporkan lalu ditelan di sini saja.
+# ---------------------------------------------------------------------------
+echo "== Membersihkan image lama =="
+docker image prune -f | tail -1 ||
+  echo "peringatan: pembersihan image gagal; deploy TETAP dianggap berhasil"
