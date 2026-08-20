@@ -48,6 +48,13 @@
 	# Satu baris di sini menutup jalur terakhir itu, sekalian `/api`, MinIO, dan
 	# `/live`.
 	#
+	# `>` pada HSTS berarti "ganti nilai yang ada, dan lakukan SESUDAH jawaban
+	# hulu selesai disalin". Tanpa awalan itu Caddy MENAMBAH, bukan mengganti,
+	# dan nginx `web` maupun `admin` sudah mengirim HSTS sendiri. Diuji hidup
+	# sebelum dikirim: tanpa `>` keluar DUA baris Strict-Transport-Security
+	# sekaligus, dengan `>` tepat satu. Ini kebalikan dari yang tertulis di
+	# dokumentasi kalau dibaca sekilas, jadi jangan "rapikan" awalan ini.
+	#
 	# `?` pada Referrer-Policy berarti "isi HANYA kalau belum ada". Django sudah
 	# mengirim `same-origin` yang LEBIH ketat untuk jawaban API, dan menimpanya
 	# justru akan melonggarkan. Peramban modern memang sudah memakai nilai ini
@@ -62,7 +69,7 @@
 	# halaman aplikasi, dan `/spaces/` dapat `SAMEORIGIN` dari react-router-serve.
 	# ------------------------------------------------------------------------
 	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		>Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		?Referrer-Policy "strict-origin-when-cross-origin"
 	}
 
