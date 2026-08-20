@@ -78,7 +78,8 @@
       "apps/api/plane/app/views/project/base.py",
       "apps/api/tests/test_unsplash_endpoint.py",
       "apps/web/core/services/api.service.ts",
-      "apps/web/core/components/core/image-picker-popover.tsx"
+      "apps/web/core/components/core/image-picker-popover.tsx",
+      "apps/web/helpers/cover-image.helper.ts"
     ],
     "folder_tanpa_penghapusan": ["apps/web/ce"]
   }

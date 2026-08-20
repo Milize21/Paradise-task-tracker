@@ -271,12 +271,27 @@ export const handleCoverImageChange = async (
     return { cover_image: null, cover_image_url: null, cover_image_asset: null };
   }
 
+  // Sampul PENGGUNA tidak boleh mengirim URL sama sekali.
+  //
+  // `entity_asset_save` di `apps/api/plane/app/views/asset/v2.py` sudah
+  // menautkan asetnya ke `cover_image_asset` dan SENGAJA menyetel
+  // `user.cover_image = None` begitu unggahan selesai. Mengirim URL-nya lagi
+  // dari sini bukan cuma percuma, tapi menggagalkan seluruh simpan profil:
+  // `User.cover_image` itu URLField, sedangkan `getFileURL` hanya menempelkan
+  // `API_BASE_URL` yang KOSONG kalau web dan API satu asal (deployment kami
+  // begitu). Nilainya tetap path relatif, dan Django menjawab
+  // 400 'Enter a valid URL.' untuk SEMUA field sekaligus, termasuk nama.
+  //
+  // `Project.cover_image` itu TextField tanpa validasi, jadi jalur project
+  // tidak pernah kena dan perilakunya dibiarkan apa adanya.
   if (analysis.needsUpload) {
     const assetUrl = await uploadCoverImage(newImage, uploadConfig);
+    if (uploadConfig.isUserAsset) return { cover_image: null, cover_image_url: assetUrl };
     // cover_image requires an absolute URL; cover_image_url is relative (matches GET /api/users/me/ format)
     return { cover_image: getFileURL(assetUrl) || assetUrl, cover_image_url: assetUrl };
   }
 
+  if (uploadConfig.isUserAsset) return { cover_image: null, cover_image_url: newImage };
   // cover_image requires an absolute URL; getFileURL converts relative paths from the Upload tab
   return { cover_image: getFileURL(newImage) || newImage, cover_image_url: newImage };
 };
