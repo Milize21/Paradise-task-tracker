@@ -29,6 +29,43 @@
 	# ------------------------------------------------------------------------
 	encode zstd gzip
 
+	# ------------------------------------------------------------------------
+	# HEADER KEAMANAN untuk SEMUA jalur.
+	#
+	# KENAPA DI SINI. nginx `web` dan `admin` sudah memasang miliknya sendiri,
+	# tapi `space` TIDAK punya nginx sama sekali: ia dilayani `react-router-serve`
+	# (Node). Berkas `apps/space/nginx/nginx.conf` yang ada di repo TIDAK DIPAKAI
+	# SIAPA PUN, tidak satu Dockerfile pun menyalinnya. Menyetel header di sana
+	# tidak berpengaruh apa-apa; jangan buang waktu ke situ.
+	#
+	# Terukur 20 Agt 2026 dari luar: `/` dan `/god-mode/` membawa HSTS, sedangkan
+	# `/spaces/` menjawab TANPA HSTS sama sekali.
+	#
+	# Itu penting karena HSTS bersifat per-HOST, bukan per-jalur. Orang yang
+	# pertama kali masuk lewat tautan publik `/spaces/...` berawalan http:// tidak
+	# pernah tersemat, sehingga kunjungan http berikutnya masih bisa disadap di
+	# jaringan kantor - persis risiko yang membuat HTTPS dipasang sejak awal.
+	# Satu baris di sini menutup jalur terakhir itu, sekalian `/api`, MinIO, dan
+	# `/live`.
+	#
+	# `?` pada Referrer-Policy berarti "isi HANYA kalau belum ada". Django sudah
+	# mengirim `same-origin` yang LEBIH ketat untuk jawaban API, dan menimpanya
+	# justru akan melonggarkan. Peramban modern memang sudah memakai nilai ini
+	# sebagai bawaan; menuliskannya membuat kebijakannya tersurat, bukan
+	# bergantung pada bawaan yang bisa berbeda antar peramban.
+	#
+	# 🔴 X-Frame-Options SENGAJA TIDAK dipasang di sini, dan itu bukan kelalaian.
+	# Pratinjau lampiran PDF dan teks memakai <iframe> seasal-usul ke MinIO, lihat
+	# `packages/editor/src/core/extensions/custom-file/components/node-view.tsx`.
+	# `DENY` global akan mematikan pratinjau itu. Pembingkaian dari situs lain
+	# sudah ditolak tanpa itu: nginx `web` dan `admin` mengirim `DENY` untuk
+	# halaman aplikasi, dan `/spaces/` dapat `SAMEORIGIN` dari react-router-serve.
+	# ------------------------------------------------------------------------
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		?Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
   redir /spaces /spaces/ permanent
 	reverse_proxy /spaces/* space:3000
 
