@@ -38,5 +38,31 @@ echo "HTTP $code"
 # menerimanya membuat healthcheck lulus justru saat rantai HTTPS-nya patah.
 [ "$code" = "200" ] || [ "$code" = "302" ] || fail=1
 
+echo "== API $WEB_URL/api/instances/ =="
+# HALAMAN DEPAN 200 TIDAK BERARTI API HIDUP. 13 Agt 2026 skrip ini melaporkan
+# SEHAT pada detik yang sama saat `/api/...` masih membalas 502: gunicorn belum
+# mengikat port, sementara nginx `web` sudah menyajikan index.html dengan riang.
+# Halaman terbuka, lalu kosong melompong begitu ia mulai mengambil data.
+#
+# Sekarang lebih penting lagi: `deploy.sh` menggantungkan pembersihan image pada
+# hasil skrip ini. Lulus palsu berarti membuang lapisan lama justru pada deploy
+# yang sebenarnya gagal, yaitu saat jalan pulangnya paling dibutuhkan.
+#
+# `-f` WAJIB, dan ini bagian yang mudah salah: tanpa `-f`, curl menganggap 502
+# sebagai jawaban yang sah, keluar 0, dan `--retry` tidak pernah terpicu. Dengan
+# `-f`, 5xx jadi galat sehingga curl mengulang sendiri sampai `api` siap.
+#
+# `--retry-connrefused` juga WAJIB, dan ini diuji bukan diduga: `--retry`
+# SENDIRIAN tidak mengulang saat sambungan DITOLAK, hanya saat 5xx. Padahal
+# sambungan ditolak persis yang terjadi ketika container `proxy` sendiri
+# dibuat ulang, yaitu tiap kali Caddyfile berubah. Tanpa bendera ini
+# healthcheck bisa gagal palsu pada deploy yang sebenarnya baik-baik saja.
+#
+# 12 x 5 detik = sekitar satu menit. Start `api` sekarang ~7 detik, jadi
+# marginnya lebar tanpa membuat deploy yang benar-benar rusak menggantung lama.
+kode_api="$(curl -fsSL --retry 12 --retry-delay 5 --retry-connrefused --max-time 20 -o /dev/null -w '%{http_code}' "$WEB_URL/api/instances/" || true)"
+echo "HTTP $kode_api"
+[ "$kode_api" = "200" ] || fail=1
+
 [ "$fail" = "0" ] && echo "== SEHAT ==" || echo "== ADA MASALAH =="
 exit "$fail"
