@@ -22,8 +22,6 @@ type Props = {
   akhirKelompok: boolean;
   sayaId?: string;
   namaOrang: (id: string) => string;
-  /** Mode pengawasan: hanya baca, tanpa satu pun aksi. */
-  hanyaBaca?: boolean;
   onBalas?: (pesan: TPesan) => void;
   onSunting?: (pesan: TPesan) => void;
   onHapus?: (pesan: TPesan) => void;
@@ -31,7 +29,7 @@ type Props = {
 };
 
 export function Gelembung(props: Props) {
-  const { pesan, dariSaya, awalKelompok, akhirKelompok, sayaId, namaOrang, hanyaBaca } = props;
+  const { pesan, dariSaya, awalKelompok, akhirKelompok, sayaId, namaOrang } = props;
   const [pilihReaksi, setPilihReaksi] = useState(false);
 
   const gaya = dariSaya ? "bg-accent-primary text-white" : "bg-layer-3 text-primary";
@@ -77,12 +75,11 @@ export function Gelembung(props: Props) {
               <button
                 key={r.emoji}
                 type="button"
-                disabled={hanyaBaca}
                 onClick={() => props.onReaksi?.(pesan, r.emoji)}
                 title={r.orang.map(namaOrang).join(", ")}
                 className={`text-xs flex items-center gap-1 rounded-full border px-1.5 py-0.5 ${
                   punyaSaya ? "border-accent-primary text-accent-primary" : "border-subtle text-secondary"
-                } ${hanyaBaca ? "" : "hover:bg-layer-1"}`}
+                } hover:bg-layer-1`}
               >
                 <span>{r.emoji}</span>
                 <span>{r.orang.length}</span>
@@ -92,64 +89,62 @@ export function Gelembung(props: Props) {
         </div>
       ) : null}
 
-      {hanyaBaca ? null : (
-        <div className="mt-0.5 flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-          <button
-            type="button"
-            onClick={() => setPilihReaksi((v) => !v)}
-            aria-label="Beri reaksi"
-            className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-secondary"
-          >
-            <SmilePlus className="size-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => props.onBalas?.(pesan)}
-            aria-label="Balas pesan"
-            className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-secondary"
-          >
-            <CornerUpLeft className="size-3.5" />
-          </button>
-          {dariSaya ? (
-            <>
-              <button
-                type="button"
-                onClick={() => props.onSunting?.(pesan)}
-                aria-label="Sunting pesan"
-                className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-secondary"
-              >
-                <Pencil className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => props.onHapus?.(pesan)}
-                aria-label="Hapus pesan"
-                className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-danger-primary"
-              >
-                <Trash2 className="size-3.5" />
-              </button>
-            </>
-          ) : null}
+      <div className="mt-0.5 flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+        <button
+          type="button"
+          onClick={() => setPilihReaksi((v) => !v)}
+          aria-label="Beri reaksi"
+          className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-secondary"
+        >
+          <SmilePlus className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => props.onBalas?.(pesan)}
+          aria-label="Balas pesan"
+          className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-secondary"
+        >
+          <CornerUpLeft className="size-3.5" />
+        </button>
+        {dariSaya ? (
+          <>
+            <button
+              type="button"
+              onClick={() => props.onSunting?.(pesan)}
+              aria-label="Sunting pesan"
+              className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-secondary"
+            >
+              <Pencil className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => props.onHapus?.(pesan)}
+              aria-label="Hapus pesan"
+              className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-danger-primary"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          </>
+        ) : null}
 
-          {pilihReaksi ? (
-            <div className="flex items-center gap-0.5 rounded-full border border-subtle bg-layer-1 px-1.5 py-0.5">
-              {REAKSI_CEPAT.map((e) => (
-                <button
-                  key={e}
-                  type="button"
-                  onClick={() => {
-                    props.onReaksi?.(pesan, e);
-                    setPilihReaksi(false);
-                  }}
-                  className="text-sm rounded px-0.5 hover:bg-layer-2"
-                >
-                  {e}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      )}
+        {pilihReaksi ? (
+          <div className="flex items-center gap-0.5 rounded-full border border-subtle bg-layer-1 px-1.5 py-0.5">
+            {REAKSI_CEPAT.map((e) => (
+              <button
+                key={e}
+                type="button"
+                onClick={() => {
+                  props.onReaksi?.(pesan, e);
+                  setPilihReaksi(false);
+                }}
+                className="text-sm rounded px-0.5 hover:bg-layer-2"
+              >
+                {e}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
