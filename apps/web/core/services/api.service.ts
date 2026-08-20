@@ -28,7 +28,12 @@ export abstract class APIService {
       (error) => {
         if (error.response && error.response.status === 401) {
           const currentPath = window.location.pathname;
-          window.location.replace(`/${currentPath ? `?next_path=${currentPath}` : ``}`);
+          // Di "/" layar masuk sudah tampil. Mengganti alamat lagi dari sana
+          // hanya memuat ulang halaman yang sama, jadi satu endpoint yang terus
+          // menjawab 401 akan membuatnya berkedip tanpa henti.
+          if (currentPath !== "/") {
+            window.location.replace(`/?next_path=${currentPath}`);
+          }
         }
         return Promise.reject(error);
       }

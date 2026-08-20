@@ -239,5 +239,17 @@ class UnsplashEndpoint(BaseAPIView):
 
         headers = {"Content-Type": "application/json"}
 
-        resp = requests.get(url=url, headers=headers)
-        return Response(resp.json(), status=resp.status_code)
+        try:
+            resp = requests.get(url=url, headers=headers, timeout=10)
+            resp.raise_for_status()
+            photos = resp.json()
+        except (requests.RequestException, ValueError) as e:
+            # Unsplash menolak atau tidak menjawab. Itu kegagalan pihak ketiga,
+            # bukan kegagalan autentikasi KITA, jadi statusnya tidak boleh
+            # diteruskan: 401 dari sini membuat web memaksa muat ulang ke layar
+            # masuk, dan halaman berkedip tanpa henti. Jawab kosong, persis
+            # seperti ketika kuncinya memang belum diisi.
+            log_exception(e)
+            return Response([], status=status.HTTP_200_OK)
+
+        return Response(photos, status=status.HTTP_200_OK)
