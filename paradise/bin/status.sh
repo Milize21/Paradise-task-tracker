@@ -6,6 +6,16 @@ cd "$(dirname "$0")/../.."
 
 C=(docker compose -f docker-compose.yml -f docker-compose.ghcr.yml)
 [ -f docker-compose.ghcr.yml ] || C=(docker compose -f docker-compose-local.yml)
+# Alamat yang diperiksa diambil dari .env, yaitu alamat yang SAMA dengan yang
+# dipakai orang. Bawaan lama `http://localhost` memeriksa hal yang keliru sejak
+# HTTPS menyala: Caddy menjawabnya 308 ke https, dan tanpa `-L` kelima endpoint
+# dilaporkan "PERIKSA" pada TIAP kali skrip ini jalan padahal semuanya 200.
+# Peringatan yang selalu menyala sama saja dengan tidak ada peringatan, dan
+# yang lebih buruk, ia mengubur peringatan yang sungguhan.
+# Logika yang sama sudah dipakai `healthcheck.sh`; ini menyusulkannya ke sini.
+if [ -z "${WEB_URL:-}" ] && [ -f .env ]; then
+  WEB_URL="$(grep -m1 '^WEB_URL=' .env | cut -d= -f2- | tr -d '"' | tr -d "'")"
+fi
 WEB_URL="${WEB_URL:-http://localhost}"
 bar() { printf '\n\033[1m== %s ==\033[0m\n' "$1"; }
 
@@ -37,7 +47,10 @@ docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 
 bar "HTTP"
 for p in / /api/instances/ /god-mode/ /spaces/ /live/health; do
-  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "${WEB_URL}${p}")"
+  code="$(curl -sL -o /dev/null -w '%{http_code}' --max-time 15 "${WEB_URL}${p}")"
+  # 308 sengaja TIDAK dianggap OK: artinya pengalihan http->https tidak sampai
+  # tujuan. Caddy menjawab 308 bahkan saat aplikasinya mati, jadi menerimanya
+  # membuat pemeriksaan ini lulus justru ketika rantai HTTPS-nya patah.
   case "$code" in 200|302) m="OK" ;; *) m="<-- PERIKSA" ;; esac
   printf '  %-18s %s %s\n' "$p" "$code" "$m"
 done
@@ -105,11 +118,24 @@ fi
 
 # ------------------------------------------------------------------ celery --
 bar "TASK TERJADWAL"
+# Daftarnya DIAMBIL dari beat_schedule yang sedang jalan, tidak ditulis tangan.
+# Versi lama menyebut tiga nama saja, sehingga tujuh task lain - termasuk sinkron
+# Google Calendar, pengingat tenggat, dan email Obrolan - tidak pernah terlihat
+# di layar ini sama sekali. Daftar tulis tangan pasti ketinggalan begitu ada task
+# baru, padahal justru task barulah yang paling mungkin belum terdaftar.
 terdaftar="$("${C[@]}" exec -T worker celery -A plane inspect registered 2>/dev/null)"
-for t in login_activity_retention recurring_issue_task deletion_task; do
-  printf '  %-26s %s\n' "$t" \
-    "$(echo "$terdaftar" | grep -q "$t" && echo 'terdaftar di worker' || echo 'TIDAK TERDAFTAR')"
-done
+dijadwalkan="$("${C[@]}" exec -T worker python -c \
+  'from plane.celery import app; print("\n".join(sorted({e["task"] for e in app.conf.beat_schedule.values()})))' \
+  2>/dev/null)"
+if [ -z "$dijadwalkan" ]; then
+  echo "  (beat_schedule tidak terbaca dari worker)"
+else
+  echo "$dijadwalkan" | while read -r t; do
+    [ -n "$t" ] || continue
+    printf '  %-62s %s\n' "$t" \
+      "$(echo "$terdaftar" | grep -qF "$t" && echo 'terdaftar' || echo 'TIDAK TERDAFTAR <-- PERIKSA')"
+  done
+fi
 echo "  (beat saja tidak cukup - task tak terdaftar dibuang diam-diam)"
 
 # ---------------------------------------------------------------- keamanan --
