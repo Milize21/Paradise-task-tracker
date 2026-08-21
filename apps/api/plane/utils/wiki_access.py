@@ -92,17 +92,15 @@ _ROLE_ADMIN = 20
 
 
 def is_super_admin(user):
-    """True kalau `user` Super Admin instance (God Mode).
+    """Diteruskan dari `plane.db.superadmin`, di situlah definisinya hidup.
 
-    Sengaja memanggil `super_admin_user_ids()` alih-alih menulis query sendiri:
-    sudah ada enam pemakai lain, dan definisi Super Admin yang bercabang dua
-    adalah cara paling rapi untuk membocorkan akses tanpa sadar.
+    Tetap diekspor dari sini karena sudah dipakai lapisan izin Wiki, dan satu
+    nama yang menunjuk satu fungsi lebih baik daripada dua fungsi yang kebetulan
+    sering sependapat.
     """
-    from plane.db.superadmin import super_admin_user_ids
+    from plane.db.superadmin import is_super_admin as _asli
 
-    if user is None or getattr(user, "is_anonymous", True):
-        return False
-    return user.id in super_admin_user_ids()
+    return _asli(user)
 
 
 def is_division_lead(user, page):

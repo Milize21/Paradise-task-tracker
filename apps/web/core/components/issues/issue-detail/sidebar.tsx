@@ -35,6 +35,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
+import { useAturanTugas } from "@/hooks/use-aturan-tugas";
 // plane web components
 // components
 import { WorkItemAdditionalSidebarProperties } from "@/plane-web/components/issues/issue-details/additional-properties";
@@ -61,6 +62,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
   const { workspaceSlug, projectId, issueId, issueOperations, isEditable } = props;
   // store hooks
   const { getProjectById } = useProject();
+  const { bisaGantiTenggat } = useAturanTugas();
   const { areEstimateEnabledByProjectId } = useProjectEstimates();
   const {
     issue: { getIssueById },
@@ -173,7 +175,11 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                     })
                   }
                   minDate={minDate ?? undefined}
-                  disabled={!isEditable}
+                  // Kustomisasi Paradise (Yorukaze Production): tenggat adalah janji
+                  // yang dibuat seseorang, jadi hanya pembuat tugas atau Super Admin
+                  // yang boleh menggesernya. Server menegakkannya; di sini kontrolnya
+                  // dimatikan supaya tidak ada tombol yang terlihat aktif lalu gagal.
+                  disabled={!isEditable || !bisaGantiTenggat(issue)}
                   buttonVariant="transparent-with-text"
                   className="group w-full grow"
                   buttonContainerClassName="w-full text-left h-7.5"

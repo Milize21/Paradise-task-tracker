@@ -33,6 +33,7 @@ from rest_framework.response import Response
 
 # Module imports
 from plane.app.permissions import ROLE, allow_permission
+from plane.utils.task_access import bisa_ganti_tenggat, bisa_hapus_tugas, tenggat_diubah
 from plane.app.serializers import (
     IssueCreateSerializer,
     IssueDetailSerializer,
@@ -674,6 +675,24 @@ class IssueViewSet(BaseViewSet):
         if not issue:
             return Response({"error": "Issue not found"}, status=status.HTTP_404_NOT_FOUND)
 
+        # Kustomisasi Paradise (Yorukaze Production): tenggat adalah janji yang
+        # dibuat seseorang, jadi yang boleh menggesernya hanya pembuat tugas
+        # atau Super Admin. Sisanya, termasuk status, prioritas, label,
+        # assignee, dan deskripsi, tetap bebas untuk semua anggota.
+        #
+        # Diperiksa "benar-benar berubah", BUKAN "ada di payload": beberapa
+        # layar mengirim ulang seluruh formulir saat menyimpan, dan menolak
+        # berdasarkan keberadaan field akan membuat orang tidak bisa menyimpan
+        # apa pun padahal yang ia ubah cuma prioritas.
+        if tenggat_diubah(issue, request.data) and not bisa_ganti_tenggat(request.user, issue):
+            return Response(
+                {
+                    "error": "Tenggat hanya bisa diubah oleh yang membuat tugas ini, "
+                    "atau Super Admin. Hubungi pembuatnya kalau tanggalnya perlu digeser."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         current_instance = json.dumps(IssueDetailSerializer(issue).data, cls=DjangoJSONEncoder)
 
         requested_data = json.dumps(self.request.data, cls=DjangoJSONEncoder)
@@ -771,16 +790,27 @@ class ProjectUserDisplayPropertyEndpoint(BaseAPIView):
 
 
 class BulkDeleteIssuesEndpoint(BaseAPIView):
-    @allow_permission([ROLE.ADMIN])
+    # Kustomisasi Paradise (Yorukaze Production): dibuka untuk MEMBER, lalu
+    # disaring per baris. Dulu endpoint ini admin-only DAN tidak memeriksa
+    # pembuat sama sekali, jadi ia adalah pintu belakang yang membuat aturan
+    # "hanya pembuatnya yang boleh menghapus" tidak berlaku sama sekali.
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def delete(self, request, slug, project_id):
         issue_ids = request.data.get("issue_ids", [])
 
         if not len(issue_ids):
             return Response({"error": "Issue IDs are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        issues = Issue.issue_objects.filter(workspace__slug=slug, project_id=project_id, pk__in=issue_ids)
+        semua = Issue.issue_objects.filter(workspace__slug=slug, project_id=project_id, pk__in=issue_ids)
 
-        total_issues = len(issues)
+        # Hapus yang boleh, lewati sisanya, lalu KATAKAN berapa yang dilewati.
+        # Diam-diam menghapus sebagian adalah kegagalan senyap, dan orang akan
+        # mengira semuanya sudah terhapus.
+        boleh = [i for i in semua if bisa_hapus_tugas(request.user, i, slug, project_id)]
+        dilewati = len(semua) - len(boleh)
+        issues = Issue.issue_objects.filter(pk__in=[i.pk for i in boleh])
+
+        total_issues = len(boleh)
 
         # First, delete all related cycle issues
         CycleIssue.objects.filter(issue__in=issues).delete()
@@ -791,8 +821,11 @@ class BulkDeleteIssuesEndpoint(BaseAPIView):
         # Finally, delete the issues themselves
         issues.delete()
 
+        pesan = f"{total_issues} tugas dihapus"
+        if dilewati:
+            pesan += f", {dilewati} dilewati karena bukan Anda yang membuatnya"
         return Response(
-            {"message": f"{total_issues} issues were deleted"},
+            {"message": pesan, "deleted": total_issues, "skipped": dilewati},
             status=status.HTTP_200_OK,
         )
 

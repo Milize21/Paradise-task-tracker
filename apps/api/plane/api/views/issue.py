@@ -80,6 +80,7 @@ from plane.db.models import (
 )
 from plane.settings.storage import S3Storage
 from plane.utils.path_validator import sanitize_filename
+from plane.utils.task_access import bisa_ganti_tenggat, tenggat_diubah
 from plane.utils.order_queryset import (
     ACTIVITY_ORDER_BY_ALLOWLIST,
     ISSUE_ORDER_BY_ALLOWLIST,
@@ -775,6 +776,19 @@ class IssueDetailAPIEndpoint(BaseAPIView):
         Supports external ID validation to prevent conflicts.
         """
         issue = Issue.objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
+
+        # Kustomisasi Paradise (Yorukaze Production): aturan tenggat berlaku di
+        # SINI juga. API token adalah pintu yang sama ke data yang sama, dan
+        # aturan yang cuma dipasang di aplikasi web bukan aturan, cuma saran.
+        if tenggat_diubah(issue, request.data) and not bisa_ganti_tenggat(request.user, issue):
+            return Response(
+                {
+                    "error": "Tenggat hanya bisa diubah oleh yang membuat tugas ini, "
+                    "atau Super Admin."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         project = Project.objects.get(pk=project_id)
         current_instance = json.dumps(IssueSerializer(issue).data, cls=DjangoJSONEncoder)
         requested_data = json.dumps(self.request.data, cls=DjangoJSONEncoder)

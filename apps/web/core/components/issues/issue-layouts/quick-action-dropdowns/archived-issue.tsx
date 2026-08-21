@@ -15,6 +15,7 @@ import { cn } from "@plane/utils";
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useAturanTugas } from "@/hooks/use-aturan-tugas";
 // local imports
 import { DeleteIssueModal } from "../../delete-issue-modal";
 import type { IQuickActionProps } from "../list/list-view-types";
@@ -48,13 +49,20 @@ export const ArchivedIssueQuickActions = observer(function ArchivedIssueQuickAct
   const isRestoringAllowed =
     handleRestore && allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT);
 
+  const { bisaHapusTugas } = useAturanTugas();
+
   // Menu items and modals using helper
   const menuItemProps: MenuItemFactoryProps = {
     issue,
     workspaceSlug: workspaceSlug?.toString(),
     activeLayout,
     isEditingAllowed,
-    isDeletingAllowed: isEditingAllowed,
+    // Kustomisasi Paradise (Yorukaze Production): tugas hanya bisa dihapus oleh
+    // yang membuatnya, admin project, atau Super Admin. Dulu baris ini berbunyi
+    // `isDeletingAllowed = isEditingAllowed`, jadi tombol Hapus muncul untuk
+    // SEMUA anggota lalu ditolak 403 oleh server. Tombol yang selalu gagal
+    // adalah cara tercepat membuat orang berhenti percaya pada aplikasinya.
+    isDeletingAllowed: isEditingAllowed && bisaHapusTugas(issue, issue.project_id ?? undefined),
     isRestoringAllowed: !!isRestoringAllowed,
     setIssueToEdit: () => {},
     setCreateUpdateIssueModal: () => {},

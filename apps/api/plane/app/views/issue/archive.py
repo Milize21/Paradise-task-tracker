@@ -41,6 +41,7 @@ from plane.utils.issue_filters import issue_filters
 from plane.utils.order_queryset import order_issue_queryset
 from plane.utils.paginator import GroupedOffsetPaginator, SubGroupedOffsetPaginator
 from plane.app.permissions import allow_permission, ROLE
+from plane.utils.task_access import bisa_hapus_tugas
 from plane.utils.error_codes import ERROR_CODES
 from plane.utils.host import base_host
 
@@ -256,6 +257,18 @@ class IssueArchiveViewSet(BaseViewSet):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def archive(self, request, slug, project_id, pk=None):
         issue = Issue.issue_objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
+        # Kustomisasi Paradise (Yorukaze Production): mengarsipkan tugas
+        # menyembunyikannya dari SEMUA papan, jadi efeknya bagi orang lain sama
+        # saja dengan menghapus. Tanpa penjaga ini, aturan hapus cuma menutup
+        # pintu depan dan meninggalkan pintu samping terbuka.
+        if not bisa_hapus_tugas(request.user, issue, slug, project_id):
+            return Response(
+                {
+                    "error": "Tugas ini hanya bisa diarsipkan oleh yang membuatnya, "
+                    "admin project, atau Super Admin."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
         if issue.state.group not in ["completed", "cancelled"]:
             return Response(
                 {"error": "Can only archive completed or cancelled state group issue"},
@@ -285,6 +298,16 @@ class IssueArchiveViewSet(BaseViewSet):
             archived_at__isnull=False,
             pk=pk,
         )
+        # Dijaga sama dengan arsip. Kalau memulihkan dibiarkan bebas, siapa pun
+        # bisa mengembalikan tugas yang sengaja dipensiunkan pembuatnya.
+        if not bisa_hapus_tugas(request.user, issue, slug, project_id):
+            return Response(
+                {
+                    "error": "Tugas ini hanya bisa dikeluarkan dari arsip oleh yang "
+                    "membuatnya, admin project, atau Super Admin."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
         issue_activity.delay(
             type="issue.activity.updated",
             requested_data=json.dumps({"archived_at": None}),

@@ -15,6 +15,7 @@ import { DateDropdown } from "@/components/dropdowns/date";
 // helpers
 // hooks
 import { useProjectState } from "@/hooks/store/use-project-state";
+import { useAturanTugas } from "@/hooks/use-aturan-tugas";
 
 type Props = {
   issue: TIssue;
@@ -27,6 +28,7 @@ export const SpreadsheetDueDateColumn = observer(function SpreadsheetDueDateColu
   const { issue, onChange, disabled, onClose } = props;
   // store hooks
   const { getStateById } = useProjectState();
+  const { bisaGantiTenggat } = useAturanTugas();
   // derived values
   const stateDetails = getStateById(issue.state_id);
 
@@ -46,7 +48,8 @@ export const SpreadsheetDueDateColumn = observer(function SpreadsheetDueDateColu
             }
           );
         }}
-        disabled={disabled}
+        // Hanya pembuat tugas atau Super Admin yang boleh menggeser tenggat.
+        disabled={disabled || !bisaGantiTenggat(issue)}
         placeholder="Due date"
         icon={<DueDatePropertyIcon className="h-3 w-3 flex-shrink-0" />}
         buttonVariant="transparent-with-text"

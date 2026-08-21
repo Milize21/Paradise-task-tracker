@@ -27,13 +27,23 @@ def create_recurring_issues():
     for rec in due:
         try:
             template = rec.template
-            issue = Issue.objects.create(
+            # `created_by` WAJIB lewat argumen `save()`, bukan lewat
+            # `objects.create()`. `BaseModel.save()` menimpa `created_by`
+            # dengan pengguna dari request, dan di dalam task Celery tidak ada
+            # request sama sekali, jadi `created_by=` yang ditaruh di
+            # `objects.create()` DIAM-DIAM jadi None.
+            #
+            # Sejak aturan "hanya pembuatnya yang boleh menghapus", tugas tanpa
+            # pembuat berarti tugas yang tidak bisa dibuang siapa pun kecuali
+            # admin project dan Super Admin. Tugas berulang justru yang paling
+            # sering perlu dibersihkan, jadi ini bukan cacat kecil.
+            issue = Issue(
                 project=rec.project,
                 name=template.title,
                 description_html=template.description_html or "<p></p>",
                 priority=template.priority or "none",
-                created_by=template.created_by,
             )
+            issue.save(created_by_id=template.created_by_id)
             if template.default_assignee_id:
                 IssueAssignee.objects.create(
                     issue=issue,

@@ -51,6 +51,18 @@ def super_admin_user_ids():
     return set(InstanceAdmin.objects.values_list("user_id", flat=True))
 
 
+def is_super_admin(user):
+    """True kalau `user` berstatus Super Admin instance (God Mode).
+
+    Satu definisi untuk seluruh aplikasi. Definisi Super Admin yang bercabang
+    dua adalah cara paling rapi untuk membocorkan akses tanpa sadar, dan sudah
+    ada tujuh pemakai `super_admin_user_ids()` di repo ini.
+    """
+    if user is None or getattr(user, "is_anonymous", True):
+        return False
+    return user.id in super_admin_user_ids()
+
+
 def sembunyikan(queryset, field="member_id", project_id=None):
     """Buang Super Admin dari queryset keanggotaan SEBUAH PROJECT.
 
