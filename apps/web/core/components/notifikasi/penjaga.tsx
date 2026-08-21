@@ -11,7 +11,6 @@ import { useNavigate } from "react-router";
 import useSWR from "swr";
 // plane imports
 import { Button } from "@plane/propel/button";
-import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 import { useWorkspaceNotifications } from "@/hooks/store/notifications";
@@ -21,76 +20,33 @@ import { useSuaraNotifikasi } from "@/hooks/use-suara-notifikasi";
 import { ChatService, KUNCI_BELUM_DIBACA } from "@/services/chat.service";
 import { WorkspaceNotificationService } from "@/services/workspace-notification.service";
 // local imports
-import { ringkasNotifikasi, ringkasPercakapan, type TRingkasan } from "./teks";
+import { TumpukanPopup, type TPopup } from "./popup";
+import { ringkasNotifikasi, ringkasPercakapan } from "./teks";
 
 const chatService = new ChatService();
 const notifService = new WorkspaceNotificationService();
 
-/** Sama dengan lencana di sidebar, dan itu disengaja: keduanya memakai kunci
- * SWR yang sama, jadi satu putaran ini melayani lencana sekaligus penjaga. */
-const SELANG = 30000;
+/** SATU-SATUNYA jam di aplikasi untuk kedua hitungan ini. Lencana di sidebar
+ * memakai kunci SWR yang persis sama dan sengaja TIDAK punya `refreshInterval`
+ * sendiri, jadi putaran ini yang menyegarkan keduanya. Dua jam untuk satu kunci
+ * cuma menggandakan permintaan tanpa menambah kabar apa pun.
+ *
+ * 15 detik, bukan 30: kartu pemberitahuan yang datang setengah menit sesudah
+ * pesannya tidak terasa sebagai pemberitahuan, terasa sebagai laporan. Yang
+ * ditarik cuma dua angka. */
+const SELANG = 15000;
 
 const KUNCI_JUMLAH_NOTIF = "WORKSPACE_UNREAD_NOTIFICATION_COUNT";
 /** Penolakan spanduk izin disimpan, karena menawarkan hal yang sama tiap kali
  * halaman dibuka adalah cara membuat orang membenci fiturnya. */
 const KUNCI_SPANDUK = "spanduk_izin_notifikasi_ditutup";
 
-type TKeluaran = TRingkasan & { tautan: string };
+/** Sebanyak ini kartu boleh menumpuk sekaligus. Lebih dari itu bukan lagi
+ * pemberitahuan melainkan dinding. Yang tergeser tidak hilang: angkanya tetap di
+ * lencana dan isinya tetap di panel Pemberitahuan. */
+const MAKS_KARTU = 3;
 
-/**
- * Memberi tahu satu kali, lewat jalur yang paling mungkin sampai.
- *
- * Tab yang sedang dilihat mendapat toast di dalam aplikasi; tab yang tersembunyi
- * mendapat pemberitahuan sistem operasi. Sengaja BUKAN keduanya sekaligus:
- * memunculkan kartu Windows untuk pesan yang barusan muncul sendiri di layar
- * adalah gangguan, dan gangguan adalah alasan orang mematikan pemberitahuan.
- *
- * Bunyi tetap dibunyikan di kedua keadaan, karena orang bisa sedang melihat
- * layar lain dengan tab ini masih "visible" di monitor kedua.
- */
-const useTampilkan = () => {
-  const { bunyikan } = useSuaraNotifikasi();
-  const navigate = useNavigate();
-
-  return useCallback(
-    (keluaran: TKeluaran, penanda: string) => {
-      bunyikan("pesan");
-
-      const tersembunyi = typeof document !== "undefined" && document.visibilityState !== "visible";
-      const bisaSistem =
-        typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted";
-
-      if (tersembunyi && bisaSistem) {
-        // `tag` membuat pemberitahuan berikutnya MENGGANTI yang sebelumnya,
-        // bukan menumpuk. Meninggalkan tab semalam lalu menemukan 40 kartu di
-        // Pusat Tindakan bukan pemberitahuan, itu hukuman.
-        const kartu = new Notification(keluaran.judul, {
-          body: keluaran.isi,
-          icon: "/favicon/android-chrome-192x192.png",
-          tag: penanda,
-        });
-        kartu.addEventListener("click", () => {
-          window.focus();
-          navigate(keluaran.tautan);
-          kartu.close();
-        });
-        return;
-      }
-
-      setToast({
-        type: TOAST_TYPE.INFO,
-        title: keluaran.judul,
-        message: keluaran.isi,
-        actionItems: (
-          <Button variant="link" size="sm" onClick={() => navigate(keluaran.tautan)}>
-            Buka
-          </Button>
-        ),
-      });
-    },
-    [bunyikan, navigate]
-  );
-};
+type TCalon = Omit<TPopup, "id">;
 
 /**
  * Mengintai dua hitungan murah, lalu mengambil isinya hanya saat naik.
@@ -99,19 +55,69 @@ const useTampilkan = () => {
  * hidup di halaman Obrolan dan hanya untuk satu ruang, sementara pemberitahuan
  * pekerjaan lahir di Celery dan tidak pernah lewat sana sama sekali. Membuat
  * satu saluran langsung untuk seluruh aplikasi adalah pekerjaan yang jauh lebih
- * besar daripada yang diminta, dan hitungan yang sudah ditarik lencana tiap 30
- * detik ini gratis: kuncinya sama, jadi SWR menggabungkannya jadi satu
- * permintaan.
+ * besar daripada yang diminta, dan hitungan ini memang sudah ditarik lencana:
+ * kuncinya sama, jadi SWR menggabungkannya jadi satu permintaan.
  *
  * Yang mahal (isi percakapan, daftar pemberitahuan) baru diambil saat angkanya
  * NAIK. Dalam keadaan tenang, penjaga ini tidak menambah satu pun permintaan.
  */
 export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) {
-  const tampilkan = useTampilkan();
+  const navigate = useNavigate();
+  const { bunyikan } = useSuaraNotifikasi();
   const { getUnreadNotificationsCount } = useWorkspaceNotifications();
   const {
     workspace: { getWorkspaceMemberDetails },
   } = useMember();
+
+  const [antrean, setAntrean] = useState<TPopup[]>([]);
+  // Penomoran sendiri, bukan cap waktu atau acak: dua pemberitahuan yang tiba di
+  // milidetik yang sama akan bertabrakan kuncinya, dan React membuang salah satu
+  // kartunya tanpa bilang apa-apa.
+  const nomor = useRef(0);
+
+  const tutup = useCallback((id: string) => setAntrean((lama) => lama.filter((p) => p.id !== id)), []);
+
+  /**
+   * Memberi tahu satu kali, lewat jalur yang paling mungkin sampai.
+   *
+   * Tab yang sedang dilihat mendapat kartu di dalam aplikasi; tab yang
+   * tersembunyi mendapat kartu sistem operasi. Sengaja BUKAN keduanya sekaligus:
+   * memunculkan kartu Windows untuk pesan yang barusan muncul sendiri di layar
+   * adalah gangguan, dan gangguan adalah alasan orang mematikan pemberitahuan.
+   *
+   * Bunyi tetap dibunyikan di kedua keadaan, karena orang bisa sedang melihat
+   * layar lain dengan tab ini masih "visible" di monitor kedua.
+   */
+  const tampilkan = useCallback(
+    (calon: TCalon, penanda: string) => {
+      bunyikan("pesan");
+
+      const tersembunyi = document.visibilityState !== "visible";
+      const bisaSistem = "Notification" in window && Notification.permission === "granted";
+
+      if (tersembunyi && bisaSistem) {
+        // `tag` membuat pemberitahuan berikutnya MENGGANTI yang sebelumnya,
+        // bukan menumpuk. Meninggalkan tab semalam lalu menemukan 40 kartu di
+        // Pusat Tindakan bukan pemberitahuan, itu hukuman.
+        const kartu = new Notification(calon.judul, {
+          body: calon.isi,
+          icon: "/favicon/android-chrome-192x192.png",
+          tag: penanda,
+        });
+        kartu.addEventListener("click", () => {
+          window.focus();
+          navigate(calon.tautan);
+          kartu.close();
+        });
+        return;
+      }
+
+      nomor.current += 1;
+      const baru: TPopup = { ...calon, id: `popup-${nomor.current}` };
+      setAntrean((lama) => [...lama, baru].slice(-MAKS_KARTU));
+    },
+    [bunyikan, navigate]
+  );
 
   const { data: statusObrolan } = useSWR(
     workspaceSlug ? KUNCI_BELUM_DIBACA : null,
@@ -152,10 +158,21 @@ export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) 
         if (dibatalkan) return;
         const ringkas = ringkasPercakapan(baris, (id) => getWorkspaceMemberDetails(id)?.member?.display_name);
         if (!ringkas) return;
-        const tujuan = ringkas.lawanBicara
-          ? `/${workspaceSlug}/chat/?dengan=${ringkas.lawanBicara}`
-          : `/${workspaceSlug}/chat/?ruang=${ringkas.ruangId}`;
-        tampilkan({ judul: ringkas.judul, isi: ringkas.isi, tautan: tujuan }, `obrolan-${ringkas.ruangId}`);
+
+        const pengirim = ringkas.lawanBicara ? getWorkspaceMemberDetails(ringkas.lawanBicara)?.member : undefined;
+        tampilkan(
+          {
+            jenis: ringkas.lawanBicara ? "pesan" : "kanal",
+            judul: ringkas.judul,
+            isi: ringkas.isi,
+            namaOrang: pengirim?.display_name,
+            avatarUrl: pengirim?.avatar_url,
+            tautan: ringkas.lawanBicara
+              ? `/${workspaceSlug}/chat/?dengan=${ringkas.lawanBicara}`
+              : `/${workspaceSlug}/chat/?ruang=${ringkas.ruangId}`,
+          },
+          `obrolan-${ringkas.ruangId}`
+        );
       } catch {
         // Ditelan dengan sengaja. Angkanya sudah naik dan lencana sudah
         // memberitahukannya; gagal mengambil ISI pesan bukan alasan untuk
@@ -185,9 +202,18 @@ export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) 
         if (dibatalkan) return;
         const terbaru = halaman?.results?.[0];
         if (!terbaru) return;
+
         const ringkas = ringkasNotifikasi(terbaru);
+        const pemicu = terbaru.triggered_by_details;
         tampilkan(
-          { ...ringkas, tautan: `/${workspaceSlug}/notifications` },
+          {
+            jenis: "tugas",
+            judul: ringkas.judul,
+            isi: ringkas.isi,
+            namaOrang: pemicu?.is_bot ? pemicu?.first_name : pemicu?.display_name,
+            avatarUrl: pemicu?.avatar_url,
+            tautan: `/${workspaceSlug}/notifications`,
+          },
           `notifikasi-${terbaru.entity_identifier ?? terbaru.id}`
         );
       } catch {
@@ -199,7 +225,12 @@ export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) 
     };
   }, [jumlahNotif, workspaceSlug, tampilkan]);
 
-  return <SpandukIzin />;
+  return (
+    <>
+      <TumpukanPopup daftar={antrean} onTutup={tutup} onBuka={navigate} />
+      <SpandukIzin />
+    </>
+  );
 }
 
 /**
@@ -209,19 +240,22 @@ export function PenjagaNotifikasi({ workspaceSlug }: { workspaceSlug: string }) 
  * bukan dari useEffect: Safari menolaknya diam-diam, dan Chrome memberi hukuman
  * pada situs yang meminta izin begitu halaman terbuka. Karena itu ada tombol,
  * dan bukan permintaan otomatis.
+ *
+ * Duduk di kiri bawah, menjauh dari dua sudut yang sudah terpakai: kartu
+ * pemberitahuan di kanan atas, toast bawaan aplikasi di kanan bawah.
  */
 function SpandukIzin() {
   const { storedValue: ditutup, setValue: setDitutup } = useLocalStorage<boolean>(KUNCI_SPANDUK, false);
   const [izin, setIzin] = useState<NotificationPermission | "tidak-ada">("tidak-ada");
 
   useEffect(() => {
-    if (typeof window !== "undefined" && "Notification" in window) setIzin(Notification.permission);
+    if ("Notification" in window) setIzin(Notification.permission);
   }, []);
 
   if (ditutup || izin !== "default") return null;
 
   return (
-    <div className="shadow-xl fixed right-4 bottom-4 z-[60] w-80 rounded-lg border border-subtle bg-surface-1 p-4">
+    <div className="fixed bottom-4 left-4 z-[60] w-80 rounded-lg border border-subtle bg-surface-1 p-4 shadow-overlay-200">
       <div className="flex items-start gap-3">
         <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-accent-primary/10">
           <Bell className="size-4 text-accent-primary" />

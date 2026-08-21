@@ -19,20 +19,19 @@ const chatService = new ChatService();
 // dikembalikan ke sini, satu pesan masuk akan berbunyi DUA KALI: SWR menyajikan
 // data yang sama ke kedua komponen, dan keduanya melihat angka yang sama naik.
 //
-// Lencana ini hidup di sidebar, jadi ikut ditarik dari SETIAP halaman. 30 detik,
-// bukan 5 seperti percakapan yang sedang dibuka: yang ini cuma perlu memberi
-// tahu bahwa ada sesuatu, bukan menyampaikan isinya. Saat percakapan dibuka,
-// halaman Obrolan memanggil mutate pada kunci yang sama sehingga angkanya turun
+// Lencana ini TIDAK memutar jamnya sendiri. PenjagaNotifikasi memakai kunci SWR
+// yang persis sama dan menyegarkannya tiap 15 detik dari halaman mana pun, jadi
+// menambahkan `refreshInterval` di sini cuma menggandakan permintaan tanpa
+// membuat angkanya lebih baru sedetik pun. Saat percakapan dibuka, halaman
+// Obrolan memanggil mutate pada kunci yang sama sehingga angkanya turun
 // seketika, tanpa menunggu putaran berikutnya.
-const SELANG = 30000;
 
 type Props = { workspaceSlug: string };
 
 export const ChatUnreadBadge = observer(function ChatUnreadBadge({ workspaceSlug }: Props) {
   const { data: status } = useSWR(
     workspaceSlug ? KUNCI_BELUM_DIBACA : null,
-    workspaceSlug ? () => chatService.getStatus(workspaceSlug) : null,
-    { refreshInterval: SELANG }
+    workspaceSlug ? () => chatService.getStatus(workspaceSlug) : null
   );
 
   const jumlah = status?.jumlah ?? 0;
