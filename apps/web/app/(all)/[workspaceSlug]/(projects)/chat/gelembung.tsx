@@ -10,6 +10,44 @@ import { Check, CheckCheck, CornerUpLeft, Pencil, SmilePlus, Trash2 } from "luci
 import { renderFormattedTime } from "@plane/utils";
 import type { TPesan } from "@/services/chat.service";
 import { DaftarLampiran } from "./lampiran";
+import { potongTautan } from "./tautan";
+
+/**
+ * Teks pesan dengan alamat yang bisa diklik.
+ *
+ * Dibuat karena penugasan sekarang otomatis masuk ke DM berikut tautan ke
+ * tugasnya. Tautan yang harus disalin-tempel dulu adalah tautan yang tidak
+ * dipakai, dan tugas yang tidak dibuka sama saja dengan tugas yang tidak
+ * dikabarkan.
+ *
+ * Potongan bukan-alamat tetap teks React, tidak pernah lewat
+ * `dangerouslySetInnerHTML`. Aturan alamat mana yang boleh jadi tautan, berikut
+ * alasan keamanannya, ada di `tautan.ts`.
+ */
+const denganTautan = (teks: string) =>
+  potongTautan(teks).map((potongan, i) =>
+    potongan.jenis === "teks" ? (
+      potongan.isi
+    ) : (
+      // Kunci dari posisi, dan di sini itu memang benar: potongannya lahir dari
+      // memecah satu teks yang tidak pernah berubah sebagian. Seluruh daftar
+      // dibuat ulang kalau isinya berganti, tidak ada yang bisa disisipkan atau
+      // diurut ulang, dan anak-anaknya tidak menyimpan state apa pun.
+      // oxlint-disable-next-line no-array-index-key
+      <span key={`tautan-${i}`}>
+        <a
+          href={potongan.alamat}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="underline underline-offset-2 hover:opacity-80"
+        >
+          {potongan.alamat}
+        </a>
+        {potongan.ekor}
+      </span>
+    )
+  );
 
 /** Reaksi cepat. Sengaja sedikit: pemilih emoji penuh membuat orang memilih,
  * dan reaksi yang butuh dipikirkan tidak akan dipakai. */
@@ -47,7 +85,7 @@ export function Gelembung(props: Props) {
           </div>
         ) : null}
 
-        {pesan.isi ? <p className="text-sm break-words whitespace-pre-wrap">{pesan.isi}</p> : null}
+        {pesan.isi ? <p className="text-sm break-words whitespace-pre-wrap">{denganTautan(pesan.isi)}</p> : null}
         <DaftarLampiran lampiran={pesan.lampiran} terang={dariSaya} />
 
         {akhirKelompok || pesan.disunting ? (

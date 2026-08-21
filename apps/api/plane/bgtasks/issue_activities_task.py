@@ -34,6 +34,7 @@ from plane.db.models import (
 )
 from plane.settings.redis import redis_instance
 from plane.utils.exception_logger import log_exception
+from plane.bgtasks.tugas_ke_dm_task import kirim_tugas_ke_dm, penerima_baru
 from plane.utils.issue_relation_mapper import get_inverse_relation
 from plane.utils.uuid import is_valid_uuid
 
@@ -1582,6 +1583,17 @@ def issue_activity(
 
         # Save all the values to database
         issue_activities_created = IssueActivity.objects.bulk_create(issue_activities)
+
+        # Kustomisasi Paradise (Yorukaze Production): rincian tugas ikut dikirim
+        # sebagai DM dari pemberi ke penerima. Ditaruh DI SINI, bukan di view,
+        # karena inilah satu-satunya corong yang dilewati SEMUA jalur penugasan:
+        # layar mana pun, API token, tugas berulang, dan pembuatan tugas yang
+        # langsung berisi penerima.
+        penerima = penerima_baru(issue_activities_created)
+        if penerima:
+            kirim_tugas_ke_dm.delay(
+                issue_id=str(issue_id), actor_id=str(actor_id), penerima_ids=penerima
+            )
 
         if notification:
             notifications.delay(

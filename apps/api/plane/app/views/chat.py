@@ -31,6 +31,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from plane.settings.storage import S3Storage
+from plane.utils.chat_ruang import ruang_dm
 from plane.utils.ice import daftar_ice
 from plane.utils.livekit import konfigurasi_ada, nama_ruang, token_panggilan, url_livekit
 from plane.utils.obrolan_siaran import siarkan
@@ -136,12 +137,12 @@ BATAS_NAMA_RUANG = 80
 
 
 def _ruang_dm(request, slug, lawan_id):
-    """Ambil ruang DM antara peminta dan lawan bicaranya, buat kalau belum ada.
+    """Ruang DM antara peminta dan lawan bicaranya, kalau lawannya memang ada.
 
-    `get_or_create` dipakai dengan `kunci_dm` sebagai kunci, dan kunci itu
-    diurutkan di dalam model. Jadi dua orang yang menekan kirim pada detik yang
-    sama tidak bisa menghasilkan dua ruang: yang kedua menabrak indeks unik lalu
-    mengambil baris yang sudah ada.
+    Yang dikerjakan di sini cuma penjagaan pintunya: lawan bicara harus anggota
+    aktif workspace ini. Pembuatan ruangnya sendiri ada di `utils/chat_ruang.py`,
+    dipakai bersama tugas Celery yang mengirim penugasan sebagai DM, supaya
+    aturan "kedua pihak langsung berlangganan" cuma ditulis satu kali.
     """
     anggota = WorkspaceMember.objects.filter(
         workspace__slug=slug, member_id=lawan_id, is_active=True
@@ -149,22 +150,7 @@ def _ruang_dm(request, slug, lawan_id):
     if anggota is None:
         return None
 
-    kunci = Ruang.buat_kunci_dm(request.user.id, lawan_id)
-    ruang, dibuat = Ruang.objects.get_or_create(
-        kunci_dm=kunci,
-        defaults={"workspace_id": anggota.workspace_id, "tipe": Ruang.Tipe.DM},
-    )
-    if dibuat:
-        # Kedua belah pihak berlangganan sejak awal. Tanpa ini, penerima tidak
-        # punya baris tempat menyimpan sudah-dibaca-sampai-mana, dan pesannya
-        # tidak akan pernah terhitung sebagai belum dibaca.
-        Langganan.objects.bulk_create(
-            [
-                Langganan(ruang=ruang, user_id=request.user.id),
-                Langganan(ruang=ruang, user_id=lawan_id),
-            ]
-        )
-    return ruang
+    return ruang_dm(anggota.workspace_id, request.user.id, lawan_id)
 
 
 def _langganan(user_id, ruang):
