@@ -207,6 +207,29 @@ export const PustakaWiki = observer(function PustakaWiki({ workspaceSlug, projec
   };
 
   const sedangMemuat = loader === "init-loader" && daftar.length === 0;
+  // Penanda halaman sudah dimuat tapi foldernya tidak ada: penanda buku yang
+  // basi karena foldernya diarsipkan atau dihapus. Tanpa cabang ini layarnya
+  // jatuh ke tampilan beranda yang mengaku "belum ada Divisi", dan itu kabar
+  // yang salah tentang keadaan Wiki.
+  const folderHilang = !!folderId && !folder && loader !== "init-loader";
+
+  if (folderHilang)
+    return (
+      <div className="flex h-full w-full items-center justify-center p-8">
+        <div className="max-w-md text-center">
+          <h2 className="text-15 font-semibold text-primary">Folder ini sudah tidak ada</h2>
+          <p className="mt-1 text-13 text-tertiary">
+            Kemungkinan besar ia diarsipkan atau dipindahkan. Isinya tidak hilang, cuma tidak lagi berada di alamat ini.
+          </p>
+          <Link
+            to={beranda}
+            className="mt-4 inline-block rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
+          >
+            Kembali ke beranda Wiki
+          </Link>
+        </div>
+      </div>
+    );
 
   return (
     <div className="flex h-full w-full flex-col overflow-y-auto">
