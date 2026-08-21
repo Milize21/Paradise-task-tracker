@@ -46,6 +46,7 @@ from plane.utils.exception_logger import log_exception
 from plane.utils.wiki_access import (
     can_edit_wiki_page,
     can_manage_wiki_material,
+    can_manage_wiki_page,
     is_wiki_governed,
 )
 
@@ -170,6 +171,79 @@ class WikiTopicMaterialEndpoint(BaseAPIView):
                     can_edit_wiki_page(request.user, page) if is_wiki_governed(project_id) else True
                 ),
             },
+            status=status.HTTP_200_OK,
+        )
+
+
+class WikiFolderEndpoint(BaseAPIView):
+    """Ganti nama dan ikon folder Divisi atau Topik.
+
+    Kenapa endpoint sendiri, bukan PATCH halaman biasa: judul halaman yang
+    SEBENARNYA hidup di binary Yjs, dan server Live mendorongnya balik ke
+    database. Mengganti nama lewat PATCH polos akan tampak berhasil, lalu nama
+    lama muncul lagi begitu halamannya dibuka. Itu jenis bug yang membuat orang
+    berhenti percaya pada seluruh fitur.
+
+    Jadi di sini `description_binary` dan `description_json` sekalian
+    dikosongkan. Server Live membangun ulang dokumennya dari `description_html`
+    plus `name` yang baru ketika binary-nya kosong
+    (`apps/live/src/extensions/database.ts`), sehingga nama barunya bertahan.
+
+    Aman untuk folder: isinya cuma penampung, dan `description_html` memang
+    selalu disinkronkan server Live. JANGAN pakai jalur ini untuk halaman yang
+    isinya tulisan sungguhan.
+    """
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    def patch(self, request, slug, project_id, page_id):
+        page = Page.objects.filter(
+            id=page_id, workspace__slug=slug, project_pages__project_id=project_id
+        ).first()
+        if page is None:
+            return Response({"error": "Folder tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not can_manage_wiki_page(request.user, page):
+            return Response(
+                {
+                    "error": "Hanya pembuatnya, kepala divisi pemilik folder, "
+                    "atau Super Admin yang boleh mengubah folder ini."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        diubah = []
+        nama = request.data.get("name")
+        if nama is not None:
+            nama = str(nama).strip()
+            if not nama:
+                return Response(
+                    {"error": "Nama folder tidak boleh kosong."}, status=status.HTTP_400_BAD_REQUEST
+                )
+            page.name = nama[:255]
+            diubah.append("name")
+            # Kosongkan Yjs supaya judul barunya tidak ditimpa balik.
+            page.description_binary = b""
+            page.description_json = {}
+            diubah += ["description_binary", "description_json"]
+
+        logo = request.data.get("logo_props")
+        if logo is not None:
+            if not isinstance(logo, dict):
+                return Response(
+                    {"error": "logo_props harus berupa objek."}, status=status.HTTP_400_BAD_REQUEST
+                )
+            page.logo_props = logo
+            diubah.append("logo_props")
+
+        if not diubah:
+            return Response({"error": "Tidak ada yang diubah."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # `.save()` penuh, BUKAN `.update()`: `Page.save()` menghitung ulang
+        # `description_stripped`, dan melewatinya meninggalkan indeks pencarian
+        # yang menunjuk isi lama.
+        page.save()
+        return Response(
+            {"id": str(page.id), "name": page.name, "logo_props": page.logo_props},
             status=status.HTTP_200_OK,
         )
 

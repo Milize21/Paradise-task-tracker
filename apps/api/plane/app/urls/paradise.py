@@ -28,6 +28,7 @@ from plane.app.views import (
     InitiativeViewSet,
     PageCanEditEndpoint,
     WikiAccessEndpoint,
+    WikiFolderEndpoint,
     WikiMaterialEndpoint,
     WikiMaterialPreviewEndpoint,
     WikiMaterialSearchEndpoint,
@@ -181,6 +182,11 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/topics/<uuid:page_id>/materials/",
         WikiTopicMaterialEndpoint.as_view(),
         name="wiki-topic-materials",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/folders/<uuid:page_id>/",
+        WikiFolderEndpoint.as_view(),
+        name="wiki-folder",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/search/",

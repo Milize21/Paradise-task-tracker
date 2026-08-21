@@ -131,3 +131,33 @@ export class WikiMaterialService extends APIService {
       });
   }
 }
+
+/**
+ * Ganti nama dan ikon folder Wiki.
+ *
+ * Sengaja BUKAN PATCH halaman biasa. Judul halaman yang sebenarnya hidup di
+ * binary Yjs dan server Live mendorongnya balik, jadi rename lewat jalur biasa
+ * akan tampak berhasil lalu terbalik sendiri. Endpoint ini sekalian
+ * mengosongkan binary-nya supaya nama barunya bertahan.
+ */
+export class WikiFolderService extends APIService {
+  constructor() {
+    super(API_BASE_URL);
+  }
+
+  private async ubah(workspaceSlug: string, projectId: string, pageId: string, data: Record<string, unknown>) {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/wiki/folders/${pageId}/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async rename(workspaceSlug: string, projectId: string, pageId: string, name: string) {
+    return this.ubah(workspaceSlug, projectId, pageId, { name });
+  }
+
+  async setLogo(workspaceSlug: string, projectId: string, pageId: string, logo_props: unknown) {
+    return this.ubah(workspaceSlug, projectId, pageId, { logo_props });
+  }
+}

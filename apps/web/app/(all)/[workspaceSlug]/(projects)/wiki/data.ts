@@ -44,12 +44,12 @@ export const usePohonWiki = (workspaceSlug?: string, projectId?: string) => {
 };
 
 export const useIzinWiki = (workspaceSlug?: string, projectId?: string) => {
-  const { data } = useSWR(
+  const { data, mutate } = useSWR(
     workspaceSlug && projectId ? `WIKI_PERMISSIONS_${projectId}` : null,
     workspaceSlug && projectId ? () => layananAkses.fetchPermissions(workspaceSlug, projectId) : null,
     { revalidateOnFocus: false }
   );
-  return data;
+  return { izin: data, muatUlangIzin: mutate };
 };
 
 /** Halaman yang tidak diarsipkan dan tidak dihapus, yaitu yang layak ditampilkan. */

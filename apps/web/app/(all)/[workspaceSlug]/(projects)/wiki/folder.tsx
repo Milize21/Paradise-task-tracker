@@ -7,8 +7,8 @@
 
 import { useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { ArrowLeft, FolderPlus, Lock, Trash2, Upload } from "lucide-react";
-import { Link, useParams } from "react-router";
+import { ArrowLeft, FolderPlus, Lock, Settings2, Trash2, Upload } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router";
 import useSWR from "swr";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -19,6 +19,8 @@ import { GridKartu, KartuFolder, KartuKerangka, KartuMateri } from "@/components
 // services
 import { ProjectPageService } from "@/services/page";
 import { WikiMaterialService } from "@/services/wiki_material.service";
+// local imports
+import { KelolaFolder } from "./kelola";
 // local imports
 import {
   anakDari,
@@ -50,10 +52,12 @@ function WikiFolderPage() {
   const idFolder = folderId?.toString() ?? "";
   const { projectId } = useProjectWiki();
   const { halaman, sedangMemuat, muatUlang } = usePohonWiki(slug, projectId);
-  const izin = useIzinWiki(slug, projectId);
+  const { izin, muatUlangIzin } = useIzinWiki(slug, projectId);
   const berkasRef = useRef<HTMLInputElement>(null);
   const [sedangMembuat, setSedangMembuat] = useState(false);
   const [sedangUnggah, setSedangUnggah] = useState(false);
+  const [kelolaTerbuka, setKelolaTerbuka] = useState(false);
+  const navigate = useNavigate();
 
   const terlihat = halamanTerlihat(halaman);
   const folder = halamanDenganId(terlihat, idFolder);
@@ -69,6 +73,9 @@ function WikiFolderPage() {
   );
   const materi = daftarMateri?.materials ?? [];
   const bolehUnggah = !!daftarMateri?.can_upload;
+  // Boleh mengurus folder ini. Jawabannya datang dari server, bukan dihitung
+  // ulang di sini, supaya aturan izinnya tidak pernah bercabang dua.
+  const bolehKelola = !!folder?.id && !!izin?.manageable_page_ids?.includes(folder.id);
 
   const buatTopik = async () => {
     if (!projectId || sedangMembuat) return;
@@ -173,7 +180,15 @@ function WikiFolderPage() {
             <ArrowLeft className="size-3.5" />
             {folder?.parent ? `Kembali ke ${getPageName(divisi?.name)}` : "Kembali ke beranda Wiki"}
           </Link>
-          <h1 className="text-3xl mt-3 font-semibold tracking-tight text-primary">{judul}</h1>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-semibold tracking-tight text-primary">{judul}</h1>
+            {bolehKelola && (
+              <Button variant="secondary" size="sm" onClick={() => setKelolaTerbuka(true)}>
+                <Settings2 className="size-3.5" />
+                Kelola
+              </Button>
+            )}
+          </div>
           <p className="mt-1 text-13 text-tertiary">
             {izinDivisi?.is_general
               ? "Folder terbuka. Semua karyawan boleh menaruh materi di sini."
@@ -301,6 +316,22 @@ function WikiFolderPage() {
           </section>
         </div>
       </div>
+
+      {folder && kelolaTerbuka && (
+        <KelolaFolder
+          workspaceSlug={slug}
+          projectId={projectId ?? ""}
+          folder={folder}
+          izin={izin}
+          isOpen={kelolaTerbuka}
+          onClose={() => setKelolaTerbuka(false)}
+          onBerubah={() => Promise.all([muatUlang(), muatUlangIzin()])}
+          onTerhapus={() => {
+            setKelolaTerbuka(false);
+            navigate(folder.parent ? `/${slug}/wiki/${folder.parent}` : `/${slug}/wiki`);
+          }}
+        />
+      )}
     </>
   );
 }

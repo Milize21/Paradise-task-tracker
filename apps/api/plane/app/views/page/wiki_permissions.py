@@ -10,7 +10,7 @@ from rest_framework.response import Response
 # Module imports
 from ..base import BaseAPIView
 from plane.app.permissions import allow_permission, ROLE
-from plane.db.models import Page, ProjectMember, WikiFolderAccess
+from plane.db.models import Page, Project, ProjectMember, WikiFolderAccess
 from plane.utils.wiki_access import is_super_admin, is_wiki_governed
 
 _ROLE_ADMIN = ROLE.ADMIN.value
@@ -54,7 +54,7 @@ class WikiPermissionsEndpoint(BaseAPIView):
             folder_id__in=folders, project_id=project_id, deleted_at__isnull=True
         ).values_list("folder_id", "division_id", "division__identifier", "division__name"):
             owners.setdefault(folder_id, set()).add(division_id)
-            label[division_id] = {"identifier": identifier, "name": name}
+            label[division_id] = {"id": str(division_id), "identifier": identifier, "name": name}
 
         # Satu query untuk seluruh keanggotaan aktif si pemakai, bukan satu per
         # folder. Di 83 anggota dan 10 folder bedanya belum terasa; di angka
@@ -97,6 +97,34 @@ class WikiPermissionsEndpoint(BaseAPIView):
                 }
             )
 
+        # Halaman mana saja yang boleh DIKELOLA orang ini: ganti nama, ganti
+        # ikon, hapus. Dihitung server dalam satu sapuan, bukan disalin jadi
+        # aturan kembar di TypeScript, karena aturan izin yang hidup di dua
+        # bahasa cepat atau lambat berbeda pendapat.
+        #
+        # Aturannya sama persis dengan halaman: pengunggahnya, kepala divisi
+        # pemilik folder teratas, atau Super Admin.
+        folder_lead = {f["id"] for f in payload if f["is_lead"]}
+        semua = Page.objects.filter(
+            projects=project_id, workspace__slug=slug, deleted_at__isnull=True
+        ).values_list("id", "parent_id", "owned_by_id")
+        induk = {pid: parent for pid, parent, _ in semua}
+
+        def teratas(page_id):
+            kini = page_id
+            for _ in range(20):
+                orang_tua = induk.get(kini)
+                if orang_tua is None:
+                    return kini
+                kini = orang_tua
+            return kini
+
+        manageable = [
+            str(pid)
+            for pid, _, owner in semua
+            if super_admin or owner == user.id or str(teratas(pid)) in folder_lead
+        ]
+
         return Response(
             {
                 "is_governed": is_wiki_governed(project_id),
@@ -104,6 +132,25 @@ class WikiPermissionsEndpoint(BaseAPIView):
                 "is_project_admin": project_admin,
                 "user_id": str(user.id),
                 "folders": payload,
+                "manageable_page_ids": manageable,
+                # Bahan untuk panel "Kelola" di dalam Wiki, supaya mengatur
+                # divisi pemilik tidak lagi harus lewat Setelan project yang
+                # sejak Wiki punya rute sendiri tidak ada jalannya lagi.
+                #
+                # Hanya dikirim ke admin project. Daftar seluruh project adalah
+                # informasi struktur organisasi, dan tidak ada alasan setiap
+                # anggota Wiki menerimanya hanya untuk melihat kartu.
+                "general_division_id": str(project_id) if project_admin else None,
+                "available_divisions": (
+                    [
+                        {"id": str(p.id), "identifier": p.identifier, "name": p.name}
+                        for p in Project.objects.filter(workspace__slug=slug)
+                        .exclude(id=project_id)
+                        .order_by("name")
+                    ]
+                    if project_admin
+                    else []
+                ),
             },
             status=status.HTTP_200_OK,
         )

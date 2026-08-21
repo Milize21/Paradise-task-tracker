@@ -36,7 +36,7 @@ function WikiBerandaPage() {
   const slug = workspaceSlug?.toString() ?? "";
   const { projectId, sedangMemuat: memuatProject } = useProjectWiki();
   const { halaman, sedangMemuat, muatUlang } = usePohonWiki(slug, projectId);
-  const izin = useIzinWiki(slug, projectId);
+  const { izin } = useIzinWiki(slug, projectId);
   const [mencari, setMencari] = useState(false);
   const [sedangMembuat, setSedangMembuat] = useState(false);
 

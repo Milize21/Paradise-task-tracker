@@ -42,7 +42,7 @@ export type TWikiFolderPermission = {
   is_lead: boolean;
   /** Folder terbuka, semua anggota Wiki boleh mengunggah. */
   is_general: boolean;
-  divisions: Pick<TWikiDivision, "identifier" | "name">[];
+  divisions: TWikiDivision[];
 };
 
 export type TWikiPermissions = {
@@ -51,6 +51,14 @@ export type TWikiPermissions = {
   is_project_admin: boolean;
   user_id: string;
   folders: TWikiFolderPermission[];
+  /**
+   * Halaman yang boleh dikelola orang ini: ganti nama, ganti ikon, hapus.
+   * Dihitung server supaya aturan izin tidak hidup di dua bahasa sekaligus.
+   */
+  manageable_page_ids: string[];
+  /** Hanya terisi untuk admin project. Dipakai panel Kelola. */
+  general_division_id: string | null;
+  available_divisions: TWikiDivision[];
 };
 
 export class WikiAccessService extends APIService {
