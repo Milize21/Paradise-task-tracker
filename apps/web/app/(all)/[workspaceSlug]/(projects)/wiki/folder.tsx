@@ -7,7 +7,7 @@
 
 import { useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { ArrowLeft, FolderPlus, Lock, Settings2, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, FolderPlus, Lock, Pencil, Settings2, Trash2, Upload } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import useSWR from "swr";
 import { Button } from "@plane/propel/button";
@@ -20,6 +20,7 @@ import { GridKartu, KartuFolder, KartuKerangka, KartuMateri } from "@/components
 import { ProjectPageService } from "@/services/page";
 import { WikiMaterialService } from "@/services/wiki_material.service";
 // local imports
+import { GantiNamaMateri } from "./ganti-nama";
 import { KelolaFolder } from "./kelola";
 // local imports
 import {
@@ -57,6 +58,7 @@ function WikiFolderPage() {
   const [sedangMembuat, setSedangMembuat] = useState(false);
   const [sedangUnggah, setSedangUnggah] = useState(false);
   const [kelolaTerbuka, setKelolaTerbuka] = useState(false);
+  const [materiDiganti, setMateriDiganti] = useState<{ id: string; title: string; name: string } | null>(null);
   const navigate = useNavigate();
 
   const terlihat = halamanTerlihat(halaman);
@@ -298,15 +300,26 @@ function WikiFolderPage() {
                     ukuran={ukuranTerbaca(m.size)}
                     aksi={
                       m.can_manage ? (
-                        <button
-                          type="button"
-                          title="Hapus materi"
-                          aria-label={`Hapus ${m.title}`}
-                          onClick={() => void hapus(m.id, m.title)}
-                          className="grid size-7 place-items-center rounded-md bg-black/25 text-white opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100 hover:bg-black/40 focus-visible:opacity-100"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            title="Ganti judul"
+                            aria-label={`Ganti judul ${m.title}`}
+                            onClick={() => setMateriDiganti({ id: m.id, title: m.title, name: m.name })}
+                            className="grid size-7 place-items-center rounded-md bg-black/25 text-white opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100 hover:bg-black/40 focus-visible:opacity-100"
+                          >
+                            <Pencil className="size-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            title="Hapus materi"
+                            aria-label={`Hapus ${m.title}`}
+                            onClick={() => void hapus(m.id, m.title)}
+                            className="grid size-7 place-items-center rounded-md bg-black/25 text-white opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100 hover:bg-black/40 focus-visible:opacity-100"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        </>
                       ) : undefined
                     }
                   />
@@ -316,6 +329,19 @@ function WikiFolderPage() {
           </section>
         </div>
       </div>
+
+      {materiDiganti && projectId && (
+        <GantiNamaMateri
+          workspaceSlug={slug}
+          projectId={projectId}
+          materiId={materiDiganti.id}
+          judulSekarang={materiDiganti.title}
+          namaBerkas={materiDiganti.name}
+          isOpen
+          onClose={() => setMateriDiganti(null)}
+          onSelesai={() => muatUlangMateri()}
+        />
+      )}
 
       {folder && kelolaTerbuka && (
         <KelolaFolder

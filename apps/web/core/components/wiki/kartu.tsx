@@ -140,8 +140,8 @@ export function KartuMateri({ to, judul, keterangan, tipe, label, ukuran, aksi }
         </div>
       </Link>
 
-      {/* Di luar <Link> supaya menekan menu tidak ikut membuka materinya. */}
-      {aksi && <div className="absolute top-2 right-2">{aksi}</div>}
+      {/* Di luar <Link> supaya menekan tombolnya tidak ikut membuka materinya. */}
+      {aksi && <div className="absolute top-2 right-2 flex gap-1">{aksi}</div>}
     </div>
   );
 }

@@ -5,82 +5,31 @@
  * See the LICENSE file for details.
  */
 
+import { useState } from "react";
 import { observer } from "mobx-react";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Download, Pencil } from "lucide-react";
 import { Link, useParams } from "react-router";
 import useSWR from "swr";
 import { renderFormattedDate } from "@plane/utils";
 // components
 import { PageHead } from "@/components/core/page-title";
 // services
-import { WikiMaterialService, type TPratinjauMateri } from "@/services/wiki_material.service";
+import { WikiMaterialService } from "@/services/wiki_material.service";
 // local imports
 import { labelTipe, ukuranTerbaca, useProjectWiki } from "./data";
+import { GantiNamaMateri } from "./ganti-nama";
+import { PenampilMateri } from "./penampil";
 
 const layanan = new WikiMaterialService();
-
-/**
- * Baca, tonton, buka. Di sini, bukan di aplikasi lain.
- *
- * Server yang memutuskan bentuk tampilannya lewat `kind`, bukan klien yang
- * menebak dari nama berkas, karena hanya server yang tahu apakah sebuah berkas
- * Office sudah berhasil dikonversi jadi PDF.
- *
- * Kalau memang tidak bisa ditampilkan, yang muncul kartu unduh BERIKUT
- * alasannya. Bingkai kosong yang tidak pernah memuat adalah kegagalan yang
- * lebih buruk, karena orang akan menunggunya.
- */
-function Bingkai({ pratinjau }: { pratinjau: TPratinjauMateri }) {
-  const { kind, url, title } = pratinjau;
-  if (!url) return null;
-
-  if (kind === "image")
-    return <img src={url} alt={title} className="mx-auto max-h-[calc(100vh-16rem)] w-auto rounded-lg object-contain" />;
-
-  if (kind === "video")
-    return (
-      // preload="metadata" saja: berkas bisa 250 MB, dan Range request sudah
-      // terbukti jalan di produksi jadi orang bisa loncat ke menit berapa pun
-      // tanpa mengunduh semuanya dulu.
-      // oxlint-disable-next-line jsx-a11y/media-has-caption
-      <video
-        src={url}
-        controls
-        preload="metadata"
-        className="mx-auto max-h-[calc(100vh-16rem)] w-full rounded-lg bg-black"
-      />
-    );
-
-  if (kind === "audio")
-    // Takarir wajib menurut aturan a11y, dan itu benar untuk video yang KAMI
-    // buat. Di sini berkasnya diunggah karyawan, jadi tidak ada berkas takarir
-    // yang bisa ditunjuk. Memasang <track> kosong justru berbohong kepada
-    // pembaca layar: ia akan mengumumkan takarir tersedia lalu tidak
-    // memberikan apa pun. Jalan yang benar adalah fitur unggah takarir
-    // tersendiri, dan itu belum diminta.
-    // oxlint-disable-next-line jsx-a11y/media-has-caption
-    return <audio src={url} controls className="w-full" />;
-
-  return (
-    <iframe
-      src={url}
-      title={title}
-      // PDF SENGAJA tanpa sandbox: Chrome menolak memuat viewer PDF bawaannya
-      // di dalam iframe ber-sandbox, apa pun kombinasi tokennya. Berkas teks
-      // justru dikunci penuh, karena isinya datang dari unggahan orang.
-      sandbox={kind === "pdf" ? undefined : ""}
-      className="h-[calc(100vh-16rem)] w-full rounded-lg border border-subtle bg-layer-1"
-    />
-  );
-}
 
 function WikiMateriPage() {
   const { workspaceSlug, assetId } = useParams();
   const slug = workspaceSlug?.toString() ?? "";
   const idMateri = assetId?.toString() ?? "";
   const { projectId } = useProjectWiki();
+  const [gantiNama, setGantiNama] = useState(false);
 
-  const { data, isLoading, error } = useSWR(
+  const { data, isLoading, error, mutate } = useSWR(
     projectId && idMateri ? `WIKI_MATERIAL_PREVIEW_${idMateri}` : null,
     projectId ? () => layanan.preview(slug, projectId, idMateri) : null,
     { revalidateOnFocus: false }
@@ -143,18 +92,30 @@ function WikiMateriPage() {
             </p>
           </div>
 
-          <a
-            href={data.download_url}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
-          >
-            <Download className="size-3.5" />
-            Unduh berkas asli
-          </a>
+          <div className="flex shrink-0 items-center gap-2">
+            {data.can_manage && (
+              <button
+                type="button"
+                onClick={() => setGantiNama(true)}
+                className="inline-flex items-center gap-1.5 rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
+              >
+                <Pencil className="size-3.5" />
+                Ganti judul
+              </button>
+            )}
+            <a
+              href={data.download_url}
+              className="inline-flex items-center gap-1.5 rounded-md border border-subtle px-3 py-1.5 text-12 font-medium text-secondary transition-colors hover:border-strong hover:text-primary"
+            >
+              <Download className="size-3.5" />
+              Unduh berkas asli
+            </a>
+          </div>
         </div>
 
         <div className="flex-1 px-page-x py-6">
           {data.url ? (
-            <Bingkai pratinjau={data} />
+            <PenampilMateri pratinjau={data} />
           ) : (
             <div className="rounded-lg border border-dashed border-subtle px-6 py-16 text-center">
               <p className="text-14 font-medium text-secondary">Materi ini tidak bisa ditampilkan di peramban</p>
@@ -167,6 +128,19 @@ function WikiMateriPage() {
           )}
         </div>
       </div>
+
+      {gantiNama && projectId && (
+        <GantiNamaMateri
+          workspaceSlug={slug}
+          projectId={projectId}
+          materiId={data.id}
+          judulSekarang={data.title}
+          namaBerkas={data.name}
+          isOpen={gantiNama}
+          onClose={() => setGantiNama(false)}
+          onSelesai={() => mutate()}
+        />
+      )}
     </>
   );
 }
