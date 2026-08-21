@@ -167,3 +167,33 @@ def has_foreign_descendants(page, user, max_depth=_MAX_DEPTH):
         seen.update(frontier)
         depth += 1
     return False
+
+
+def can_manage_wiki_material(user, asset):
+    """True kalau `user` boleh mengubah atau menghapus sebuah Materi Wiki.
+
+    Aturannya SAMA PERSIS dengan aturan halaman, cuma sumbernya beda: pemilik
+    sebuah materi adalah `created_by` pada berkasnya, bukan `owned_by` pada
+    halaman. Sengaja diturunkan dari fungsi yang sama supaya tidak ada dua
+    aturan hapus yang suatu saat berbeda pendapat.
+
+    Materi yang tidak menempel ke halaman mana pun tidak bisa dinilai terhadap
+    folder mana pun, jadi ia hanya boleh disentuh pengunggahnya atau Super
+    Admin. Itu keadaan yang seharusnya tidak pernah terjadi, tapi kalau terjadi
+    jawabannya harus menutup, bukan membuka.
+    """
+    if user is None or getattr(user, "is_anonymous", True):
+        return False
+    if asset.created_by_id == user.id:
+        return True
+    if is_super_admin(user):
+        return True
+    if asset.page_id is None:
+        return False
+
+    from plane.db.models import Page
+
+    page = Page.objects.filter(id=asset.page_id).first()
+    if page is None:
+        return False
+    return is_division_lead(user, page)

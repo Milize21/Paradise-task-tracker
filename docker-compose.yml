@@ -209,6 +209,28 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
+  # Konversi Materi Wiki ke PDF (Yorukaze Production).
+  #
+  # Word, Excel, dan PowerPoint tidak bisa dibuka peramban mana pun. Gotenberg
+  # (MIT) membungkus LibreOffice headless di balik satu rute HTTP, jadi berkas
+  # Office diubah jadi PDF lalu dibaca lewat penampil PDF yang sudah terbukti
+  # jalan. Dipilih daripada memasang tiga pustaka perender di sisi peramban
+  # karena satu mekanisme mengalahkan tiga, dan untuk PowerPoint memang tidak
+  # ada pustaka klien yang layak.
+  #
+  # TIDAK dipublikasikan ke luar: hanya `api` yang memanggilnya, lewat jaringan
+  # internal compose. Jangan pernah memetakan portnya ke host.
+  gotenberg:
+    container_name: gotenberg
+    image: gotenberg/gotenberg:8
+    restart: always
+    command:
+      - gotenberg
+      # Chromium tidak dipakai sama sekali di sini, cuma LibreOffice. Mematikan
+      # rutenya memperkecil permukaan serang sekaligus pemakaian memori.
+      - --chromium-disable-javascript=true
+      - --api-timeout=180s
+
   plane-minio:
     container_name: plane-minio
     image: minio/minio

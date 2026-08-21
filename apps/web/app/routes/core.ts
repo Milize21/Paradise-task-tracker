@@ -89,9 +89,19 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/chat", "./(all)/[workspaceSlug]/(projects)/chat/page.tsx"),
         ]),
 
-        // Wiki (Paradise/Yorukaze Production), pintasan yang meresolusi project WIKI lalu
-        // redirect. Tanpa layout: halamannya cuma redirect, tidak punya chrome.
-        route(":workspaceSlug/wiki", "./(all)/[workspaceSlug]/(projects)/wiki/page.tsx"),
+        // Wiki (Paradise/Yorukaze Production).
+        //
+        // Punya layout sendiri, dan itu bukan soal rapi-rapian: selama Wiki
+        // menumpang halaman daftar Pages sebuah project, kepalanya membawa
+        // serta tombol buat halaman, breadcrumb project, dan Work Items. Wiki
+        // bukan tempat mengerjakan tugas, jadi ia tidak boleh terlihat begitu.
+        layout("./(all)/[workspaceSlug]/(projects)/wiki/layout.tsx", [
+          route(":workspaceSlug/wiki", "./(all)/[workspaceSlug]/(projects)/wiki/page.tsx"),
+          // Segmen statis `materi` didaftarkan LEBIH DULU dari `:folderId`
+          // supaya react-router tidak pernah menganggap kata itu sebuah id.
+          route(":workspaceSlug/wiki/materi/:assetId", "./(all)/[workspaceSlug]/(projects)/wiki/materi.tsx"),
+          route(":workspaceSlug/wiki/:folderId", "./(all)/[workspaceSlug]/(projects)/wiki/folder.tsx"),
+        ]),
 
         // Browse
         layout("./(all)/[workspaceSlug]/(projects)/browse/[workItem]/layout.tsx", [

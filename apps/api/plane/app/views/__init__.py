@@ -211,6 +211,12 @@ from .chat import (
 )
 from .page.wiki_access import WikiAccessEndpoint, WikiFolderAccessEndpoint
 from .page.wiki_permissions import WikiPermissionsEndpoint
+from .page.wiki_material import (
+    WikiMaterialEndpoint,
+    WikiMaterialPreviewEndpoint,
+    WikiMaterialSearchEndpoint,
+    WikiTopicMaterialEndpoint,
+)
 
 from .search.base import GlobalSearchEndpoint, SearchEndpoint
 from .search.issue import IssueSearchEndpoint

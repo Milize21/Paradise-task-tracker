@@ -28,7 +28,11 @@ from plane.app.views import (
     InitiativeViewSet,
     PageCanEditEndpoint,
     WikiAccessEndpoint,
+    WikiMaterialEndpoint,
+    WikiMaterialPreviewEndpoint,
+    WikiMaterialSearchEndpoint,
     WikiPermissionsEndpoint,
+    WikiTopicMaterialEndpoint,
     WikiFolderAccessEndpoint,
 )
 
@@ -172,6 +176,26 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/wiki-permissions/",
         WikiPermissionsEndpoint.as_view(),
         name="wiki-permissions",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/topics/<uuid:page_id>/materials/",
+        WikiTopicMaterialEndpoint.as_view(),
+        name="wiki-topic-materials",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/search/",
+        WikiMaterialSearchEndpoint.as_view(),
+        name="wiki-material-search",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/materials/<uuid:asset_id>/",
+        WikiMaterialEndpoint.as_view(),
+        name="wiki-material",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki/materials/<uuid:asset_id>/preview/",
+        WikiMaterialPreviewEndpoint.as_view(),
+        name="wiki-material-preview",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/wiki-access/folders/<uuid:folder_id>/",

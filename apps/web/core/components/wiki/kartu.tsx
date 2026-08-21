@@ -5,7 +5,17 @@
  * See the LICENSE file for details.
  */
 
-import { ArrowRight, BookOpen, FileText, Users } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  FileSpreadsheet,
+  FileText,
+  Image as ImageIcon,
+  Music,
+  Presentation,
+  Users,
+  Video,
+} from "lucide-react";
 import { Link } from "react-router";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import type { TLogoProps } from "@plane/types";
@@ -27,39 +37,52 @@ type TKartuFolder = TKartuDasar & {
 };
 
 type TKartuMateri = TKartuDasar & {
-  cap?: string;
+  /** MIME berkasnya, penentu ikon dan label. */
+  tipe: string;
+  label: string;
+  ukuran: string;
+  /** Menu aksi, kalau orangnya boleh mengelola materi ini. */
+  aksi?: React.ReactNode;
 };
 
 const SAMPUL = "relative flex h-[132px] items-center justify-center overflow-hidden";
 const KARTU =
-  "group flex flex-col overflow-hidden rounded-lg border border-subtle bg-layer-2 transition-shadow duration-200 hover:border-strong hover:shadow-raised-200 focus-visible:border-strong";
+  "group relative flex flex-col overflow-hidden rounded-lg border border-subtle bg-layer-2 transition-shadow duration-200 hover:border-strong hover:shadow-raised-200 focus-visible:border-strong";
 
-/** Ikon halaman kalau ada, kalau tidak ikon bawaan menurut jenis kartunya. */
-function IkonSampul({ logoProps, fallback }: { logoProps?: TLogoProps; fallback: React.ReactNode }) {
-  if (logoProps?.in_use) {
-    return (
-      <span className="grid size-16 place-items-center rounded-2xl bg-white/20 text-white backdrop-blur-[1px]">
-        <Logo logo={logoProps} size={34} type="lucide" />
-      </span>
-    );
-  }
-  return <span className="text-white/95">{fallback}</span>;
+/** Ikon yang menjawab "ini berkas apa" dari jauh, sebelum judulnya terbaca. */
+function IkonBerkas({ tipe }: { tipe: string }) {
+  const kelas = "size-12";
+  if (tipe.startsWith("image/")) return <ImageIcon className={kelas} strokeWidth={1.5} />;
+  if (tipe.startsWith("video/")) return <Video className={kelas} strokeWidth={1.5} />;
+  if (tipe.startsWith("audio/")) return <Music className={kelas} strokeWidth={1.5} />;
+  if (tipe.includes("spreadsheetml") || tipe === "application/vnd.ms-excel")
+    return <FileSpreadsheet className={kelas} strokeWidth={1.5} />;
+  if (tipe.includes("presentationml") || tipe === "application/vnd.ms-powerpoint")
+    return <Presentation className={kelas} strokeWidth={1.5} />;
+  return <FileText className={kelas} strokeWidth={1.5} />;
 }
 
 /**
  * Kartu Divisi atau Topik: sesuatu yang BERISI hal lain.
  *
- * Bedanya dengan kartu Materi bukan sekadar hiasan. Kartu ini menjanjikan
- * "masih ada isinya di dalam", jadi ia selalu memakai kata kerja "Lihat" dan
- * selalu menyebut berapa banyak isinya, termasuk ketika isinya nol. Folder
- * kosong yang jujur mengaku kosong jauh lebih berguna daripada folder yang
- * terlihat sama saja lalu mengecewakan setelah diklik.
+ * Ia selalu memakai kata kerja "Lihat" dan selalu menyebut berapa banyak
+ * isinya, termasuk ketika isinya nol. Folder kosong yang jujur mengaku kosong
+ * jauh lebih berguna daripada folder yang terlihat sama saja lalu mengecewakan
+ * setelah diklik.
  */
 export function KartuFolder({ to, judul, keterangan, logoProps, jumlahAnak, satuanAnak, terbuka }: TKartuFolder) {
   return (
     <Link to={to} className={KARTU}>
       <div className={SAMPUL} style={{ backgroundImage: gradienUntuk(judul) }}>
-        <IkonSampul logoProps={logoProps} fallback={<BookOpen className="size-12" strokeWidth={1.5} />} />
+        {logoProps?.in_use ? (
+          <span className="grid size-16 place-items-center rounded-2xl bg-white/20 text-white backdrop-blur-[1px]">
+            <Logo logo={logoProps} size={34} type="lucide" />
+          </span>
+        ) : (
+          <span className="text-white/95">
+            <BookOpen className="size-12" strokeWidth={1.5} />
+          </span>
+        )}
         {terbuka && (
           <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-11 font-medium text-white backdrop-blur-[1px]">
             <Users className="size-3" /> Terbuka
@@ -86,42 +109,44 @@ export function KartuFolder({ to, judul, keterangan, logoProps, jumlahAnak, satu
 }
 
 /**
- * Kartu Materi: ujung pohon, satu dokumen untuk dibaca atau ditonton.
+ * Kartu Materi: satu berkas yang sudah diunggah seseorang.
  *
- * Tombolnya bergaya garis, bukan teks polos seperti kartu folder, supaya
- * "membuka isi" dan "menelusuri lebih dalam" tidak terlihat sebagai aksi yang
- * sama. Itu satu-satunya perbedaan bentuk yang benar-benar membawa arti di
- * layar ini.
+ * Ia menyebut tipe dan ukurannya di muka, dan itu bukan hiasan. Orang di
+ * jaringan kantor berhak tahu bahwa yang akan dibuka itu video 180 MB sebelum
+ * menekannya, bukan sesudah.
  */
-export function KartuMateri({ to, judul, keterangan, logoProps, cap }: TKartuMateri) {
+export function KartuMateri({ to, judul, keterangan, tipe, label, ukuran, aksi }: TKartuMateri) {
   return (
-    <Link to={to} className={KARTU}>
-      <div className={SAMPUL} style={{ backgroundImage: gradienUntuk(judul) }}>
-        <IkonSampul logoProps={logoProps} fallback={<FileText className="size-12" strokeWidth={1.5} />} />
-      </div>
-
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="text-15 truncate font-semibold text-primary">{judul}</h3>
-        <p className="mt-1 line-clamp-1 text-12 text-tertiary">{keterangan}</p>
-
-        <div className="mt-4 flex items-center justify-between border-t border-subtle pt-3">
-          {cap ? (
-            <span className="rounded-md bg-layer-3 px-2 py-1 text-11 font-medium tracking-wide text-tertiary">
-              {cap}
-            </span>
-          ) : (
-            <span />
-          )}
-          <span className="rounded-md border border-accent-strong px-3 py-1 text-12 font-medium text-accent-primary transition-colors group-hover:bg-accent-primary group-hover:text-on-color">
-            Baca
+    <div className={KARTU}>
+      <Link to={to} className="flex flex-1 flex-col">
+        <div className={SAMPUL} style={{ backgroundImage: gradienUntuk(judul) }}>
+          <span className="text-white/95">
+            <IkonBerkas tipe={tipe} />
           </span>
         </div>
-      </div>
-    </Link>
+
+        <div className="flex flex-1 flex-col p-4">
+          <h3 className="text-15 truncate font-semibold text-primary">{judul}</h3>
+          <p className="mt-1 line-clamp-1 text-12 text-tertiary">{keterangan}</p>
+
+          <div className="mt-4 flex items-center justify-between border-t border-subtle pt-3">
+            <span className="rounded-md bg-layer-3 px-2 py-1 text-11 font-medium tracking-wide text-tertiary">
+              {label} · {ukuran}
+            </span>
+            <span className="rounded-md border border-accent-strong px-3 py-1 text-12 font-medium text-accent-primary transition-colors group-hover:bg-accent-primary group-hover:text-on-color">
+              Buka
+            </span>
+          </div>
+        </div>
+      </Link>
+
+      {/* Di luar <Link> supaya menekan menu tidak ikut membuka materinya. */}
+      {aksi && <div className="absolute top-2 right-2">{aksi}</div>}
+    </div>
   );
 }
 
-/** Kerangka kartu selagi pohonnya dimuat. Ukurannya sengaja sama persis supaya tidak ada lompatan tata letak. */
+/** Kerangka kartu selagi datanya dimuat. Ukurannya sengaja sama persis supaya tidak ada lompatan tata letak. */
 export function KartuKerangka() {
   return (
     <div className="overflow-hidden rounded-lg border border-subtle bg-layer-2">
@@ -133,4 +158,9 @@ export function KartuKerangka() {
       </div>
     </div>
   );
+}
+
+/** Grid yang dipakai ketiga tingkat, supaya lebarnya konsisten di seluruh Wiki. */
+export function GridKartu({ children }: { children: React.ReactNode }) {
+  return <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{children}</div>;
 }

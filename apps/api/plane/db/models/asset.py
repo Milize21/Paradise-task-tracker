@@ -48,6 +48,23 @@ class FileAsset(BaseModel):
         # Tidak perlu migrasi: `entity_type` CharField biasa tanpa choices, dan
         # pasangan (entity_type, entity_identifier) sudah ter-indeks.
         CHAT_ATTACHMENT = "CHAT_ATTACHMENT"
+        # Materi Wiki: SATU berkas yang berdiri sendiri di dalam sebuah Topik.
+        #
+        # Bedanya dengan PAGE_DESCRIPTION penting dan bukan soal rapi-rapian.
+        # PAGE_DESCRIPTION adalah berkas yang TERTANAM di badan sebuah dokumen:
+        # nama, ukuran, dan tipenya hidup di dalam binary Yjs, jadi tidak bisa
+        # ditanyakan lewat query, dan untuk menaruhnya orang harus membuat
+        # halaman dulu lalu mengetik di editor. WIKI_MATERIAL adalah berkasnya
+        # SENDIRI yang jadi warga kelas satu: `page` menunjuk Topik tempat ia
+        # berada, `attributes` menyimpan nama dan judulnya, `size` dan
+        # `created_by` sudah kolom sungguhan. Jadi kartu bisa menyebut
+        # "PDF, 4,2 MB, diunggah Budi" tanpa membuka apa pun, dan mengunggah
+        # materi cukup satu langkah: pilih berkas.
+        WIKI_MATERIAL = "WIKI_MATERIAL"
+        # Hasil konversi otomatis sebuah WIKI_MATERIAL ke PDF, supaya berkas
+        # Office bisa dibaca di peramban. Turunan, bukan unggahan orang: ia
+        # tidak pernah muncul sebagai materi tersendiri.
+        WIKI_MATERIAL_PREVIEW = "WIKI_MATERIAL_PREVIEW"
 
     attributes = models.JSONField(default=dict)
     asset = models.FileField(upload_to=get_upload_path, max_length=800)
@@ -101,6 +118,8 @@ class FileAsset(BaseModel):
             self.EntityTypeContext.COMMENT_DESCRIPTION,
             self.EntityTypeContext.PAGE_DESCRIPTION,
             self.EntityTypeContext.DRAFT_ISSUE_DESCRIPTION,
+            self.EntityTypeContext.WIKI_MATERIAL,
+            self.EntityTypeContext.WIKI_MATERIAL_PREVIEW,
         ]:
             return f"/api/assets/v2/workspaces/{self.workspace.slug}/projects/{self.project_id}/{self.id}/"
 

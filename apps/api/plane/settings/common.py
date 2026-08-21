@@ -377,6 +377,19 @@ CELERY_IMPORTS = (
 
 FILE_SIZE_LIMIT = int(os.environ.get("FILE_SIZE_LIMIT", 5242880))
 
+# Konversi Materi Wiki ke PDF (Yorukaze Production).
+#
+# Word, Excel, dan PowerPoint TIDAK BISA dibuka peramban mana pun. Supaya orang
+# tetap bisa membacanya di dalam aplikasi, berkasnya dikonversi jadi PDF lewat
+# LibreOffice yang dibungkus Gotenberg (MIT), lalu hasilnya disimpan dan dipakai
+# ulang. Kosongkan alamatnya untuk mematikan fitur ini; materi Office akan jatuh
+# ke tombol unduh berikut alasannya, bukan ke bingkai kosong.
+GOTENBERG_URL = os.environ.get("GOTENBERG_URL", "")
+# Di atas ambang ini konversi tidak dicoba. Konversi berjalan di dalam siklus
+# permintaan, jadi satu berkas raksasa berarti satu worker gunicorn tertahan.
+WIKI_PREVIEW_MAX_BYTES = int(os.environ.get("WIKI_PREVIEW_MAX_BYTES", 52428800))
+WIKI_PREVIEW_TIMEOUT = int(os.environ.get("WIKI_PREVIEW_TIMEOUT", 120))
+
 # Unsplash Access key
 UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY")
 # Github Access Token

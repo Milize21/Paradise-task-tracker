@@ -22,7 +22,11 @@ from ..base import BaseAPIView
 from plane.db.models import FileAsset, Workspace, Project, User, WorkspaceMember, ProjectMember, Page
 from plane.settings.storage import S3Storage
 from plane.app.permissions import allow_permission, ROLE
-from plane.utils.wiki_access import is_wiki_governed, can_edit_wiki_page
+from plane.utils.wiki_access import (
+    can_edit_wiki_page,
+    can_manage_wiki_material,
+    is_wiki_governed,
+)
 from plane.utils.cache import invalidate_cache_directly
 from plane.utils.path_validator import sanitize_filename
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
@@ -47,6 +51,9 @@ def allowed_mime_types(entity_type):
         FileAsset.EntityTypeContext.PAGE_DESCRIPTION,
         # Lampiran Obrolan: gambar, video, dan dokumen, sama seperti Wiki.
         FileAsset.EntityTypeContext.CHAT_ATTACHMENT,
+        # Materi Wiki: justru inti fiturnya, jadi seluruh tipe lampiran.
+        FileAsset.EntityTypeContext.WIKI_MATERIAL,
+        FileAsset.EntityTypeContext.WIKI_MATERIAL_PREVIEW,
     ):
         return settings.ATTACHMENT_MIME_TYPES
     return IMAGE_MIME_TYPES
@@ -578,7 +585,14 @@ class ProjectAssetEndpoint(BaseAPIView):
         ]:
             return {"issue_id": entity_id}
 
-        if entity_type == FileAsset.EntityTypeContext.PAGE_DESCRIPTION:
+        if entity_type in (
+            FileAsset.EntityTypeContext.PAGE_DESCRIPTION,
+            # Materi Wiki menempel ke halaman TOPIK tempat ia berada. Dari situ
+            # resolver ACL menelusuri naik ke folder Divisi, jadi izinnya ikut
+            # aturan yang sudah ada tanpa satu pun cabang baru.
+            FileAsset.EntityTypeContext.WIKI_MATERIAL,
+            FileAsset.EntityTypeContext.WIKI_MATERIAL_PREVIEW,
+        ):
             return {"page_id": entity_id}
 
         if entity_type == FileAsset.EntityTypeContext.COMMENT_DESCRIPTION:
@@ -607,7 +621,11 @@ class ProjectAssetEndpoint(BaseAPIView):
         # boleh oleh admin project atau anggota divisi pemilik folder, biar gate
         # ini tidak jadi celah samping dari izin halaman.
         if (
-            entity_type == FileAsset.EntityTypeContext.PAGE_DESCRIPTION
+            entity_type
+            in (
+                FileAsset.EntityTypeContext.PAGE_DESCRIPTION,
+                FileAsset.EntityTypeContext.WIKI_MATERIAL,
+            )
             and is_wiki_governed(project_id)
         ):
             page = Page.objects.filter(id=entity_identifier, workspace__slug=slug).first()
@@ -689,6 +707,22 @@ class ProjectAssetEndpoint(BaseAPIView):
     def delete(self, request, slug, project_id, pk):
         # Get the asset
         asset = FileAsset.objects.get(id=pk, workspace__slug=slug, project_id=project_id)
+
+        # ACL Wiki (fork Yorukaze Production): materi adalah berkas milik
+        # pengunggahnya. Tanpa penjaga ini, endpoint ini jadi pintu belakang
+        # yang meloloskan siapa pun anggota project untuk membuang kerja orang
+        # lain, dan aturan hapus di lapisan halaman jadi tidak ada artinya.
+        if asset.entity_type == FileAsset.EntityTypeContext.WIKI_MATERIAL and not can_manage_wiki_material(
+            request.user, asset
+        ):
+            return Response(
+                {
+                    "error": "Hanya pengunggahnya, kepala divisi pemilik folder, "
+                    "atau Super Admin yang boleh menghapus materi ini."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         # Check deleted assets
         asset.is_deleted = True
         asset.deleted_at = timezone.now()
