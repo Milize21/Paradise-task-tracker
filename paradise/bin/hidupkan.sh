@@ -112,8 +112,14 @@ fi
 # susah payah dinaikkan ikut dimatikan, di tengah proses menyalakan. `run`
 # menjalankan satu container sekali pakai, mengembalikan kode keluarnya, dan
 # tidak menyentuh apa pun yang lain.
+#
+# `-T` dan `</dev/null` dengan alasan yang sama seperti probe di lib-server.sh:
+# `run` menempelkan stdin, dan stdin yang berupa terminal membuatnya menunggu
+# aliran yang tidak akan pernah ditutup. Keluarannya tetap terlihat, yang hilang
+# cuma kemampuan mengetik ke dalamnya, dan migrasi memang tidak menanyakan
+# apa-apa.
 langkah "Lapis 2/4: migrasi database"
-if "${C[@]}" run --rm --no-deps migrator; then
+if "${C[@]}" run --rm -T --no-deps migrator </dev/null; then
   ok "migrasi selesai"
 else
   gagal "MIGRASI GAGAL. Aplikasi TIDAK dinaikkan."

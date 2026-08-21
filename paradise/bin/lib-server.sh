@@ -157,15 +157,28 @@ tunggu() {
   return 1
 }
 
-# 🔴 Tiap probe yang masuk ke dalam container DIBATASI WAKTU.
+# 🔴 Tiap probe yang masuk ke dalam container DIBATASI WAKTU dan DIPUTUS dari
+#    papan ketik.
 #
-# `docker compose exec` pada container yang menggantung akan menunggu selamanya.
-# Yang paling mahal dari itu bukan lambatnya: `sudo matikan` dan `sudo status`
-# justru paling dibutuhkan ketika ada yang menggantung, dan perintah yang ikut
-# membeku pada saat itu adalah perintah yang tidak ada gunanya. Lebih baik
-# menjawab "tidak menjawab" dalam 15 detik daripada benar tapi tidak pernah
-# selesai.
-batas_waktu() { timeout "${1:-15}" "${@:2}"; }
+# Dua hal berbeda, dan yang kedua ditemukan justru saat perintah ini pertama kali
+# dijalankan manusia di terminal sungguhan.
+#
+# SATU, batas waktu. `docker compose exec` pada container yang menggantung akan
+# menunggu selamanya, dan `sudo status` justru paling dibutuhkan ketika ada yang
+# menggantung. `-k 5` menyusulkan KILL lima detik sesudah TERM, karena klien
+# docker yang sedang menempel pada aliran data tidak selalu mau pergi hanya
+# karena diminta baik-baik.
+#
+# DUA, `</dev/null`, dan ini yang sebenarnya menyelamatkan. `docker compose exec`
+# MENEMPELKAN stdin, dan kalau stdin itu terminal sungguhan, ia menunggu aliran
+# itu ditutup, yaitu tidak pernah. Perintahnya membeku, dan Ctrl-C pun ikut
+# tertelan karena papan ketiknya sudah dipegang docker.
+#
+# ⚠️ Ini TIDAK terlihat kalau diuji lewat `ssh perintah` tanpa TTY, dan begitulah
+# skrip ini sempat lolos uji: tanpa terminal, stdin sudah kosong sejak awal.
+# Terbukti dengan `ssh -tt`: tanpa `</dev/null` menggantung sampai sambungannya
+# diputus paksa, dengan `</dev/null` selesai dalam 1 detik.
+batas_waktu() { timeout -k 5 "${1:-15}" "${@:2}" </dev/null; }
 
 probe_db()    { batas_waktu 15 "${C[@]}" exec -T plane-db pg_isready -U "$POSTGRES_USER" -q; }
 probe_redis() { batas_waktu 15 "${C[@]}" exec -T plane-redis redis-cli ping 2>/dev/null | grep -q PONG; }

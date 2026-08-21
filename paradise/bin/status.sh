@@ -229,7 +229,7 @@ bagian_lengkap() {
 
     bar "MIGRASI"
     printf '  terakhir  : %s\n' "$(psql_t -c "SELECT app||' '||name FROM django_migrations ORDER BY id DESC LIMIT 1;")"
-    tertinggal="$("${C[@]}" exec -T api python manage.py showmigrations --plan 2>/dev/null | grep -c '^\[ \]')"
+    tertinggal="$(batas_waktu 30 "${C[@]}" exec -T api python manage.py showmigrations --plan 2>/dev/null | grep -c '^\[ \]')"
     if [ "${tertinggal:-0}" = "0" ]; then
       printf '  belum jalan: 0\n'
     else
@@ -268,7 +268,7 @@ bagian_lengkap() {
   fi
 
   bar "CELERY"
-  hidup="$("${C[@]}" exec -T worker celery -A plane inspect ping -t 8 2>/dev/null | grep -c 'pong')"
+  hidup="$(batas_waktu 30 "${C[@]}" exec -T worker celery -A plane inspect ping -t 8 2>/dev/null | grep -c 'pong')"
   if [ "${hidup:-0}" -gt 0 ]; then
     ok "$hidup pekerja menjawab"
   else
@@ -279,8 +279,8 @@ bagian_lengkap() {
   # Daftarnya DIAMBIL dari beat_schedule yang sedang jalan, tidak ditulis tangan.
   # Daftar tulis tangan pasti ketinggalan begitu ada task baru, padahal justru
   # task barulah yang paling mungkin belum terdaftar.
-  terdaftar="$("${C[@]}" exec -T worker celery -A plane inspect registered -t 8 2>/dev/null)"
-  dijadwalkan="$("${C[@]}" exec -T worker python -c \
+  terdaftar="$(batas_waktu 30 "${C[@]}" exec -T worker celery -A plane inspect registered -t 8 2>/dev/null)"
+  dijadwalkan="$(batas_waktu 30 "${C[@]}" exec -T worker python -c \
     'from plane.celery import app; print("\n".join(sorted({e["task"] for e in app.conf.beat_schedule.values()})))' \
     2>/dev/null)"
   if [ -z "$dijadwalkan" ]; then
