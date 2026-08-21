@@ -4,9 +4,17 @@
 
 from plane.db.models import ProjectMember, Page
 from plane.app.permissions import ROLE
-from plane.utils.wiki_access import is_wiki_governed, can_edit_wiki_page
+from plane.utils.wiki_access import (
+    can_edit_wiki_page,
+    can_manage_wiki_page,
+    has_foreign_descendants,
+    is_division_lead,
+    is_super_admin,
+    is_wiki_governed,
+)
 
 
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
@@ -42,7 +50,7 @@ class ProjectPagePermission(BasePermission):
         # ACL Wiki (fork Yorukaze Production): di project ber-governance, hak edit ditentukan
         # kepemilikan folder per-divisi, bukan peran atau kepemilikan halaman.
         if is_wiki_governed(project_id):
-            return self._has_wiki_governed_access(request, slug, project_id, page_id, role)
+            return self._has_wiki_governed_access(request, view, slug, project_id, page_id, role)
 
         if page_id:
             # Scope the page to the project in the URL. Resolving the page by
@@ -71,32 +79,83 @@ class ProjectPagePermission(BasePermission):
         # Handle public page access
         return self._has_public_page_action_access(request, role)
 
-    def _has_wiki_governed_access(self, request, slug, project_id, page_id, role):
+    def _has_wiki_governed_access(self, request, view, slug, project_id, page_id, role):
         """Izin halaman di Wiki ber-ACL folder.
 
-        View: semua anggota project boleh. Tulis: admin project selalu boleh;
-        selain itu harus anggota divisi pemilik folder top-level. Membuat folder
-        top-level (POST tanpa parent) = admin saja.
+        Tiga hak yang sengaja dipisah, karena inilah aturan yang diminta pemilik
+        instance dan menyatukannya membuat salah satunya pasti salah:
+
+            baca            semua anggota project Wiki
+            unggah baru     anggota aktif divisi pemilik folder teratas
+            kelola yang ada pengunggahnya, kepala divisi pemilik, atau Super Admin
+
+        Perhatikan admin project Wiki TIDAK lagi otomatis lolos untuk hak ketiga.
+        Yang dimaksud "super admin" oleh pemilik instance adalah Super Admin
+        instance (God Mode), dan mereka semua sudah punya baris ProjectMember
+        role 20 di setiap project, jadi mereka tetap lolos lewat is_super_admin.
+        Yang tercabut justru admin project Wiki yang bukan Super Admin, dan itu
+        memang tujuannya.
+
+        Membuat folder Divisi (POST tanpa parent) tetap admin project saja,
+        supaya tingkat teratas tidak tercemar folder liar.
         """
         if request.method in SAFE_METHODS:
             return True
 
-        if role == ADMIN:
-            return True
+        user = request.user
+        action = getattr(view, "action", None)
 
-        # Sasaran = halaman yang diedit, atau folder induk saat membuat sub-halaman.
-        target = None
-        if page_id:
-            target = Page.objects.filter(id=page_id, workspace__slug=slug).first()
-        else:
+        # --- Membuat halaman baru -------------------------------------------
+        if not page_id:
             parent_id = request.data.get("parent")
-            if parent_id:
-                target = Page.objects.filter(id=parent_id, workspace__slug=slug).first()
+            if not parent_id:
+                # Folder Divisi = tingkat teratas, dan folder teratas tanpa baris
+                # WikiFolderAccess terkunci untuk semua orang. Jadi membuatnya
+                # harus disertai pemberian pemilik, dan itu pekerjaan admin.
+                return role == ADMIN
+            parent = Page.objects.filter(id=parent_id, workspace__slug=slug).first()
+            if parent is None:
+                return False
+            return can_edit_wiki_page(user, parent)
 
-        if target is None:
+        # --- Mengubah halaman yang sudah ada --------------------------------
+        page = Page.objects.filter(id=page_id, workspace__slug=slug).first()
+        if page is None:
             return False
 
-        return can_edit_wiki_page(request.user, target)
+        if not can_manage_wiki_page(user, page):
+            raise PermissionDenied(
+                "Hanya pengunggahnya, kepala divisi pemilik folder, atau Super Admin "
+                "yang boleh mengubah materi ini."
+            )
+
+        # Tiga penjaga struktur di bawah ini menutup lubang yang tidak tertutup
+        # oleh aturan kepemilikan, karena ketiganya merusak materi ORANG LAIN
+        # lewat operasi atas halaman milik SENDIRI.
+        if action == "archive" and has_foreign_descendants(page, user):
+            if not (is_super_admin(user) or is_division_lead(user, page)):
+                raise PermissionDenied(
+                    "Folder ini berisi materi milik orang lain, dan mengarsipkannya "
+                    "ikut menyembunyikan semuanya. Hanya kepala divisi pemilik folder "
+                    "atau Super Admin yang boleh melakukannya."
+                )
+
+        if action == "unarchive" and page.parent_id:
+            if Page.objects.filter(id=page.parent_id, archived_at__isnull=False).exists():
+                raise PermissionDenied(
+                    "Buka arsip folder induknya dulu. Kalau tidak, materi ini akan "
+                    "lepas ke tingkat teratas dan kehilangan divisi pemiliknya."
+                )
+
+        if action == "destroy":
+            if Page.objects.filter(parent_id=page.id, deleted_at__isnull=True).exists():
+                raise PermissionDenied(
+                    "Folder ini masih berisi materi. Pindahkan atau hapus isinya dulu. "
+                    "Menghapus folder tidak ikut menghapus isinya, melainkan melempar "
+                    "isinya ke tingkat teratas tanpa divisi pemilik."
+                )
+
+        return True
 
     def _check_project_member_access(self, request, slug, project_id):
         """

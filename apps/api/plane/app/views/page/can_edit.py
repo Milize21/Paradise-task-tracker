@@ -8,6 +8,7 @@ from types import SimpleNamespace
 
 # Third party imports
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 # Module imports
@@ -38,5 +39,12 @@ class PageCanEditEndpoint(BaseAPIView):
             kwargs={"slug": slug, "project_id": str(project_id), "page_id": str(page_id)}
         )
 
-        can_edit = bool(ProjectPagePermission().has_permission(probe_request, probe_view))
+        try:
+            can_edit = bool(ProjectPagePermission().has_permission(probe_request, probe_view))
+        except PermissionDenied:
+            # Penegaknya kini menolak dengan alasan tertulis supaya pemakai REST
+            # tahu kenapa. Di sini yang ditanya cuma boleh atau tidak, dan
+            # penolakan itu jawabannya, bukan galat.
+            can_edit = False
+
         return Response({"can_edit": can_edit}, status=status.HTTP_200_OK)

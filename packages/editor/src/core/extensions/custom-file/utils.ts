@@ -81,6 +81,10 @@ const FRAMEABLE_TEXT_MIME_TYPES = new Set([
 ]);
 
 export const getFilePreviewKind = (mimeType: string): TFilePreviewKind => {
+  // Matroska lolos `video/` tapi tidak ada peramban yang memutarnya. Tanpa
+  // pengecualian ini pemakai melihat pemutar hitam yang diam saja, dan itu
+  // lebih membingungkan daripada kartu unduh yang jujur.
+  if (mimeType === "video/x-matroska") return "none";
   if (mimeType.startsWith("video/")) return "video";
   if (mimeType.startsWith("audio/")) return "audio";
   if (mimeType.startsWith("image/")) return "image";

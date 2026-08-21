@@ -68,6 +68,19 @@ class WikiAccessEndpoint(BaseAPIView):
                     .exclude(id=project_id)
                     .order_by("name")
                 ],
+                # Folder "General": semua orang boleh mengunggah.
+                #
+                # Tidak ada mode ketiga di model, dan memang tidak perlu ada.
+                # Seluruh anggota Wiki adalah ProjectMember project Wiki, jadi
+                # menunjuk project Wiki SENDIRI sebagai divisi pemilik berarti
+                # "siapa pun anggota Wiki boleh mengunggah di sini", dievaluasi
+                # oleh resolver yang sama tanpa satu pun cabang baru.
+                #
+                # Nilainya dikirim terpisah, bukan diselipkan ke
+                # available_divisions, supaya UI bisa menamainya apa adanya
+                # ("Semua anggota Wiki") alih-alih menampilkan project Wiki
+                # sebagai kalau-kalau ia sebuah divisi.
+                "general_division_id": str(project_id),
             },
             status=status.HTTP_200_OK,
         )

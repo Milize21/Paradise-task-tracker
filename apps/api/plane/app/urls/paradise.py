@@ -28,6 +28,7 @@ from plane.app.views import (
     InitiativeViewSet,
     PageCanEditEndpoint,
     WikiAccessEndpoint,
+    WikiPermissionsEndpoint,
     WikiFolderAccessEndpoint,
 )
 
@@ -166,6 +167,11 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/wiki-access/",
         WikiAccessEndpoint.as_view(),
         name="wiki-access",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/wiki-permissions/",
+        WikiPermissionsEndpoint.as_view(),
+        name="wiki-permissions",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/wiki-access/folders/<uuid:folder_id>/",

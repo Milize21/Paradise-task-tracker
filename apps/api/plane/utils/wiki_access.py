@@ -68,3 +68,102 @@ def can_edit_wiki_page(user, page):
         is_active=True,
         deleted_at__isnull=True,
     ).exists()
+
+
+# --- Hak KELOLA (sunting, arsip, hapus, kunci) atas materi yang SUDAH ada -----
+#
+# Hak UNGGAH dan hak KELOLA sengaja berbeda, dan bedanya itu inti aturan yang
+# diminta pemilik instance:
+#
+#   unggah materi baru  -> siapa pun anggota aktif divisi pemilik folder
+#   kelola materi lama  -> pengunggahnya sendiri, kepala divisi pemilik, atau
+#                          Super Admin instance
+#
+# Jadi satu divisi tetap bisa mengisi Wiki-nya bersama-sama, tapi tidak ada yang
+# bisa membuang atau menimpa kerja rekannya. "Menimpa" ikut dikunci karena
+# mengosongkan isi sebuah materi hasilnya sama saja dengan menghapusnya.
+#
+# Kepala divisi ikut dimasukkan bukan demi kelonggaran, melainkan demi jalan
+# keluar: tidak ada alih kepemilikan halaman di Plane, jadi tanpa kepala divisi
+# setiap materi milik karyawan yang resign hanya bisa disentuh Super Admin,
+# selamanya.
+
+_ROLE_ADMIN = 20
+
+
+def is_super_admin(user):
+    """True kalau `user` Super Admin instance (God Mode).
+
+    Sengaja memanggil `super_admin_user_ids()` alih-alih menulis query sendiri:
+    sudah ada enam pemakai lain, dan definisi Super Admin yang bercabang dua
+    adalah cara paling rapi untuk membocorkan akses tanpa sadar.
+    """
+    from plane.db.superadmin import super_admin_user_ids
+
+    if user is None or getattr(user, "is_anonymous", True):
+        return False
+    return user.id in super_admin_user_ids()
+
+
+def is_division_lead(user, page):
+    """True kalau `user` Admin (role 20) di salah satu divisi pemilik folder teratas."""
+    from plane.db.models import ProjectMember
+
+    if user is None or getattr(user, "is_anonymous", True):
+        return False
+
+    division_ids = owning_division_ids(top_level_folder(page))
+    if not division_ids:
+        return False
+
+    return ProjectMember.objects.filter(
+        member=user,
+        project_id__in=division_ids,
+        role=_ROLE_ADMIN,
+        is_active=True,
+        deleted_at__isnull=True,
+    ).exists()
+
+
+def can_manage_wiki_page(user, page):
+    """True kalau `user` boleh menyunting, mengarsip, atau menghapus `page`."""
+    if user is None or getattr(user, "is_anonymous", True):
+        return False
+    if page.owned_by_id == user.id:
+        return True
+    if is_super_admin(user):
+        return True
+    return is_division_lead(user, page)
+
+
+def has_foreign_descendants(page, user, max_depth=_MAX_DEPTH):
+    """True kalau ada keturunan `page` yang diunggah orang LAIN.
+
+    Dipakai sebelum mengarsipkan folder. Mengarsipkan folder di Plane menyeret
+    SELURUH keturunannya lewat satu SQL rekursif tanpa cek kepemilikan, jadi
+    tanpa pemeriksaan ini pemilik sebuah Topik bisa menyembunyikan materi satu
+    divisi hanya dengan mengarsipkan foldernya sendiri.
+
+    Ditelusuri per tingkat, bukan rekursif per baris: kedalaman Wiki cuma tiga,
+    jadi ini paling banyak tiga query, dan batas kedalaman menjaga dari rantai
+    parent yang melingkar.
+    """
+    from plane.db.models import Page
+
+    frontier = [page.id]
+    depth = 0
+    seen = {page.id}
+    while frontier and depth < max_depth:
+        children = list(
+            Page.objects.filter(parent_id__in=frontier, deleted_at__isnull=True).values_list(
+                "id", "owned_by_id"
+            )
+        )
+        if not children:
+            return False
+        if any(owner_id != user.id for _, owner_id in children):
+            return True
+        frontier = [child_id for child_id, _ in children if child_id not in seen]
+        seen.update(frontier)
+        depth += 1
+    return False

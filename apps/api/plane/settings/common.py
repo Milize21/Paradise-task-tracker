@@ -393,7 +393,16 @@ POSTHOG_HOST = os.environ.get("POSTHOG_HOST", False)
 # Skip environment variable configuration
 SKIP_ENV_VAR = os.environ.get("SKIP_ENV_VAR", "1") == "1"
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("FILE_SIZE_LIMIT", 5242880))
+# JANGAN sambungkan lagi ke FILE_SIZE_LIMIT.
+#
+# Dulu keduanya membaca env yang sama, jadi menaikkan batas unggah ke 250 MB
+# diam-diam juga menyuruh Django bersedia menyerap body permintaan 250 MB KE
+# RAM, di setiap worker gunicorn sekaligus. Itu jalur kehabisan memori yang
+# tidak ada hubungannya dengan unggahan berkas: berkas di aplikasi ini tidak
+# pernah lewat Django sama sekali (nol pemakaian `request.FILES` di seluruh
+# repo), ia diunggah langsung ke MinIO lewat URL presigned. Yang benar-benar
+# lewat sini cuma body JSON biasa, dan 10 MB sudah kelewat longgar untuk itu.
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("DATA_UPLOAD_MAX_MEMORY_SIZE", 10485760))
 
 # Cookie Settings
 SESSION_COOKIE_SECURE = secure_origins
@@ -528,6 +537,12 @@ ATTACHMENT_MIME_TYPES = [
     "video/quicktime",
     "video/x-msvideo",
     "video/x-ms-wmv",
+    # Keluaran bawaan OBS. Peramban tidak bisa memutarnya, jadi ia sengaja
+    # TIDAK diberi pemutar sebaris di editor dan jatuh ke kartu unduh. Tetap
+    # diterima karena pemilik instance meminta semua tipe berkas boleh masuk,
+    # dan menolaknya di server berarti orang kehilangan rekamannya, bukan
+    # sekadar kehilangan pratinjaunya.
+    "video/x-matroska",
     # Archives
     "application/zip",
     "application/x-rar",

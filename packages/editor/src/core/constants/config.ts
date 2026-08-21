@@ -49,6 +49,9 @@ export const ACCEPTED_ATTACHMENT_MIME_TYPES = [
   "video/quicktime",
   "video/x-msvideo",
   "video/x-ms-wmv",
+  // .mkv: diterima supaya rekaman OBS tidak ditolak, tapi peramban tidak bisa
+  // memutarnya, jadi getFilePreviewKind sengaja menjatuhkannya ke kartu unduh.
+  "video/x-matroska",
   "application/zip",
   "application/x-rar-compressed",
   "application/x-tar",

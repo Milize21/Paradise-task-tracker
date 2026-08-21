@@ -210,6 +210,7 @@ from .chat import (
     ChatUnreadEndpoint,
 )
 from .page.wiki_access import WikiAccessEndpoint, WikiFolderAccessEndpoint
+from .page.wiki_permissions import WikiPermissionsEndpoint
 
 from .search.base import GlobalSearchEndpoint, SearchEndpoint
 from .search.issue import IssueSearchEndpoint
