@@ -182,8 +182,11 @@ bagian_lengkap() {
   proyek="$(basename "$AKAR_PARADISE")"
   for v in "${VOLUME_PENTING[@]}"; do
     if titik="$(docker volume inspect -f '{{.Mountpoint}}' "${proyek}_${v}" 2>/dev/null)"; then
+      # Ukurannya hanya terbaca sebagai root: isi volume ada di dalam
+      # /var/lib/docker yang tertutup untuk pengguna biasa. Dikatakan apa
+      # adanya, bukan dibiarkan jadi tanda tanya yang terbaca seperti kerusakan.
       besar="$(du -sh "$titik" 2>/dev/null | cut -f1)"
-      printf '  ada     %-28s %s\n' "${proyek}_${v}" "${besar:-?}"
+      printf '  ada     %-28s %s\n' "${proyek}_${v}" "${besar:-(ukuran butuh sudo)}"
     else
       printf '  %sTIDAK ADA %s%s\n' "$MERAH" "${proyek}_${v}" "$NOL"
       catat "volume ${proyek}_${v} hilang"
