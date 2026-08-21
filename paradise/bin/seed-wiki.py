@@ -1,6 +1,25 @@
 # Seed Workspace Wiki, Paradise Task Tracker (Yorukaze Production)
 # Jalankan: docker exec -i pradise_plane-api-1 python manage.py shell < paradise/bin/seed-wiki.py
-# Idempotent: aman dijalankan ulang (get_or_create semua).
+#
+# !!! JANGAN JALANKAN LAGI DI PRODUKSI TANPA MEMBACA INI DULU !!!
+#
+# Berkas ini hanya membuat Wiki dari NOL. Ia sudah tidak menggambarkan produksi
+# dan "idempoten"-nya lebih dangkal daripada kelihatannya:
+#
+#   1. Kunci get_or_create halamannya (workspace, name, owned_by), BUKAN
+#      (project, name). Begitu sebuah folder diganti namanya, menjalankan ulang
+#      berkas ini akan MELAHIRKAN LAGI folder lama dengan nama di ROOT_PAGES,
+#      di samping yang sudah ada.
+#   2. Folder yang lahir dari sini TIDAK punya divisi pemilik, dan folder tanpa
+#      pemilik di Wiki ber-governance bukan berarti bebas, melainkan TERKUNCI
+#      untuk semua orang kecuali admin project.
+#   3. Ia tidak menyentuh WikiGovernedProject maupun WikiFolderAccess sama
+#      sekali. Yang mengurus keduanya adalah `seed-wiki-access.py`.
+#
+# Jadi: untuk instance BARU, jalankan berkas ini lalu `seed-wiki-access.py`.
+# Untuk produksi yang sudah hidup, jangan sentuh berkas ini.
+#
+# Idempotent: aman dijalankan ulang (get_or_create semua), dengan catatan di atas.
 #
 # Membuat project "Wiki" perusahaan: public, semua user aktif jadi Member (bisa menulis),
 # hanya fitur Pages yang aktif, di-seed halaman root per divisi + halaman umum.
