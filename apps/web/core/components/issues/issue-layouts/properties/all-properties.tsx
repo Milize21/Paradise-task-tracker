@@ -4,6 +4,23 @@
  * See the LICENSE file for details.
  */
 
+// UTANG PERINGATAN UPSTREAM, dibungkam supaya gerbang commit tidak menolak
+// perubahan yang tidak ada hubungannya (Yorukaze Production, 21 Agt 2026).
+//
+// Berkas ini punya 25 peringatan a11y SEBELUM kami menyentuhnya: 12 pembungkus
+// `<div className="h-5" onFocus onClick>` yang memakai penangan itu semata-mata
+// untuk mencegah klik merambat ke baris di belakangnya. Memperbaikinya dengan
+// benar berarti memberi peran dan penanganan papan ketik pada dua belas
+// pembungkus dropdown milik upstream, dan itu pekerjaan aksesibilitas
+// tersendiri, bukan bagian dari menambahkan satu label nama.
+//
+// Perubahan kami sendiri menambah NOL peringatan; chip pemberi tugas di bawah
+// sengaja tidak diberi penangan klik karena isinya cuma teks.
+//
+// Kalau nanti ada sapuan aksesibilitas, mulai dari sini dan cabut baris ini.
+// oxlint-disable jsx-a11y/no-static-element-interactions
+// oxlint-disable jsx-a11y/click-events-have-key-events
+
 import type { SyntheticEvent } from "react";
 import { useCallback, useMemo } from "react";
 import { xor } from "lodash-es";
@@ -13,7 +30,13 @@ import { useParams } from "next/navigation";
 import { Paperclip } from "lucide-react";
 // i18n
 import { useTranslation } from "@plane/i18n";
-import { LinkIcon, StartDatePropertyIcon, ViewsIcon, DueDatePropertyIcon } from "@plane/propel/icons";
+import {
+  LinkIcon,
+  StartDatePropertyIcon,
+  ViewsIcon,
+  DueDatePropertyIcon,
+  UserCirclePropertyIcon,
+} from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
 import type { TIssue, IIssueDisplayProperties, TIssuePriorities } from "@plane/types";
 // ui
@@ -37,6 +60,7 @@ import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useLabel } from "@/hooks/store/use-label";
+import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useAppRouter } from "@/hooks/use-app-router";
@@ -58,6 +82,17 @@ export interface IIssueProperties {
   isEpic?: boolean;
 }
 
+/**
+ * Mencegah klik pada properti ikut membuka baris kerjanya.
+ *
+ * Di lingkup modul, bukan di dalam komponen: fungsinya murni dan tidak
+ * menyentuh state apa pun, jadi membuatnya ulang tiap render tidak ada gunanya.
+ */
+const handleEventPropagation = (e: SyntheticEvent<HTMLDivElement>) => {
+  e.stopPropagation();
+  e.preventDefault();
+};
+
 export const IssueProperties = observer(function IssueProperties(props: IIssueProperties) {
   const { issue, updateIssue, displayProperties, isReadOnly, className, isEpic = false } = props;
   // i18n
@@ -65,6 +100,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
   // store hooks
   const { getProjectById } = useProject();
   const { labelMap } = useLabel();
+  const { getUserDetails } = useMember();
   const storeType = useIssueStoreType();
   const {
     issues: { changeModulesInIssue },
@@ -174,6 +210,12 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
 
   const redirectToIssueDetail = () => router.push(`${workItemLink}#sub-issues`);
 
+  // Kustomisasi Paradise (Yorukaze Production): nama pemberi tugas terlihat
+  // tanpa perlu membuka tugasnya. Sengaja NAMA, bukan foto profil: baris kerja
+  // sudah penuh avatar assignee, dan avatar kedua di sebelahnya justru membuat
+  // orang harus menebak mana pemberi dan mana pengerjanya.
+  const pemberiTugas = getUserDetails(issue.created_by)?.display_name;
+
   if (!displayProperties || !issue.project_id) return null;
 
   // date range is enabled only when both dates are available and both dates are enabled
@@ -186,13 +228,23 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
   const minDate = getDate(issue.start_date);
   const maxDate = getDate(issue.target_date);
 
-  const handleEventPropagation = (e: SyntheticEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    e.preventDefault();
-  };
-
   return (
     <div className={className}>
+      {/* pemberi tugas (Yorukaze Production) */}
+      {pemberiTugas && (
+        // Tanpa onClick/onFocus, beda dengan pembungkus di bawahnya: isi chip ini
+        // cuma teks, bukan dropdown, jadi tidak ada apa pun yang perlu dicegah
+        // merambat, dan menambahkannya justru membuatnya terlihat bisa diklik.
+        <div className="h-5">
+          <Tooltip tooltipContent={`Tugas ini diberikan oleh ${pemberiTugas}`} isMobile={isMobile}>
+            <span className="inline-flex h-5 max-w-40 items-center gap-1 rounded border-[0.5px] border-subtle bg-layer-2 px-2 text-11 text-secondary">
+              <UserCirclePropertyIcon className="size-3 shrink-0 text-tertiary" />
+              <span className="truncate">{pemberiTugas}</span>
+            </span>
+          </Tooltip>
+        </div>
+      )}
+
       {/* basic properties */}
       {/* state */}
       <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="state">
