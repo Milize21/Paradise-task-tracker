@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # Kustomisasi Paradise Task Tracker: keadaan server, menyeluruh (Yorukaze Production)
 #
-#   sudo status              # potret lengkap sekali jalan
-#   sudo status --pantau     # pantau langsung, menyegar tiap 5 detik
-#   sudo status --pantau 2   # ganti selangnya
-#   sudo status --ringkas    # hanya bagian yang cepat, tanpa kueri database
+#   sudo status              # potret lengkap sekali jalan (sekitar 30 detik)
+#   sudo status --ringkas    # hanya bagian yang cepat (sekitar 10 detik)
+#   sudo status --pantau     # ulangi bagian cepat terus-menerus, jeda 5 detik
+#   sudo status --pantau 30  # ganti jedanya
+#
+# Potret lengkap lebih lama karena ia memuat Django di dalam container untuk
+# memeriksa migrasi dan task terjadwal. Itu wajar, dan itulah sebabnya --pantau
+# tidak ikut melakukannya.
 #
 # Baca-saja. Tidak menyentuh, menyalakan, atau mematikan apa pun, jadi aman
 # dijalankan kapan saja termasuk saat sedang ada masalah.
@@ -37,7 +41,7 @@ while [ "$i" -lt "${#sisa_arg[@]}" ]; do
       if [ -n "$berikut" ] && [ "$berikut" -eq "$berikut" ] 2>/dev/null; then SELANG="$berikut"; i=$((i + 1)); fi
       ;;
     --ringkas) RINGKAS=1 ;;
-    -h|--help) sed -n '2,15p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,19p' "$0"; exit 0 ;;
     *) echo "Pilihan tidak dikenal: ${sisa_arg[$i]}" >&2; exit 2 ;;
   esac
   i=$((i + 1))
@@ -268,34 +272,45 @@ bagian_lengkap() {
   fi
 
   bar "CELERY"
-  hidup="$(batas_waktu 30 "${C[@]}" exec -T worker celery -A plane inspect ping -t 8 2>/dev/null | grep -c 'pong')"
-  if [ "${hidup:-0}" -gt 0 ]; then
+  # SATU panggilan untuk tiga jawaban, dan itu bukan kerapian melainkan waktu.
+  # Tiap `exec` ke container worker memuat Django dari nol, dan itu sepuluh detik
+  # sekali jalan; versi sebelumnya memanggilnya TIGA KALI (ping, registered,
+  # beat_schedule) sehingga tiga puluh detik dari lima puluh satu detik seluruh
+  # layar ini dihabiskan memuat Django yang sama berulang-ulang.
+  #
+  # Daftar task DIAMBIL dari beat_schedule yang sedang jalan, tidak ditulis
+  # tangan. Daftar tulis tangan pasti ketinggalan begitu ada task baru, padahal
+  # justru task barulah yang paling mungkin belum terdaftar.
+  celery_out="$(batas_waktu 45 "${C[@]}" exec -T worker python -c '
+from plane.celery import app
+i = app.control.inspect(timeout=6)
+print("PEKERJA", len(i.ping() or {}))
+terdaftar = {t for v in (i.registered() or {}).values() for t in v}
+for t in sorted({e["task"] for e in app.conf.beat_schedule.values()}):
+    print("TASK", "ya" if t in terdaftar else "tidak", t)
+' 2>/dev/null)"
+
+  hidup="$(printf '%s\n' "$celery_out" | awk '$1=="PEKERJA"{print $2; exit}')"
+  if [ "${hidup:-0}" -gt 0 ] 2>/dev/null; then
     ok "$hidup pekerja menjawab"
   else
     gagal "tidak ada pekerja yang menjawab"
     catat "tidak ada pekerja Celery yang menjawab"
   fi
 
-  # Daftarnya DIAMBIL dari beat_schedule yang sedang jalan, tidak ditulis tangan.
-  # Daftar tulis tangan pasti ketinggalan begitu ada task baru, padahal justru
-  # task barulah yang paling mungkin belum terdaftar.
-  terdaftar="$(batas_waktu 30 "${C[@]}" exec -T worker celery -A plane inspect registered -t 8 2>/dev/null)"
-  dijadwalkan="$(batas_waktu 30 "${C[@]}" exec -T worker python -c \
-    'from plane.celery import app; print("\n".join(sorted({e["task"] for e in app.conf.beat_schedule.values()})))' \
-    2>/dev/null)"
-  if [ -z "$dijadwalkan" ]; then
+  if ! printf '%s\n' "$celery_out" | grep -q '^TASK '; then
     info "(beat_schedule tidak terbaca dari worker)"
   else
     printf '  Task terjadwal:\n'
-    while read -r t; do
-      [ -n "$t" ] || continue
-      if echo "$terdaftar" | grep -qF "$t"; then
-        printf '    %-58s terdaftar\n' "$t"
+    while read -r penanda status tugas; do
+      [ "$penanda" = "TASK" ] || continue
+      if [ "$status" = "ya" ]; then
+        printf '    %-58s terdaftar\n' "$tugas"
       else
-        printf '    %-58s %sTIDAK TERDAFTAR%s\n' "$t" "$MERAH" "$NOL"
-        catat "task terjadwal $t tidak terdaftar di worker"
+        printf '    %-58s %sTIDAK TERDAFTAR%s\n' "$tugas" "$MERAH" "$NOL"
+        catat "task terjadwal $tugas tidak terdaftar di worker"
       fi
-    done <<< "$dijadwalkan"
+    done <<< "$celery_out"
     info "(beat saja tidak cukup - task tak terdaftar dibuang diam-diam)"
   fi
 
@@ -364,13 +379,18 @@ if [ "$PANTAU" = "1" ]; then
   # ke detik; memutarnya tiap 5 detik cuma membebani server yang mungkin sedang
   # bermasalah, persis saat ia paling tidak boleh dibebani.
   trap 'printf "\n"; exit 0' INT
+  lalu=""
   while true; do
+    awal=$(date +%s)
+    keluaran="$(MASALAH=(); bagian_cepat; vonis)"
+    # Digambar ke layar SESUDAH semuanya terkumpul, bukan sambil dikerjakan.
+    # Satu putaran butuh sekitar sepuluh detik, dan menggambar sedikit demi
+    # sedikit selama itu membuat layarnya terlihat seperti sedang tersendat.
     clear
-    printf '%sPANTAU LANGSUNG%s   tiap %sd   Ctrl-C untuk berhenti   %s\n' \
-      "$TEBAL" "$NOL" "$SELANG" "$(date '+%H:%M:%S')"
-    MASALAH=()
-    bagian_cepat
-    vonis
+    printf '%sPANTAU LANGSUNG%s   %s   putaran sebelumnya %s   jeda %sd   Ctrl-C berhenti\n' \
+      "$TEBAL" "$NOL" "$(date '+%H:%M:%S')" "${lalu:-?}" "$SELANG"
+    printf '%s\n' "$keluaran"
+    lalu="$(( $(date +%s) - awal ))d"
     sleep "$SELANG"
   done
 fi
