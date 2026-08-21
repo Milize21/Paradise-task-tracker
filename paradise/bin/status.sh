@@ -337,10 +337,21 @@ bagian_lengkap() {
 # ===========================================================================
 vonis() {
   bar "KESIMPULAN"
+  # 🔴 Vonis yang tidak menyebutkan apa yang TIDAK diperiksa adalah vonis yang
+  # menyesatkan. `--ringkas` dan `--pantau` melewati migrasi, sertifikat, backup,
+  # dan reboot tertunda; tanpa baris ini, keduanya bisa mencetak "SEMUA SEHAT"
+  # pada server yang sertifikatnya tinggal tiga hari.
+  local sebagian=""
+  [ "$RINGKAS" = "1" ] || [ "$PANTAU" = "1" ] &&
+    sebagian="  (hanya bagian cepat; migrasi, sertifikat, backup, dan reboot TIDAK diperiksa)"
+
   if [ "${#MASALAH[@]}" -eq 0 ]; then
-    printf '  %sSEMUA SEHAT.%s Tidak ada yang perlu dikerjakan.\n\n' "$HIJAU$TEBAL" "$NOL"
+    printf '  %sSEMUA SEHAT.%s Tidak ada yang perlu dikerjakan.\n' "$HIJAU$TEBAL" "$NOL"
+    [ -n "$sebagian" ] && printf '%s\n' "$sebagian"
+    printf '\n'
     return 0
   fi
+  [ -n "$sebagian" ] && printf '%s\n' "$sebagian"
   printf '  %s%s hal perlu dilihat:%s\n' "$MERAH$TEBAL" "${#MASALAH[@]}" "$NOL"
   for m in "${MASALAH[@]}"; do printf '    - %s\n' "$m"; done
   printf '\n'
