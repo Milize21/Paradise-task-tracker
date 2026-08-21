@@ -123,9 +123,14 @@ function WikiAccessSettingsPage() {
             <h3 className="text-xl font-medium text-primary">Akses Wiki per Folder</h3>
           </div>
           <p className="text-sm text-tertiary">
-            Semua anggota project tetap bisa membaca seluruh Wiki. Yang diatur di sini adalah siapa yang boleh mengedit:
-            hanya anggota divisi pemilik folder. Sub-halaman mengikuti folder induknya, dan admin project selalu bisa
-            mengedit.
+            Semua anggota project tetap bisa membaca seluruh Wiki. Yang diatur di sini adalah siapa yang boleh{" "}
+            <span className="font-medium text-secondary">menaruh materi baru</span>: anggota divisi pemilik folder.
+          </p>
+          <p className="text-sm text-tertiary">
+            Materi yang sudah ada hanya bisa diubah atau dihapus oleh pengunggahnya sendiri, kepala divisi pemilik
+            folder, atau Super Admin. Admin project yang bukan Super Admin{" "}
+            <span className="font-medium text-secondary">tidak</span> bisa membereskan materi orang lain. Sub-halaman
+            selalu mengikuti folder teratasnya.
           </p>
         </div>
 
@@ -159,6 +164,7 @@ function WikiAccessSettingsPage() {
                 ) : (
                   state.folders.map((folder) => {
                     const owned = new Set(folder.divisions.map((d) => d.id));
+                    const terbuka = owned.has(state.general_division_id);
                     return (
                       <div key={folder.id} className="rounded-md border border-subtle px-3 py-2.5">
                         <div className="flex items-center justify-between">
@@ -166,14 +172,36 @@ function WikiAccessSettingsPage() {
                           {savingFolderId === folder.id ? (
                             <span className="text-xs text-tertiary">menyimpan…</span>
                           ) : (
-                            owned.size === 0 && <span className="text-xs text-tertiary">admin saja</span>
+                            owned.size === 0 && (
+                              <span className="text-xs text-tertiary">terkunci, admin project saja</span>
+                            )
                           )}
                         </div>
+
+                        {/* Folder General. Bukan mode ketiga di model: pemiliknya
+                            project Wiki itu sendiri, dan karena semua karyawan
+                            adalah anggotanya, artinya siapa pun boleh menaruh
+                            materi di sini. Ditaruh terpisah dan disebut apa
+                            adanya, bukan diselipkan sebagai salah satu divisi,
+                            supaya tidak ada yang mencentangnya tanpa sadar. */}
+                        <label className="text-xs mt-2 flex items-center gap-1.5 font-medium text-secondary">
+                          <input
+                            type="checkbox"
+                            checked={terbuka}
+                            disabled={savingFolderId === folder.id}
+                            onChange={(e) =>
+                              void handleToggleDivision(folder.id, state.general_division_id, e.target.checked)
+                            }
+                            className="size-3.5"
+                          />
+                          Terbuka untuk semua karyawan (General)
+                        </label>
+
                         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
                           {state.available_divisions.map((division) => (
                             <label
                               key={division.id}
-                              className="text-xs flex items-center gap-1.5 text-secondary"
+                              className={`text-xs flex items-center gap-1.5 ${terbuka ? "text-placeholder" : "text-secondary"}`}
                               title={division.name}
                             >
                               <input
@@ -187,6 +215,12 @@ function WikiAccessSettingsPage() {
                             </label>
                           ))}
                         </div>
+                        {terbuka && (
+                          <p className="text-xs mt-1.5 text-tertiary">
+                            Folder terbuka, jadi centang divisi di atas tidak menambah apa-apa lagi. Hak mengubah dan
+                            menghapus tetap milik masing-masing pengunggah.
+                          </p>
+                        )}
                       </div>
                     );
                   })

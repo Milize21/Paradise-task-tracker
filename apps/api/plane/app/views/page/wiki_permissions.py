@@ -49,10 +49,12 @@ class WikiPermissionsEndpoint(BaseAPIView):
         )
 
         owners = {}
-        for folder_id, division_id in WikiFolderAccess.objects.filter(
+        label = {}
+        for folder_id, division_id, identifier, name in WikiFolderAccess.objects.filter(
             folder_id__in=folders, project_id=project_id, deleted_at__isnull=True
-        ).values_list("folder_id", "division_id"):
+        ).values_list("folder_id", "division_id", "division__identifier", "division__name"):
             owners.setdefault(folder_id, set()).add(division_id)
+            label[division_id] = {"identifier": identifier, "name": name}
 
         # Satu query untuk seluruh keanggotaan aktif si pemakai, bukan satu per
         # folder. Di 83 anggota dan 10 folder bedanya belum terasa; di angka
@@ -80,6 +82,18 @@ class WikiPermissionsEndpoint(BaseAPIView):
                     # Folder "General": pemiliknya project Wiki itu sendiri,
                     # jadi seluruh anggota Wiki boleh mengunggah ke sini.
                     "is_general": project_id in division_ids,
+                    # Siapa yang mengurus folder ini. Sengaja terlihat oleh semua
+                    # orang, bukan cuma admin: folder yang tidak punya nama
+                    # penanggung jawab adalah folder yang pelan-pelan jadi tong
+                    # sampah, dan itu pola yang sudah terdokumentasi di mana-mana.
+                    "divisions": sorted(
+                        (
+                            label[d]
+                            for d in division_ids
+                            if d in label and d != project_id
+                        ),
+                        key=lambda x: x["name"],
+                    ),
                 }
             )
 

@@ -20,6 +20,8 @@ import { PageHead } from "@/components/core/page-title";
 import { DetailedEmptyState } from "@/components/empty-state/detailed-empty-state-root";
 import { PagesListRoot } from "@/components/pages/list/root";
 import { PagesListView } from "@/components/pages/pages-list-view";
+import { BatasGalatWiki } from "@/components/wiki/batas-galat";
+import { PustakaWiki } from "@/components/wiki/pustaka";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
@@ -33,6 +35,18 @@ const getPageType = (pageType?: string | null): TPageNavigationTabs => {
   if (pageType === "archived") return "archived";
   return "public";
 };
+
+/**
+ * Wiki perusahaan adalah project biasa ber-identifier WIKI, dan halaman ini
+ * memang halaman daftarnya. Jadi pustaka berkartu dipasang DI SINI, bukan di
+ * rute sendiri: `router.projectId` sudah terisi (store halaman bergantung
+ * padanya), tautan lama ke `.../pages/` tetap hidup, pintasan sidebar `/wiki`
+ * tidak perlu disentuh, dan nol rute baru didaftarkan.
+ *
+ * Tab privat dan arsip sengaja tetap memakai daftar baris: keduanya urusan
+ * beres-beres, bukan urusan menelusuri materi.
+ */
+const WIKI_PROJECT_IDENTIFIER = "WIKI";
 
 function ProjectPagesPage({ params }: Route.ComponentProps) {
   // router
@@ -53,6 +67,10 @@ function ProjectPagesPage({ params }: Route.ComponentProps) {
   const canPerformEmptyStateActions = allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT);
   const resolvedPath = resolvedTheme === "light" ? lightPagesAsset : darkPagesAsset;
   const pageType = getPageType(type);
+  const tampilkanPustaka =
+    project?.identifier === WIKI_PROJECT_IDENTIFIER &&
+    pageType === "public" &&
+    searchParams.get("tampilan") !== "daftar";
 
   // No access to cycle
   if (currentProjectDetails?.page_view === false)
@@ -72,6 +90,16 @@ function ProjectPagesPage({ params }: Route.ComponentProps) {
         />
       </div>
     );
+  if (tampilkanPustaka)
+    return (
+      <>
+        <PageHead title={pageTitle} />
+        <BatasGalatWiki tautanDaftar={`/${workspaceSlug}/projects/${projectId}/pages/?tampilan=daftar`}>
+          <PustakaWiki workspaceSlug={workspaceSlug} projectId={projectId} />
+        </BatasGalatWiki>
+      </>
+    );
+
   return (
     <>
       <PageHead title={pageTitle} />

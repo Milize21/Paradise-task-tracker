@@ -25,6 +25,32 @@ export type TWikiAccessState = {
   is_governed: boolean;
   folders: TWikiFolder[];
   available_divisions: TWikiDivision[];
+  /**
+   * Id project Wiki itu sendiri. Menjadikannya "divisi pemilik" sebuah folder
+   * berarti folder General: siapa pun anggota Wiki boleh mengunggah ke sana.
+   * Tidak ada mode ketiga di model, dan memang tidak perlu ada.
+   */
+  general_division_id: string;
+};
+
+/** Bendera izin satu folder teratas, untuk pemakai yang sedang bertanya. */
+export type TWikiFolderPermission = {
+  id: string;
+  /** Boleh menaruh Topik atau Materi baru di dalam folder ini. */
+  can_upload: boolean;
+  /** Kepala divisi pemilik: boleh membereskan materi orang lain di sini. */
+  is_lead: boolean;
+  /** Folder terbuka, semua anggota Wiki boleh mengunggah. */
+  is_general: boolean;
+  divisions: Pick<TWikiDivision, "identifier" | "name">[];
+};
+
+export type TWikiPermissions = {
+  is_governed: boolean;
+  is_super_admin: boolean;
+  is_project_admin: boolean;
+  user_id: string;
+  folders: TWikiFolderPermission[];
 };
 
 export class WikiAccessService extends APIService {
@@ -34,6 +60,22 @@ export class WikiAccessService extends APIService {
 
   async fetchState(workspaceSlug: string, projectId: string): Promise<TWikiAccessState> {
     return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/wiki-access/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  /**
+   * Izin seluruh folder teratas sekaligus.
+   *
+   * Sengaja borongan: `can-edit/` menjawab satu halaman per permintaan, dan
+   * halaman daftar berisi belasan kartu. Bendera dikembalikan per folder
+   * TERATAS karena resolver izin di server memang selalu naik ke sana, jadi
+   * klien tidak perlu menyalin satu pun aturan izin ke TypeScript.
+   */
+  async fetchPermissions(workspaceSlug: string, projectId: string): Promise<TWikiPermissions> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/wiki-permissions/`)
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;
