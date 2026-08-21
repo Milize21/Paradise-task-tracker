@@ -10,6 +10,11 @@ import suaraPanggilan from "@/app/assets/sounds/notifikasi-panggilan.mp3?url";
 import suaraPesan from "@/app/assets/sounds/notifikasi-pesan.mp3?url";
 import useLocalStorage from "./use-local-storage";
 
+/** Nama kuncinya menyebut "obrolan" karena di situlah ia lahir, tapi sejak ada
+ * PenjagaNotifikasi ia mengatur SELURUH bunyi pemberitahuan, termasuk tugas yang
+ * diberikan dan penyebutan di komentar. Namanya sengaja TIDAK diganti: mengganti
+ * kunci berarti mengosongkan pilihan yang sudah tersimpan di peramban semua
+ * orang, dan yang sudah mematikan bunyi akan mendapatkannya menyala lagi. */
 export const KUNCI_SUARA = "suara_notifikasi_obrolan";
 
 const BERKAS = {
@@ -19,7 +24,7 @@ const BERKAS = {
 
 export type TJenisSuara = keyof typeof BERKAS;
 
-/** Memutar suara notifikasi, dengan saklar bisu yang tersimpan per peramban.
+/** Memutar suara notifikasi, dengan SATU saklar bisu yang tersimpan per peramban.
  *
  * Elemen Audio dibuat sekali lalu dipakai ulang, bukan `new Audio()` tiap kali
  * berbunyi: pesan yang datang beruntun akan meninggalkan tumpukan elemen audio

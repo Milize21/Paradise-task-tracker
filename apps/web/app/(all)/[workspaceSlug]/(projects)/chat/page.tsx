@@ -19,8 +19,6 @@ import {
   Search,
   Send,
   SmilePlus,
-  Volume2,
-  VolumeX,
   X,
   Hash,
   Lock,
@@ -40,6 +38,7 @@ import { cn, getFileURL, renderFormattedDate, renderFormattedTime } from "@plane
 import { PageHead } from "@/components/core/page-title";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
+import { SaklarSuara } from "@/components/notifikasi/saklar-suara";
 import { useSuaraNotifikasi } from "@/hooks/use-suara-notifikasi";
 import { useUser } from "@/hooks/store/user";
 // services
@@ -125,7 +124,7 @@ function ChatPage() {
   const [jelajah, setJelajah] = useState(false);
   const berkasRef = useRef<HTMLInputElement>(null);
   const akhirRef = useRef<HTMLDivElement>(null);
-  const { bunyikan, nyala: suaraNyala, setNyala: setSuaraNyala } = useSuaraNotifikasi();
+  const { bunyikan } = useSuaraNotifikasi();
   const pesanTerakhirRef = useRef<string | null>(null);
   const tulisRef = useRef<HTMLTextAreaElement>(null);
   const namaKanalRef = useRef<HTMLInputElement>(null);
@@ -529,15 +528,7 @@ function ChatPage() {
               </button>
             ) : null}
           </div>
-          <button
-            type="button"
-            onClick={() => setSuaraNyala(!suaraNyala)}
-            aria-label={suaraNyala ? "Matikan suara notifikasi" : "Nyalakan suara notifikasi"}
-            title={suaraNyala ? "Suara notifikasi menyala" : "Suara notifikasi mati"}
-            className="flex size-9 shrink-0 items-center justify-center rounded-md text-tertiary hover:bg-layer-1 hover:text-secondary"
-          >
-            {suaraNyala ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
-          </button>
+          <SaklarSuara />
         </div>
         <div className="flex-1 overflow-y-auto">
           {/* Kanal ditaruh di ATAS daftar orang. Kanal jumlahnya sedikit dan

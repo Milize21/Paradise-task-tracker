@@ -5,17 +5,20 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useRef } from "react";
 import { observer } from "mobx-react";
 import useSWR from "swr";
 // components
 import { CountChip } from "@/components/common/count-chip";
 // services
-import { useSuaraNotifikasi } from "@/hooks/use-suara-notifikasi";
 import { ChatService, KUNCI_BELUM_DIBACA } from "@/services/chat.service";
 
 const chatService = new ChatService();
 
+// Bunyi dan pop-up TIDAK lagi di sini. Keduanya pindah ke PenjagaNotifikasi,
+// yang memakai kunci SWR yang sama persis dengan berkas ini. Kalau bunyinya
+// dikembalikan ke sini, satu pesan masuk akan berbunyi DUA KALI: SWR menyajikan
+// data yang sama ke kedua komponen, dan keduanya melihat angka yang sama naik.
+//
 // Lencana ini hidup di sidebar, jadi ikut ditarik dari SETIAP halaman. 30 detik,
 // bukan 5 seperti percakapan yang sedang dibuka: yang ini cuma perlu memberi
 // tahu bahwa ada sesuatu, bukan menyampaikan isinya. Saat percakapan dibuka,
@@ -33,17 +36,6 @@ export const ChatUnreadBadge = observer(function ChatUnreadBadge({ workspaceSlug
   );
 
   const jumlah = status?.jumlah ?? 0;
-  const { bunyikan } = useSuaraNotifikasi();
-  const sebelumnya = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (!status) return;
-    // Muatan PERTAMA tidak pernah berbunyi. Tanpa penjaga ini, membuka
-    // aplikasi dengan pesan lama yang belum dibaca langsung disambut bunyi,
-    // padahal tidak ada yang baru saja terjadi.
-    if (sebelumnya.current !== null && status.jumlah > sebelumnya.current) bunyikan("pesan");
-    sebelumnya.current = status.jumlah;
-  }, [status, bunyikan]);
 
   if (jumlah <= 0) return <></>;
 

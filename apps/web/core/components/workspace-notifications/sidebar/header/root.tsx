@@ -11,6 +11,7 @@ import { InboxIcon } from "@plane/propel/icons";
 import { Breadcrumbs, Header } from "@plane/ui";
 // components
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
+import { SaklarSuara } from "@/components/notifikasi/saklar-suara";
 // local imports
 import { NotificationSidebarHeaderOptions } from "./options";
 
@@ -41,6 +42,10 @@ export const NotificationSidebarHeader = observer(function NotificationSidebarHe
         </Breadcrumbs>
       </Header.LeftItem>
       <Header.RightItem>
+        {/* Kustomisasi Paradise (Yorukaze Production): saklar yang sama dengan yang
+            ada di halaman Obrolan. Orang yang terganggu bunyi tugas mencarinya di
+            sini, bukan di Obrolan. */}
+        <SaklarSuara />
         <NotificationSidebarHeaderOptions workspaceSlug={workspaceSlug} />
       </Header.RightItem>
     </Header>
